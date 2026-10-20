@@ -8,24 +8,39 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- KaTeX for High-Precision Mathematical Typesetting -->
+  <!-- KaTeX for Math -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <!-- Typography: Anek Bangla & Inter -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;600;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/base.css" />
+  <style>
+    body {
+      font-family: 'Anek Bangla', 'Inter', sans-serif;
+      touch-action: manipulation;
+    }
+    .katex-display {
+      margin: 0.4em 0 !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .active-hw-type {
+      background-color: #fef3c7 !important;
+      border-color: #f59e0b !important;
+      color: #78350f !important;
+    }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-amber-200">
+<body class="bg-amber-50/40 text-slate-900 min-h-screen flex flex-col antialiased">
 
   <!-- Header -->
   <header class="bg-amber-600 text-white shadow-md sticky top-0 z-40">
     <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-      <div class="flex items-center gap-3 cursor-pointer" id="brandLogo">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="location.reload()">
         <span class="text-3xl">📐</span>
         <div>
           <h1 class="text-xl sm:text-2xl font-black tracking-tight leading-none" id="uiBrandTitle">গণিত পাঠশালা</h1>
@@ -34,13 +49,11 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <!-- Language Switcher -->
         <button id="langToggleBtn" class="bg-amber-700 hover:bg-amber-800 border border-amber-400 px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
           <span>🌐</span>
           <span id="currentLangLabel">English</span>
         </button>
 
-        <!-- Homework Helper Trigger -->
         <button id="openHwBtn" class="bg-amber-50 text-amber-900 hover:bg-white px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
           <span>📷</span>
           <span id="uiHwNavText">ঘৰুৱা কাম</span>
@@ -60,60 +73,47 @@
                placeholder="যিকোনো গাণিতিক ধাৰণা অনুসন্ধান কৰক (যেনে: ভগ্নাংশ, সমীকৰণ)..." 
                class="w-full px-3 py-3 text-sm sm:text-base focus:outline-none bg-transparent" />
       </div>
-      <!-- Live Search Results Dropdown -->
       <div id="searchResultsDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-amber-200 z-30 max-h-72 overflow-y-auto"></div>
     </div>
 
     <!-- Class Selector Dropdown -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-amber-100/50 p-4 rounded-2xl border border-amber-200">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-amber-100/60 p-4 rounded-2xl border border-amber-200">
       <label for="classSelectDropdown" class="text-sm font-bold text-amber-950 flex items-center gap-2">
         <span>🎓</span> <span id="uiSelectClassLabel">শ্ৰেণী বা পৰ্যায় বাছক:</span>
       </label>
       <select id="classSelectDropdown" class="w-full sm:w-auto bg-white border-2 border-amber-300 text-slate-800 font-bold text-sm rounded-xl px-4 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
-        <!-- Options populated dynamically -->
       </select>
     </div>
 
-    <!-- Dashboard: Chapter Cards Grid -->
-    <div id="chaptersContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Injected via JavaScript -->
-    </div>
+    <!-- Chapter Cards Grid -->
+    <div id="chaptersContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
 
-    <!-- Interactive Workspace (Hidden by default, shown when Learn/Play/Test is active) -->
+    <!-- Interactive Workspace (Learn / Play / Test) -->
     <div id="workspaceModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-      <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-amber-200 overflow-hidden">
-        
-        <!-- Workspace Header -->
+      <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-amber-200 overflow-hidden">
         <div class="bg-amber-600 text-white p-4 flex justify-between items-center">
           <div>
             <span id="wsModeBadge" class="bg-amber-800 text-[10px] uppercase font-black px-2 py-0.5 rounded-full">MODE</span>
-            <h3 id="wsChapterTitle" class="text-lg sm:text-xl font-bold mt-0.5">Chapter Title</h3>
+            <h3 id="wsChapterTitle" class="text-lg font-bold mt-0.5">Title</h3>
           </div>
           <button id="closeWsBtn" class="text-white hover:bg-amber-700 w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg">✕</button>
         </div>
-
-        <!-- Workspace Dynamic Content Container -->
-        <div id="wsBody" class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-5">
-          <!-- Dynamic Mode Views Inject Here -->
-        </div>
-
+        <div id="wsBody" class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-5"></div>
       </div>
     </div>
 
-    <!-- Camera / Homework Helper Modal -->
+    <!-- Homework Helper Modal -->
     <div id="hwModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
-      <div class="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-amber-200 overflow-hidden">
-        
+      <div class="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl border border-amber-200 overflow-hidden">
         <div class="bg-amber-600 text-white p-4 flex justify-between items-center">
           <div class="flex items-center gap-2">
             <span class="text-2xl">📷</span>
-            <h3 id="uiHwTitle" class="text-lg font-bold">ঘৰুৱা কামৰ সহায়ক (Homework Helper)</h3>
+            <h3 id="uiHwTitle" class="text-lg font-bold">ঘৰুৱা কামৰ সহায়ক</h3>
           </div>
           <button id="closeHwBtn" class="text-white hover:bg-amber-700 w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg">✕</button>
         </div>
 
-        <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
-          <!-- Input Options: Camera / File / Text -->
+        <div class="p-5 overflow-y-auto flex-1 space-y-4">
           <div class="grid grid-cols-2 gap-3">
             <label class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-amber-400 bg-amber-50 hover:bg-amber-100 rounded-2xl cursor-pointer transition">
               <span class="text-3xl">📸</span>
@@ -128,45 +128,36 @@
             </label>
           </div>
 
-          <!-- Image Preview -->
           <div id="hwImagePreviewContainer" class="hidden relative rounded-xl overflow-hidden border border-slate-200">
             <img id="hwImagePreview" src="" alt="Homework Preview" class="w-full max-h-48 object-contain bg-slate-100" />
             <button id="hwRemoveImgBtn" class="absolute top-2 right-2 bg-slate-900/70 text-white p-1 rounded-full text-xs">✕</button>
           </div>
 
-          <!-- Problem Text Input -->
-          <div>
-            <textarea id="hwTextInput" rows="3" 
-                      placeholder="বা ইয়াত আপোনাৰ অংকটো টাইপ কৰক..." 
-                      class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
-          </div>
+          <textarea id="hwTextInput" rows="3" placeholder="বা ইয়াত আপোনাৰ অংকটো টাইপ কৰক..." 
+                    class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
 
-          <!-- Assistance Level Selector -->
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1.5" id="uiHwModeSelectLabel">সহায়ৰ ধৰণ বাছক:</label>
             <div class="grid grid-cols-3 gap-2">
-              <button class="hw-type-btn p-2 rounded-xl border border-amber-300 text-xs font-bold text-amber-950 bg-amber-50 active-hw-type" data-type="hint" id="uiHwOptHint">ইংগিত (Hint)</button>
-              <button class="hw-type-btn p-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white" data-type="step" id="uiHwOptStep">স্তৰে স্তৰে (Steps)</button>
-              <button class="hw-type-btn p-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white" data-type="check" id="uiHwOptCheck">পৰীক্ষা (Check)</button>
+              <button class="hw-type-btn p-2 rounded-xl border border-amber-300 text-xs font-bold text-amber-950 bg-amber-50 active-hw-type" data-type="hint" id="uiHwOptHint">ইংগিত</button>
+              <button class="hw-type-btn p-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white" data-type="step" id="uiHwOptStep">স্তৰে স্তৰে</button>
+              <button class="hw-type-btn p-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white" data-type="check" id="uiHwOptCheck">পৰীক্ষা</button>
             </div>
           </div>
 
-          <!-- Action Button -->
           <button id="askHwBtn" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl transition shadow flex items-center justify-center gap-2 text-sm">
             <span>✨</span> <span id="uiAskBtnText">সহায় বিচাৰক</span>
           </button>
 
-          <!-- AI Response Area -->
           <div id="hwOutput" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm leading-relaxed space-y-2"></div>
         </div>
-
       </div>
     </div>
 
   </main>
 
   <!-- Step-by-Step Onboarding Gateway -->
-  <div id="onboardingPortal" class="hidden fixed inset-0 bg-amber-600/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+  <div id="onboardingPortal" class="fixed inset-0 bg-amber-600/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border-4 border-amber-300 text-center">
       
       <!-- Screen 1: Language Selection -->
@@ -228,6 +219,679 @@
     </div>
   </div>
 
-  <script type="module" src="js/app.js"></script>
+  <!-- APPLICATION ENGINE (SELF-CONTAINED) -->
+  <script>
+    const AI_STUDIO_URL = "https://aistudio.google.com/app/apikey";
+
+    const strings = {
+      as: {
+        brandTitle: "গণিত পাঠশালা",
+        brandTagline: "স্পৰ্শ কৰা, খেলা আৰু শিকা",
+        searchPlaceholder: "যিকোনো গাণিতিক ধাৰণা অনুসন্ধান কৰক (যেনে: ভগ্নাংশ, সমীকৰণ)...",
+        selectClassLabel: "শ্ৰেণী বা পৰ্যায় বাছক:",
+        hwNavText: "ঘৰুৱা কাম",
+        learnBtn: "শিকক",
+        playBtn: "খেলক",
+        testBtn: "পৰীক্ষা",
+        portalKeyTitle: "Google Gemini Key প্ৰয়োজন",
+        portalKeyDesc: "গণিত পাঠশালা ব্যৱহাৰ কৰিবলৈ আপোনাক এতিয়া Google ৰ বিনামূলীয়া Gemini Key পৃষ্ঠালৈ লৈ যোৱা হ’ব। তাত Key টো বনাই কপি কৰি পুনৰ ইয়ালৈ ঘূৰি আহক।",
+        redirectBtnText: "মোক Key পৃষ্ঠালৈ লৈ যাওক",
+        portalPasteTitle: "Key পেষ্ট কৰক",
+        portalPasteDesc: "Google AI Studio ৰ পৰা কপি কৰি অনা Key টো তলৰ বাকচত পেষ্ট কৰক:",
+        launchBtnText: "পৰীক্ষা কৰি এপ আৰম্ভ কৰক",
+        reopenGoogleBtnText: "↺ পুনৰ Google AI Studio লৈ যাওক",
+        keyInvalid: "ভুল Key! Gemini Key সাধাৰণতে 'AIza' ৰে আৰম্ভ হয়।",
+        verifyingKey: "Key পৰীক্ষা কৰি থকা হৈছে...",
+        keyValid: "✓ সংযোগ সফল হ’ল! গণিত পাঠশালালৈ স্বাগতম!",
+        keyFailed: "সংযোগ বিফল হ’ল। অনুগ্ৰহ কৰি সঠিক Key দিয়ক।",
+        hwTitle: "ঘৰুৱা কামৰ সহায়ক",
+        captureBtn: "ফটো তোলক",
+        uploadBtn: "ফটো বাছক",
+        hwPlaceholder: "বা ইয়াত আপোনাৰ অংকটো টাইপ কৰক...",
+        hwModeLabel: "সহায়ৰ ধৰণ বাছক:",
+        hwHint: "ইংগিত",
+        hwStep: "স্তৰে স্তৰে",
+        hwCheck: "পৰীক্ষা",
+        askBtn: "সহায় বিচাৰক",
+        analyzingHw: "AI গুৰুৱে অংকটো বিশ্লেষণ কৰি আছে...",
+        rescueTitle: "বাঃ, আপুনি প্ৰায় সমাধানৰ ওচৰ পাইছিলগৈ!",
+        tryAgainGuidance: "আহকচোন, এই খোজটো একেলগে পুনৰ পৰীক্ষা কৰোঁ:"
+      },
+      en: {
+        brandTitle: "Gonit Pathshala",
+        brandTagline: "Touch, Play and Master Mathematics",
+        searchPlaceholder: "Search any math concept (e.g., Fractions, Linear Equations)...",
+        selectClassLabel: "Select Grade / Level:",
+        hwNavText: "Homework Help",
+        learnBtn: "Learn",
+        playBtn: "Play",
+        testBtn: "Test",
+        portalKeyTitle: "Google Gemini Key Required",
+        portalKeyDesc: "To experience Gonit Pathshala, you will now be taken directly to Google to create your free Gemini API Key. Copy your key there and return to this tab.",
+        redirectBtnText: "Take me to my Key Page",
+        portalPasteTitle: "Paste Your Key",
+        portalPasteDesc: "Paste the key you copied from Google AI Studio below:",
+        launchBtnText: "Verify Key & Launch App",
+        reopenGoogleBtnText: "↺ Open Google AI Studio again",
+        keyInvalid: "Invalid Key format. Gemini keys begin with 'AIza'.",
+        verifyingKey: "Verifying connection...",
+        keyValid: "✓ Success! Welcome to Gonit Pathshala!",
+        keyFailed: "Verification failed. Please check your key.",
+        hwTitle: "Homework Helper",
+        captureBtn: "Take Photo",
+        uploadBtn: "Upload Photo",
+        hwPlaceholder: "Or type your math problem here...",
+        hwModeLabel: "Choose Assistance Level:",
+        hwHint: "Hint",
+        hwStep: "Step-by-Step",
+        hwCheck: "Check My Work",
+        askBtn: "Get Assistance",
+        analyzingHw: "AI Guru is analyzing the problem...",
+        rescueTitle: "Great try! You were super close!",
+        tryAgainGuidance: "Let's examine this specific step together:"
+      }
+    };
+
+    const asDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+
+    const classesData = [
+      {
+        id: "cls_primary_1_2",
+        title: { as: "প্ৰাথমিক (১–২ শ্ৰেণী)", en: "Primary (Classes 1–2)" },
+        chapters: [
+          {
+            id: "tactile_counting",
+            title: { as: "বস্তু গণন আৰু স্থানমান", en: "Object Counting & Place Value" },
+            desc: { as: "বস্তু চুই চুই গণনা কৰা আৰু ১০ ৰ দল গঠন।", en: "Touch counting and grouping by 10s." },
+            formula: "১ + ১ = ২",
+            learnHtml: {
+              as: "<p>গণনা হ'ল প্ৰকৃতিৰ আটাইতকৈ সহজ খেল। বস্তু এটা এটাকৈ একত্ৰিত কৰিলে মুঠ সংখ্যা বাঢ়ি যায়।</p>",
+              en: "<p>Counting is the bedrock of all math. Grouping individual items increases the total sum.</p>"
+            }
+          },
+          {
+            id: "basic_addition",
+            title: { as: "সহজ যোগ আৰু বিয়োগ", en: "Basic Addition & Subtraction" },
+            desc: { as: "বস্তু একেলগ কৰা আৰু আঁতৰাই নতুন সংখ্যা পোৱা।", en: "Combining and removing items to find new totals." },
+            formula: "৩ + ৪ = ৭",
+            learnHtml: {
+              as: "<p>যোগ মানে একত্ৰিত কৰা ($+$) আৰু বিয়োগ মানে আঁতৰোৱা ($-$)।</p>",
+              en: "<p>Addition means bringing together ($+$); subtraction means taking away ($-$).</p>"
+            }
+          }
+        ]
+      },
+      {
+        id: "cls_upper_3_5",
+        title: { as: "উচ্চ প্ৰাথমিক (৩–৫ শ্ৰেণী)", en: "Upper Primary (Classes 3–5)" },
+        chapters: [
+          {
+            id: "fractions_slice",
+            title: { as: "ভগ্নাংশৰ পৰিচয়", en: "Visual Fractions" },
+            desc: { as: "এডাল গোটা বস্তুক সমান ভাগত ভাগ কৰাৰ কৌশল।", en: "Splitting wholes into equal proportional slices." },
+            formula: "\\frac{১}{২} + \\frac{১}{৪} = \\frac{৩}{৪}",
+            learnHtml: {
+              as: "<p>যেতিয়া এটা বস্তুক সমান সমান অংশত কটা হয়, প্ৰতিটো অংশক ভগ্নাংশ বোলা হয়। ওপৰৰ সংখ্যাটো লৱ আৰু তলৰটো হৰ।</p>",
+              en: "<p>A fraction represents a part of a whole. Top is numerator, bottom is denominator.</p>"
+            }
+          },
+          {
+            id: "factors_multiples",
+            title: { as: "গ.সা.উ. আৰু ল.সা.গু.", en: "HCF & LCM" },
+            desc: { as: "উমৈহতীয়া উৎপাদক আৰু গুণিতকৰ সন্ধান।", en: "Greatest common divisors and least common multiples." },
+            formula: "\\text{LCM}(৪, ৬) = ১২",
+            learnHtml: {
+              as: "<p>ল.সা.গু. (LCM) হ'ল দুটা সংখ্যাৰ আটাইতকৈ সৰু উমৈহতীয়া গুণিতক।</p>",
+              en: "<p>LCM is the smallest positive number divisible by both values.</p>"
+            }
+          }
+        ]
+      },
+      {
+        id: "cls_middle_6_8",
+        title: { as: "মধ্য পৰ্যায় (৬–৮ শ্ৰেণী)", en: "Middle Stage (Classes 6–8)" },
+        chapters: [
+          {
+            id: "integers_line",
+            title: { as: "অখণ্ড সংখ্যা আৰু সংখ্যোৰেখা", en: "Integers & The Number Line" },
+            desc: { as: "শূন্যৰ তলৰ ঋণাত্মক সংখ্যাৰ জগত।", en: "Understanding signed values below and above zero." },
+            formula: "(-৫) + (+৮) = +৩",
+            learnHtml: {
+              as: "<p>শূন্যৰ সোঁফালে ধনাত্মক ($+$) আৰু বাওঁফালে ঋণাত্মক ($-$) সংখ্যা থাকে।</p>",
+              en: "<p>Values right of zero are positive ($+$); values left of zero are negative ($-$).</p>"
+            }
+          },
+          {
+            id: "linear_equations",
+            title: { as: "সৰল সমীকৰণ", en: "Linear Equations" },
+            desc: { as: "তুলাচনীৰ দৰে দুয়োপাল্লা সমান ৰাখি চলকৰ মান উলিওৱা।", en: "Balancing equations to determine the unknown variable." },
+            formula: "২x + ৩ = ১১ \\implies x = ৪",
+            learnHtml: {
+              as: "<p>সমীকৰণ এটা এখন তুলাচনীৰ দৰে। সমান চিনৰ দুয়োফালে একেই কাৰ্য কৰিলে সমতা অটুট থাকে।</p>",
+              en: "<p>An equation is like a balanced scale. Performing identical operations preserves equilibrium.</p>"
+            }
+          }
+        ]
+      },
+      {
+        id: "cls_secondary_9_10",
+        title: { as: "মাধ্যমিক (৯–১০ শ্ৰেণী)", en: "Secondary (Classes 9–10)" },
+        chapters: [
+          {
+            id: "quadratic_eq",
+            title: { as: "দ্বিঘাত সমীকৰণ", en: "Quadratic Equations" },
+            desc: { as: "শ্ৰীধৰ আচাৰ্যৰ সূত্ৰ আৰু মূলৰ প্ৰকৃতি।", en: "Roots, parabolas, and discriminant analysis." },
+            formula: "x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}",
+            learnHtml: {
+              as: "<p>দ্বিঘাত সমীকৰণৰ সাধাৰণ ৰূপ হ'ল $ax^2 + bx + c = 0$। ইয়াৰ ভেদ নিৰূপক $D = b^2 - 4ac$।</p>",
+              en: "<p>Standard form is $ax^2 + bx + c = 0$. The discriminant is $D = b^2 - 4ac$.</p>"
+            }
+          },
+          {
+            id: "trigonometry",
+            title: { as: "ত্ৰিকোণমিতিৰ সূচনা", en: "Introduction to Trigonometry" },
+            desc: { as: "সমকোণী ত্ৰিভুজৰ বাহু আৰু কোণৰ অনুপাত।", en: "Sine, Cosine, and Tangent geometric ratios." },
+            formula: "\\sin^2\\theta + \\cos^2\\theta = ১",
+            learnHtml: {
+              as: "<p>ত্ৰিকোণমিতিয়ে সূক্ষ্মকোণ আৰু বাহুৰ অনুপাত ব্যাখ্যা কৰে: $\\sin\\theta = \\frac{\\text{লম্ব}}{\\text{অতিভুজ}}$।</p>",
+              en: "<p>Trigonometric ratios relate angles to side lengths.</p>"
+            }
+          }
+        ]
+      },
+      {
+        id: "cls_higher_ug",
+        title: { as: "উচ্চতৰ আৰু স্নাতক", en: "Higher & Undergraduate" },
+        chapters: [
+          {
+            id: "calculus_diff",
+            title: { as: "কলন গণিত (অৱকলন)", en: "Differential Calculus" },
+            desc: { as: "পৰিৱৰ্তনৰ তাৎক্ষণিক হাৰ আৰু স্পৰ্শক।", en: "Instantaneous rate of change and tangents." },
+            formula: "\\lim_{h \\to 0} \\frac{f(x+h) - f(x)}{h}",
+            learnHtml: {
+              as: "<p>অৱকলজে যিকোনো বক্ৰৰেখাৰ নিৰ্দিষ্ট বিন্দুত স্পৰ্শকৰ নতি বা ঢাল সূচায়।</p>",
+              en: "<p>The derivative calculates instantaneous tangent slope.</p>"
+            }
+          }
+        ]
+      }
+    ];
+
+    let currentLang = localStorage.getItem('omnimath_lang') || 'as';
+    let apiKey = localStorage.getItem('omnimath_gemini_key') || '';
+    let currentClassId = classesData[0].id;
+    let currentHwImageBase64 = null;
+    let currentHwType = "hint";
+
+    function t(key) {
+      return strings[currentLang][key] || key;
+    }
+
+    function toDigits(num) {
+      if (currentLang === 'en') return num.toString();
+      return num.toString().replace(/\d/g, d => asDigits[d]);
+    }
+
+    // Force Open Key Gateway if key is not verified
+    window.addEventListener('DOMContentLoaded', () => {
+      setupUI();
+
+      if (!apiKey || !apiKey.startsWith('AIza')) {
+        document.getElementById('onboardingPortal').classList.remove('hidden');
+        document.getElementById('onboardingStepLang').classList.remove('hidden');
+      } else {
+        document.getElementById('onboardingPortal').classList.add('hidden');
+        bootDashboard();
+      }
+    });
+
+    function setupUI() {
+      // Language Selection in Modal
+      document.getElementById('chooseLangAsBtn').onclick = () => selectLang('as');
+      document.getElementById('chooseLangEnBtn').onclick = () => selectLang('en');
+
+      // Header Lang Toggle
+      document.getElementById('langToggleBtn').onclick = () => {
+        selectLang(currentLang === 'as' ? 'en' : 'as');
+        bootDashboard();
+      };
+
+      // Direct Redirect to AI Studio
+      document.getElementById('directRedirectBtn').onclick = () => {
+        sessionStorage.setItem('omnimath_redirected', 'true');
+        window.open(AI_STUDIO_URL, '_blank');
+        showKeyPasteScreen();
+      };
+
+      document.getElementById('reopenGoogleBtn').onclick = () => {
+        window.open(AI_STUDIO_URL, '_blank');
+      };
+
+      document.getElementById('saveAndLaunchBtn').onclick = verifyAndLaunch;
+
+      // Detect return from Google tab
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && !apiKey) {
+          if (sessionStorage.getItem('omnimath_redirected') === 'true') {
+            showKeyPasteScreen();
+          }
+        }
+      });
+
+      // Class Dropdown Change
+      document.getElementById('classSelectDropdown').onchange = (e) => {
+        currentClassId = e.target.value;
+        renderChapterCards();
+      };
+
+      // Search Handler
+      document.getElementById('conceptSearchInput').oninput = handleUniversalSearch;
+
+      // Homework Modal Triggers
+      document.getElementById('openHwBtn').onclick = () => document.getElementById('hwModal').classList.remove('hidden');
+      document.getElementById('closeHwBtn').onclick = () => document.getElementById('hwModal').classList.add('hidden');
+      document.getElementById('closeWsBtn').onclick = () => document.getElementById('workspaceModal').classList.add('hidden');
+
+      // Homework File Upload
+      document.getElementById('hwCameraInput').onchange = handleHwImage;
+      document.getElementById('hwFileInput').onchange = handleHwImage;
+      document.getElementById('hwRemoveImgBtn').onclick = clearHwImage;
+
+      // Homework Help Type Toggles
+      document.querySelectorAll('.hw-type-btn').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('.hw-type-btn').forEach(b => b.classList.remove('active-hw-type'));
+          btn.classList.add('active-hw-type');
+          currentHwType = btn.getAttribute('data-type');
+        };
+      });
+
+      document.getElementById('askHwBtn').onclick = submitHomeworkQuery;
+    }
+
+    function selectLang(lang) {
+      currentLang = lang;
+      localStorage.setItem('omnimath_lang', lang);
+      document.documentElement.lang = lang;
+      applyStaticTranslations();
+
+      if (!apiKey || !apiKey.startsWith('AIza')) {
+        document.getElementById('onboardingStepLang').classList.add('hidden');
+        showKeyRedirectScreen();
+      }
+    }
+
+    function showKeyRedirectScreen() {
+      document.getElementById('onboardingStepKeyPaste').classList.add('hidden');
+      document.getElementById('onboardingStepKeyRedirect').classList.remove('hidden');
+
+      document.getElementById('portalKeyTitle').innerText = t('portalKeyTitle');
+      document.getElementById('portalKeyDesc').innerText = t('portalKeyDesc');
+      document.getElementById('redirectBtnText').innerText = t('redirectBtnText');
+    }
+
+    function showKeyPasteScreen() {
+      document.getElementById('onboardingStepKeyRedirect').classList.add('hidden');
+      document.getElementById('onboardingStepKeyPaste').classList.remove('hidden');
+
+      document.getElementById('portalPasteTitle').innerText = t('portalPasteTitle');
+      document.getElementById('portalPasteDesc').innerText = t('portalPasteDesc');
+      document.getElementById('launchBtnText').innerText = t('launchBtnText');
+      document.getElementById('reopenGoogleBtnText').innerText = t('reopenGoogleBtnText');
+
+      setTimeout(() => document.getElementById('geminiKeyInput').focus(), 250);
+    }
+
+    async function verifyAndLaunch() {
+      const input = document.getElementById('geminiKeyInput');
+      const feedback = document.getElementById('portalFeedback');
+      const btn = document.getElementById('saveAndLaunchBtn');
+      const key = input.value.trim();
+
+      feedback.classList.remove('hidden');
+
+      if (!key || !key.startsWith('AIza')) {
+        feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center";
+        feedback.innerText = t('keyInvalid');
+        return;
+      }
+
+      feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-amber-100 text-amber-800 text-center";
+      feedback.innerText = t('verifyingKey');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] })
+        });
+
+        if (res.ok) {
+          apiKey = key;
+          localStorage.setItem('omnimath_gemini_key', key);
+          sessionStorage.removeItem('omnimath_redirected');
+
+          feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 text-center";
+          feedback.innerText = t('keyValid');
+
+          setTimeout(() => {
+            document.getElementById('onboardingPortal').classList.add('hidden');
+            btn.disabled = false;
+            bootDashboard();
+          }, 700);
+        } else {
+          throw new Error();
+        }
+      } catch (err) {
+        btn.disabled = false;
+        feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center";
+        feedback.innerText = t('keyFailed');
+      }
+    }
+
+    function applyStaticTranslations() {
+      document.getElementById('uiBrandTitle').innerText = t('brandTitle');
+      document.getElementById('uiBrandTagline').innerText = t('brandTagline');
+      document.getElementById('currentLangLabel').innerText = currentLang === 'as' ? 'English' : 'অসমীয়া';
+      document.getElementById('conceptSearchInput').placeholder = t('searchPlaceholder');
+      document.getElementById('uiSelectClassLabel').innerText = t('selectClassLabel');
+      document.getElementById('uiHwNavText').innerText = t('hwNavText');
+      document.getElementById('uiHwTitle').innerText = t('hwTitle');
+      document.getElementById('uiCaptureBtnText').innerText = t('captureBtn');
+      document.getElementById('uiUploadBtnText').innerText = t('uploadBtn');
+      document.getElementById('hwTextInput').placeholder = t('hwPlaceholder');
+      document.getElementById('uiHwModeSelectLabel').innerText = t('hwModeLabel');
+      document.getElementById('uiHwOptHint').innerText = t('hwHint');
+      document.getElementById('uiHwOptStep').innerText = t('hwStep');
+      document.getElementById('uiHwOptCheck').innerText = t('hwCheck');
+      document.getElementById('uiAskBtnText').innerText = t('askBtn');
+    }
+
+    function bootDashboard() {
+      applyStaticTranslations();
+      populateClassDropdown();
+      renderChapterCards();
+    }
+
+    function populateClassDropdown() {
+      const dd = document.getElementById('classSelectDropdown');
+      dd.innerHTML = '';
+      classesData.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.innerText = c.title[currentLang];
+        if (c.id === currentClassId) opt.selected = true;
+        dd.appendChild(opt);
+      });
+    }
+
+    function renderChapterCards() {
+      const container = document.getElementById('chaptersContainer');
+      container.innerHTML = '';
+
+      const currentClass = classesData.find(c => c.id === currentClassId) || classesData[0];
+
+      currentClass.chapters.forEach(ch => {
+        const card = document.createElement('div');
+        card.className = "bg-white border-2 border-amber-200/90 rounded-3xl p-5 hover:border-amber-400 hover:shadow-lg transition flex flex-col justify-between";
+
+        card.innerHTML = `
+          <div>
+            <h4 class="font-extrabold text-slate-900 text-lg">${ch.title[currentLang]}</h4>
+            <p class="text-xs text-slate-600 my-1.5 leading-relaxed">${ch.desc[currentLang]}</p>
+            <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-2 text-center my-3 text-amber-950 font-mono text-sm overflow-x-auto">
+              $$${ch.formula}$$
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-2 pt-3 border-t border-slate-100">
+            <button class="action-learn-btn bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs py-2 rounded-xl transition text-center" data-id="${ch.id}">
+              📖 ${t('learnBtn')}
+            </button>
+            <button class="action-play-btn bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold text-xs py-2 rounded-xl transition text-center" data-id="${ch.id}">
+              🎮 ${t('playBtn')}
+            </button>
+            <button class="action-test-btn bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-300 font-bold text-xs py-2 rounded-xl transition text-center" data-id="${ch.id}">
+              ✍️ ${t('testBtn')}
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      container.querySelectorAll('.action-learn-btn').forEach(btn => {
+        btn.onclick = () => launchWorkspace(btn.getAttribute('data-id'), 'learn');
+      });
+      container.querySelectorAll('.action-play-btn').forEach(btn => {
+        btn.onclick = () => launchWorkspace(btn.getAttribute('data-id'), 'play');
+      });
+      container.querySelectorAll('.action-test-btn').forEach(btn => {
+        btn.onclick = () => launchWorkspace(btn.getAttribute('data-id'), 'test');
+      });
+
+      if (window.renderMathInElement) {
+        renderMathInElement(container, { delimiters: [{ left: '$$', right: '$$', display: true }] });
+      }
+    }
+
+    function handleUniversalSearch(e) {
+      const query = e.target.value.trim().toLowerCase();
+      const dropdown = document.getElementById('searchResultsDropdown');
+
+      if (query.length < 2) {
+        dropdown.classList.add('hidden');
+        dropdown.innerHTML = '';
+        return;
+      }
+
+      const results = [];
+      classesData.forEach(c => {
+        c.chapters.forEach(ch => {
+          const matchAs = ch.title.as.toLowerCase().includes(query) || ch.desc.as.toLowerCase().includes(query);
+          const matchEn = ch.title.en.toLowerCase().includes(query) || ch.desc.en.toLowerCase().includes(query);
+          if (matchAs || matchEn) {
+            results.push({ ...ch, classTitle: c.title[currentLang] });
+          }
+        });
+      });
+
+      if (results.length === 0) {
+        dropdown.innerHTML = `<div class="p-4 text-xs text-slate-500 text-center">কোনো ধাৰণা পোৱা নগ'ল / No concept found</div>`;
+      } else {
+        dropdown.innerHTML = results.map(r => `
+          <div class="search-result-item p-3 border-b border-slate-100 hover:bg-amber-50 cursor-pointer flex justify-between items-center" data-id="${r.id}">
+            <div>
+              <h5 class="text-sm font-bold text-slate-900">${r.title[currentLang]}</h5>
+              <span class="text-[10px] text-amber-700 font-semibold uppercase">${r.classTitle}</span>
+            </div>
+            <span class="text-xs text-amber-700 font-bold">খোলক &rarr;</span>
+          </div>
+        `).join('');
+
+        dropdown.querySelectorAll('.search-result-item').forEach(item => {
+          item.onclick = () => {
+            dropdown.classList.add('hidden');
+            launchWorkspace(item.getAttribute('data-id'), 'learn');
+          };
+        });
+      }
+
+      dropdown.classList.remove('hidden');
+    }
+
+    function launchWorkspace(chapterId, mode) {
+      let foundChapter = null;
+      classesData.forEach(c => {
+        const ch = c.chapters.find(x => x.id === chapterId);
+        if (ch) foundChapter = ch;
+      });
+      if (!foundChapter) return;
+
+      const modal = document.getElementById('workspaceModal');
+      const badge = document.getElementById('wsModeBadge');
+      const title = document.getElementById('wsChapterTitle');
+      const body = document.getElementById('wsBody');
+
+      badge.innerText = mode.toUpperCase();
+      title.innerText = foundChapter.title[currentLang];
+      modal.classList.remove('hidden');
+
+      if (mode === 'learn') {
+        body.innerHTML = `
+          <div class="space-y-4">
+            <div class="prose max-w-none text-sm text-slate-700 leading-relaxed">
+              ${foundChapter.learnHtml[currentLang]}
+            </div>
+            <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200">
+              <h5 class="text-xs font-bold text-amber-900 uppercase">${currentLang === 'as' ? 'প্ৰধান সূত্ৰ' : 'Core Identity'}</h5>
+              <div class="text-center text-lg my-2 font-mono">$$${foundChapter.formula}$$</div>
+            </div>
+          </div>
+        `;
+      } else if (mode === 'play') {
+        const target = Math.floor(Math.random() * 8) + 4;
+        let cur = 0;
+        body.innerHTML = `
+          <div class="space-y-4 text-center">
+            <p class="text-sm font-bold text-slate-800">
+              ${currentLang === 'as' ? `তুলাচনীৰ সোঁফালে যোগ কৰি মুঠ মান <b>${toDigits(target)}</b> ৰ সমান কৰক:` : `Add weights to balance the scale to exactly <b>${target}</b>:`}
+            </p>
+            <div class="p-6 bg-amber-50 rounded-2xl border-2 border-amber-300 flex justify-around items-center min-h-[140px]">
+              <div class="bg-amber-600 text-white font-black text-xl p-4 rounded-2xl shadow">🎯 ${toDigits(target)}</div>
+              <div class="text-2xl font-black text-amber-800">=</div>
+              <div id="playCurrentBox" class="bg-white border-2 border-amber-400 text-amber-900 font-black text-xl p-4 rounded-2xl shadow min-w-[70px]">${toDigits(0)}</div>
+            </div>
+            <div id="playFeedback" class="text-xs font-bold h-5 text-amber-700"></div>
+            <div class="flex justify-center gap-3">
+              <button id="addWeight1" class="px-4 py-2 bg-white border-2 border-amber-400 hover:bg-amber-100 text-amber-950 font-bold rounded-xl">+${toDigits(1)}</button>
+              <button id="addWeight2" class="px-4 py-2 bg-white border-2 border-amber-400 hover:bg-amber-100 text-amber-950 font-bold rounded-xl">+${toDigits(2)}</button>
+              <button id="resetPlayWeight" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">🔄</button>
+            </div>
+          </div>
+        `;
+
+        const box = body.querySelector('#playCurrentBox');
+        const feed = body.querySelector('#playFeedback');
+        body.querySelector('#addWeight1').onclick = () => { cur += 1; checkWeight(); };
+        body.querySelector('#addWeight2').onclick = () => { cur += 2; checkWeight(); };
+        body.querySelector('#resetPlayWeight').onclick = () => { cur = 0; box.innerText = toDigits(0); feed.innerText = ''; };
+
+        function checkWeight() {
+          box.innerText = toDigits(cur);
+          if (cur === target) {
+            feed.className = "text-xs font-bold h-5 text-emerald-700 animate-bounce";
+            feed.innerText = currentLang === 'as' ? "🎉 অসাধাৰণ! সমতা নিশ্চিত হ’ল!" : "🎉 Splendid! Equilibrium achieved!";
+          } else if (cur > target) {
+            feed.className = "text-xs font-bold h-5 text-rose-700";
+            feed.innerText = currentLang === 'as' ? "অলপ বেছি হ’ল! পুনৰ চেষ্টা কৰক।" : "A bit over! Reset and try again.";
+          }
+        }
+      } else if (mode === 'test') {
+        const a = Math.floor(Math.random() * 6) + 2;
+        const b = Math.floor(Math.random() * 5) + 3;
+        const ans = a + b;
+        body.innerHTML = `
+          <div class="space-y-4">
+            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200">
+              <h4 class="text-lg font-black text-slate-900">${currentLang === 'as' ? 'সমীকৰণটো সমাধান কৰক:' : 'Solve the given equation:'}</h4>
+              <div class="text-center text-xl font-bold my-3 font-mono">${toDigits(a)} + ${toDigits(b)} = ?</div>
+            </div>
+            <div class="flex gap-2">
+              <input type="number" id="testAnsInput" placeholder="?" class="flex-1 p-3 border-2 border-slate-300 rounded-xl text-center text-lg font-bold" />
+              <button id="testSubmitBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-6 py-3 rounded-xl">${currentLang === 'as' ? 'উত্তৰ চাওক' : 'Check'}</button>
+            </div>
+            <div id="testRescueBox" class="hidden p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl text-xs space-y-2">
+              <h5 class="font-black text-amber-950 flex items-center gap-1.5 text-sm"><span>💡</span> <span>${t('rescueTitle')}</span></h5>
+              <p class="text-amber-900">${t('tryAgainGuidance')}</p>
+              <p class="font-mono bg-white p-2 rounded-lg border border-amber-200">${toDigits(a)} + ${toDigits(b)} = ${toDigits(a)} + (${toDigits(1)} + ${toDigits(b - 1)})</p>
+            </div>
+          </div>
+        `;
+
+        body.querySelector('#testSubmitBtn').onclick = () => {
+          const val = parseInt(body.querySelector('#testAnsInput').value.trim(), 10);
+          const r = body.querySelector('#testRescueBox');
+          r.classList.remove('hidden');
+          if (val === ans) {
+            r.className = "p-4 bg-emerald-50 border-2 border-emerald-300 rounded-2xl text-xs text-emerald-900 font-bold";
+            r.innerHTML = `<span>🌟 ${currentLang === 'as' ? 'শুদ্ধ সমাধান! আপুনি ধাৰণাটো আয়ত্ত কৰিলে।' : 'Correct! Concept fully mastered.'}</span>`;
+          }
+        };
+      }
+
+      if (window.renderMathInElement) {
+        renderMathInElement(body, { delimiters: [{ left: '$$', right: '$$', display: true }] });
+      }
+    }
+
+    function handleHwImage(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        currentHwImageBase64 = event.target.result.split(',')[1];
+        document.getElementById('hwImagePreview').src = event.target.result;
+        document.getElementById('hwImagePreviewContainer').classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearHwImage() {
+      currentHwImageBase64 = null;
+      document.getElementById('hwImagePreviewContainer').classList.add('hidden');
+      document.getElementById('hwCameraInput').value = '';
+      document.getElementById('hwFileInput').value = '';
+    }
+
+    async function submitHomeworkQuery() {
+      const text = document.getElementById('hwTextInput').value.trim();
+      const output = document.getElementById('hwOutput');
+      const btn = document.getElementById('askHwBtn');
+
+      if (!text && !currentHwImageBase64) return;
+      output.classList.remove('hidden');
+      output.innerHTML = `<span class="animate-pulse font-bold text-amber-800">⚡ ${t('analyzingHw')}</span>`;
+      btn.disabled = true;
+
+      const langRule = currentLang === 'as' 
+        ? "Respond purely and strictly in Assamese. Use formal terminology (যেনে: অৱকলজ, সমীকৰণ, ভগ্নাংশ). Do not include English sentences."
+        : "Respond purely and strictly in English with professional mathematical clarity. Do not mix any other language.";
+
+      let modeRule = currentHwType === "hint" 
+        ? "Give only a concise conceptual clue and the formula. Do not provide final answer."
+        : currentHwType === "step" 
+        ? "Derive step-by-step using LaTeX syntax ($...$) for formulas."
+        : "Evaluate student working. Explain where the logic slipped constructively.";
+
+      const promptText = `OmniMath Guru. ${langRule} ${modeRule} Problem: ${text || "Please analyze attached image."}`;
+      const contentsParts = [{ text: promptText }];
+      if (currentHwImageBase64) {
+        contentsParts.push({ inline_data: { mime_type: "image/jpeg", data: currentHwImageBase64 } });
+      }
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts: contentsParts }] })
+        });
+        const data = await res.json();
+        const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (candidate) {
+          output.innerHTML = candidate.replace(/\n/g, '<br/>');
+          if (window.renderMathInElement) {
+            renderMathInElement(output, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }] });
+          }
+        } else {
+          throw new Error();
+        }
+      } catch (err) {
+        output.innerHTML = `<span class="text-rose-700 font-bold">${currentLang === 'as' ? 'বিশ্লেষণত সমস্যা হ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।' : 'Unable to complete analysis. Please try again.'}</span>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  </script>
 </body>
 </html>
