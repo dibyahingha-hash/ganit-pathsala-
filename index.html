@@ -569,7 +569,14 @@ async function verifyAndLaunch() {
   btn.disabled = true;
 
   try {
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`);
+    // Pass key as both header and query param for full compatibility with AQ. and AIza keys
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`, {
+      method: 'GET',
+      headers: {
+        'x-goog-api-key': key,
+        'Content-Type': 'application/json'
+      }
+    });
     const data = await res.json();
 
     if (res.ok) {
@@ -586,10 +593,10 @@ async function verifyAndLaunch() {
         bootDashboard();
       }, 700);
     } else {
-      const errMsg = data.error?.message || `Error ${res.status}: ${res.statusText}`;
-      feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center break-words";
-      feedback.innerText = errMsg;
       btn.disabled = false;
+      const apiErr = data.error?.message || `Error ${res.status}: ${res.statusText}`;
+      feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center break-words";
+      feedback.innerText = apiErr;
     }
   } catch (err) {
     btn.disabled = false;
@@ -597,6 +604,7 @@ async function verifyAndLaunch() {
     feedback.innerText = err.message || "Network error reaching Google API";
   }
 }
+    
     
 
     function applyStaticTranslations() {
@@ -882,7 +890,9 @@ async function verifyAndLaunch() {
       try {
         const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: 'Content-Type': 'application/json',
+  'x-goog-api-key': apiKey
+},
           body: JSON.stringify({ contents: [{ parts: contentsParts }] })
         });
         const data = await res.json();
