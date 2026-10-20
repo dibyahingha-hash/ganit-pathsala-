@@ -5,120 +5,229 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>গণিত পাঠশালা | Gonit Pathshala</title>
 
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- KaTeX for High-Performance Math Typesetting -->
+  <!-- KaTeX for High-Precision Mathematical Typesetting -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
 
-  <!-- Google Fonts: Anek Bangla (Natural Assamese) & Inter -->
+  <!-- Typography: Anek Bangla & Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;600;700;800&family=Fredoka:wght@600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- Core App Stylesheet -->
   <link rel="stylesheet" href="css/base.css" />
 </head>
-<body class="bg-amber-50/40 text-slate-900 min-h-screen flex flex-col antialiased">
+<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased selection:bg-amber-200">
 
-  <!-- Top Navigation Bar -->
+  <!-- Header -->
   <header class="bg-amber-600 text-white shadow-md sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 py-2.5 flex justify-between items-center">
-      <div class="flex items-center gap-3">
-        <span class="text-3xl">🧮</span>
+    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center gap-3 cursor-pointer" id="brandLogo">
+        <span class="text-3xl">📐</span>
         <div>
-          <h1 class="text-xl sm:text-2xl font-black tracking-tight leading-none" data-i18n="brandTitle">গণিত পাঠশালা</h1>
-          <p class="text-[10px] sm:text-xs text-amber-200 font-semibold" data-i18n="brandTagline">স্পৰ্শ কৰা, খেলা আৰু শিকা</p>
+          <h1 class="text-xl sm:text-2xl font-black tracking-tight leading-none" id="uiBrandTitle">গণিত পাঠশালা</h1>
+          <p class="text-[10px] sm:text-xs text-amber-100 font-medium" id="uiBrandTagline">স্পৰ্শ কৰা, খেলা আৰু শিকা</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 sm:gap-4">
+      <div class="flex items-center gap-2">
         <!-- Language Switcher -->
-        <button id="langToggleBtn" class="bg-amber-700/70 hover:bg-amber-800 border border-amber-400 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+        <button id="langToggleBtn" class="bg-amber-700 hover:bg-amber-800 border border-amber-400 px-3 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
           <span>🌐</span>
           <span id="currentLangLabel">English</span>
         </button>
 
-        <!-- API Key Status / Modal Trigger -->
-        <button id="openKeyModalBtn" class="bg-amber-700/70 hover:bg-amber-800 border border-amber-400 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
-          <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-rose-400"></span>
-          <span id="apiStatusLabel">AI Key</span>
+        <!-- Homework Helper Trigger -->
+        <button id="openHwBtn" class="bg-amber-50 text-amber-900 hover:bg-white px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+          <span>📷</span>
+          <span id="uiHwNavText">ঘৰুৱা কাম</span>
         </button>
       </div>
     </div>
   </header>
 
-  <!-- App Mount Root -->
-  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
-    <!-- Stage Selector Bar -->
-    <div class="mb-6 flex gap-2 overflow-x-auto pb-2 scrollbar-none" id="stageSelector">
-      <!-- Stage buttons injected dynamically -->
+  <!-- Main Viewport -->
+  <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+
+    <!-- Universal Search Bar -->
+    <div class="relative">
+      <div class="flex items-center bg-white border-2 border-amber-300 rounded-2xl shadow-sm overflow-hidden focus-within:ring-4 focus-within:ring-amber-200 transition">
+        <span class="pl-4 text-xl text-slate-400">🔍</span>
+        <input type="text" id="conceptSearchInput" 
+               placeholder="যিকোনো গাণিতিক ধাৰণা অনুসন্ধান কৰক (যেনে: ভগ্নাংশ, সমীকৰণ)..." 
+               class="w-full px-3 py-3 text-sm sm:text-base focus:outline-none bg-transparent" />
+      </div>
+      <!-- Live Search Results Dropdown -->
+      <div id="searchResultsDropdown" class="hidden absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-amber-200 z-30 max-h-72 overflow-y-auto"></div>
     </div>
 
-    <!-- Active Stage Container -->
-    <div id="stageContainer" class="space-y-6">
-      <div class="bg-white p-6 rounded-2xl border border-amber-200/80 shadow-sm flex flex-col items-center justify-center text-center py-16">
-        <span class="text-5xl animate-bounce mb-3">🥭</span>
-        <h2 class="text-xl font-bold text-amber-950" data-i18n="welcomeHeading">গণিত পাঠশালালৈ স্বাগতম</h2>
-        <p class="text-sm text-slate-600 max-w-md mt-1" data-i18n="welcomeSub">
-          প্ৰাথমিক গণনাৰ পৰা উচ্চ গণিতলৈ—প্ৰতিটো ধাৰণা স্পৰ্শ কৰক আৰু বুজি লওক।
-        </p>
+    <!-- Class Selector Dropdown -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-amber-100/50 p-4 rounded-2xl border border-amber-200">
+      <label for="classSelectDropdown" class="text-sm font-bold text-amber-950 flex items-center gap-2">
+        <span>🎓</span> <span id="uiSelectClassLabel">শ্ৰেণী বা পৰ্যায় বাছক:</span>
+      </label>
+      <select id="classSelectDropdown" class="w-full sm:w-auto bg-white border-2 border-amber-300 text-slate-800 font-bold text-sm rounded-xl px-4 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+        <!-- Options populated dynamically -->
+      </select>
+    </div>
+
+    <!-- Dashboard: Chapter Cards Grid -->
+    <div id="chaptersContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <!-- Interactive Workspace (Hidden by default, shown when Learn/Play/Test is active) -->
+    <div id="workspaceModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+      <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-amber-200 overflow-hidden">
+        
+        <!-- Workspace Header -->
+        <div class="bg-amber-600 text-white p-4 flex justify-between items-center">
+          <div>
+            <span id="wsModeBadge" class="bg-amber-800 text-[10px] uppercase font-black px-2 py-0.5 rounded-full">MODE</span>
+            <h3 id="wsChapterTitle" class="text-lg sm:text-xl font-bold mt-0.5">Chapter Title</h3>
+          </div>
+          <button id="closeWsBtn" class="text-white hover:bg-amber-700 w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg">✕</button>
+        </div>
+
+        <!-- Workspace Dynamic Content Container -->
+        <div id="wsBody" class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-5">
+          <!-- Dynamic Mode Views Inject Here -->
+        </div>
+
       </div>
     </div>
+
+    <!-- Camera / Homework Helper Modal -->
+    <div id="hwModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+      <div class="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-amber-200 overflow-hidden">
+        
+        <div class="bg-amber-600 text-white p-4 flex justify-between items-center">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">📷</span>
+            <h3 id="uiHwTitle" class="text-lg font-bold">ঘৰুৱা কামৰ সহায়ক (Homework Helper)</h3>
+          </div>
+          <button id="closeHwBtn" class="text-white hover:bg-amber-700 w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg">✕</button>
+        </div>
+
+        <div class="p-5 sm:p-6 overflow-y-auto flex-1 space-y-4">
+          <!-- Input Options: Camera / File / Text -->
+          <div class="grid grid-cols-2 gap-3">
+            <label class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-amber-400 bg-amber-50 hover:bg-amber-100 rounded-2xl cursor-pointer transition">
+              <span class="text-3xl">📸</span>
+              <span class="text-xs font-bold text-amber-900 mt-1" id="uiCaptureBtnText">ফটো তোলক</span>
+              <input type="file" id="hwCameraInput" accept="image/*" capture="environment" class="hidden" />
+            </label>
+
+            <label class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100 rounded-2xl cursor-pointer transition">
+              <span class="text-3xl">📁</span>
+              <span class="text-xs font-bold text-slate-700 mt-1" id="uiUploadBtnText">ফটো বাছক</span>
+              <input type="file" id="hwFileInput" accept="image/*" class="hidden" />
+            </label>
+          </div>
+
+          <!-- Image Preview -->
+          <div id="hwImagePreviewContainer" class="hidden relative rounded-xl overflow-hidden border border-slate-200">
+            <img id="hwImagePreview" src="" alt="Homework Preview" class="w-full max-h-48 object-contain bg-slate-100" />
+            <button id="hwRemoveImgBtn" class="absolute top-2 right-2 bg-slate-900/70 text-white p-1 rounded-full text-xs">✕</button>
+          </div>
+
+          <!-- Problem Text Input -->
+          <div>
+            <textarea id="hwTextInput" rows="3" 
+                      placeholder="বা ইয়াত আপোনাৰ অংকটো টাইপ কৰক..." 
+                      class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+          </div>
+
+          <!-- Assistance Level Selector -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5" id="uiHwModeSelectLabel">সহায়ৰ ধৰণ বাছক:</label>
+            <div class="grid grid-cols-3 gap-2">
+              <button class="hw-type-btn p-2 rounded-xl border border-amber-300 text-xs font-bold text-amber-950 bg-amber-50 active-hw-type" data-type="hint" id="uiHwOptHint">ইংগিত (Hint)</button>
+              <button class="hw-type-btn p-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white" data-type="step" id="uiHwOptStep">স্তৰে স্তৰে (Steps)</button>
+              <button class="hw-type-btn p-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 bg-white" data-type="check" id="uiHwOptCheck">পৰীক্ষা (Check)</button>
+            </div>
+          </div>
+
+          <!-- Action Button -->
+          <button id="askHwBtn" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl transition shadow flex items-center justify-center gap-2 text-sm">
+            <span>✨</span> <span id="uiAskBtnText">সহায় বিচাৰক</span>
+          </button>
+
+          <!-- AI Response Area -->
+          <div id="hwOutput" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm leading-relaxed space-y-2"></div>
+        </div>
+
+      </div>
+    </div>
+
   </main>
 
-  <!-- BYOK Gemini Key Modal -->
-  <div id="keyModal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-amber-200 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
-        <div class="flex items-center gap-2">
-          <span class="text-2xl">🔑</span>
-          <h3 class="text-lg font-bold text-slate-900" data-i18n="keyModalTitle">Google Gemini API সংযোগ</h3>
-        </div>
-        <button id="closeKeyModalBtn" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
-      </div>
-
-      <div class="mt-4 space-y-4 text-sm text-slate-600 leading-relaxed">
-        <p data-i18n="keyModalDesc">
-          এই এপটোত অংক সমাধান আৰু খোজবোৰ বুজিবলৈ Google Gemini AI ব্যৱহাৰ কৰা হয়। বিনামূলীয়াকৈ ব্যৱহাৰ কৰিবলৈ আপোনাৰ নিজা Google Gemini Key সংযোগ কৰক।
+  <!-- Step-by-Step Onboarding Gateway -->
+  <div id="onboardingPortal" class="hidden fixed inset-0 bg-amber-600/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border-4 border-amber-300 text-center">
+      
+      <!-- Screen 1: Language Selection -->
+      <div id="onboardingStepLang">
+        <span class="text-5xl inline-block mb-3">🌐</span>
+        <h2 class="text-2xl font-black text-slate-900">Choose Language / ভাষা বাছক</h2>
+        <p class="text-xs text-slate-600 mt-1 mb-6">
+          আপুনি কোনটো ভাষাত গণিত শিকিব বিচাৰে?<br/>Which language do you prefer to learn mathematics in?
         </p>
 
-        <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 text-amber-900 space-y-2">
-          <p class="font-bold text-xs uppercase tracking-wider" data-i18n="stepsTitle">৩ টা সহজ খোজত Key লওক:</p>
-          <ol class="list-decimal list-inside text-xs space-y-1 font-medium">
-            <li data-i18n="step1">তলৰ বুটামত ক্লিক কৰি Google AI Studio খোলক।</li>
-            <li data-i18n="step2">Google একাউণ্টেৰে Sign In কৰি <b>"Create API Key"</b> ত ক্লিক কৰক।</li>
-            <li data-i18n="step3">Key টো কপি কৰি তলৰ বাকচত পেষ্ট (Paste) কৰক।</li>
-          </ol>
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" 
-             class="inline-flex items-center gap-1.5 mt-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2 rounded-lg transition shadow-sm">
-            <span>🚀</span> <span data-i18n="studioBtnText">বিনামূলীয়া Key লওক (Google AI Studio)</span>
-          </a>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase mb-1" data-i18n="pasteKeyLabel">Gemini API Key পেষ্ট কৰক:</label>
-          <input type="password" id="geminiKeyInput" placeholder="AIzaSy..." 
-                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" />
-        </div>
-
-        <div id="keyFeedback" class="hidden p-3 rounded-xl text-xs font-semibold"></div>
-
-        <div class="flex gap-3 pt-2">
-          <button id="saveKeyBtn" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl transition shadow text-xs sm:text-sm flex items-center justify-center gap-2">
-            <span>💾</span> <span data-i18n="saveKeyBtnText">পৰীক্ষা কৰি সাঁচি থওক</span>
+        <div class="grid grid-cols-2 gap-3">
+          <button id="chooseLangAsBtn" class="p-4 rounded-2xl border-2 border-amber-400 bg-amber-50 hover:bg-amber-100 font-black text-amber-950 transition transform active:scale-95 flex flex-col items-center gap-1 shadow-sm">
+            <span class="text-2xl">অ</span>
+            <span class="text-base font-bold">অসমীয়া</span>
           </button>
-          <button id="cancelKeyModalBtn" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm transition" data-i18n="cancelBtnText">
-            পাছত কৰিম
+
+          <button id="chooseLangEnBtn" class="p-4 rounded-2xl border-2 border-slate-300 bg-slate-50 hover:bg-slate-100 font-black text-slate-900 transition transform active:scale-95 flex flex-col items-center gap-1 shadow-sm">
+            <span class="text-2xl">En</span>
+            <span class="text-base font-bold">English</span>
           </button>
         </div>
       </div>
+
+      <!-- Screen 2A: Direct Handover to Gemini Key -->
+      <div id="onboardingStepKeyRedirect" class="hidden">
+        <span class="text-6xl animate-bounce inline-block mb-3">🔑</span>
+        <h2 class="text-2xl font-black text-slate-900" id="portalKeyTitle">Google Gemini Key প্ৰয়োজন</h2>
+        <p class="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed" id="portalKeyDesc"></p>
+
+        <button id="directRedirectBtn" class="mt-6 w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-black py-3.5 px-4 rounded-2xl shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2 text-sm sm:text-base">
+          <span>🚀</span> <span id="redirectBtnText">মোক Key পৃষ্ঠালৈ লৈ যাওক</span>
+        </button>
+      </div>
+
+      <!-- Screen 2B: Returning to Paste Key -->
+      <div id="onboardingStepKeyPaste" class="hidden">
+        <span class="text-5xl inline-block mb-2">📋</span>
+        <h3 class="text-xl font-black text-slate-900" id="portalPasteTitle">Key পেষ্ট কৰক</h3>
+        <p class="text-xs text-slate-600 mt-1" id="portalPasteDesc"></p>
+
+        <div class="mt-4">
+          <input type="password" id="geminiKeyInput" placeholder="AIzaSy..." 
+                 class="w-full px-4 py-3 bg-slate-50 border-2 border-amber-400 rounded-xl font-mono text-sm focus:ring-4 focus:ring-amber-200 focus:outline-none text-center" />
+        </div>
+
+        <div id="portalFeedback" class="hidden mt-3 p-2.5 rounded-xl text-xs font-bold"></div>
+
+        <div class="mt-4 flex flex-col gap-2">
+          <button id="saveAndLaunchBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl shadow-md transition transform active:scale-95 text-sm flex items-center justify-center gap-2">
+            <span>✨</span> <span id="launchBtnText">পৰীক্ষা কৰি এপ খোলক</span>
+          </button>
+          
+          <button id="reopenGoogleBtn" class="text-xs text-amber-700 font-bold hover:underline py-1">
+            <span id="reopenGoogleBtnText">↺ পুনৰ Google AI Studio লৈ যাওক</span>
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- Modular Scripts -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
