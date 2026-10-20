@@ -1,47 +1,71 @@
 // js/i18n.js
 
-const translations = {
+export const strings = {
   as: {
     brandTitle: "গণিত পাঠশালা",
     brandTagline: "স্পৰ্শ কৰা, খেলা আৰু শিকা",
-    welcomeHeading: "গণিত পাঠশালালৈ স্বাগতম",
-    welcomeSub: "প্ৰাথমিক গণনাৰ পৰা উচ্চ গণিতলৈ—প্ৰতিটো ধাৰণা স্পৰ্শ কৰক আৰু বুজি লওক।",
-    keyModalTitle: "Google Gemini API সংযোগ",
-    keyModalDesc: "এই এপটোত অংক সমাধান আৰু খোজবোৰ বুজিবলৈ Google Gemini AI ব্যৱহাৰ কৰা হয়। বিনামূলীয়াকৈ ব্যৱহাৰ কৰিবলৈ আপোনাৰ নিজা Google Gemini Key সংযোগ কৰক।",
-    stepsTitle: "৩ টা সহজ খোজত Key লওক:",
-    step1: "তলৰ বুটামত ক্লিক কৰি Google AI Studio খোলক।",
-    step2: "Google একাউণ্টেৰে Sign In কৰি 'Create API Key' ত ক্লিক কৰক।",
-    step3: "Key টো কপি কৰি তলৰ বাকচত পেষ্ট (Paste) কৰক।",
-    studioBtnText: "বিনামূলীয়া Key লওক (Google AI Studio)",
-    pasteKeyLabel: "Gemini API Key পেষ্ট কৰক:",
-    saveKeyBtnText: "পৰীক্ষা কৰি সাঁচি থওক",
-    cancelBtnText: "পাছত কৰিম",
-    activeKeyStatus: "AI সক্ৰিয়",
-    needKeyStatus: "AI Key নাই",
-    testingKey: "পৰীক্ষা কৰি থকা হৈছে...",
-    keyValid: "সফল হ’ল! আপোনাৰ Gemini Key সুৰক্ষিতভাৱে সাঁচি থোৱা হ’ল।",
-    keyInvalid: "ভুল Key! অনুগ্ৰহ কৰি সঠিক Key দিয়ক।"
+    searchPlaceholder: "যিকোনো গাণিতিক ধাৰণা অনুসন্ধান কৰক (যেনে: ভগ্নাংশ, সমীকৰণ)...",
+    selectClassLabel: "শ্ৰেণী বা পৰ্যায় বাছক:",
+    hwNavText: "ঘৰুৱা কাম",
+    learnBtn: "শিকক (Learn)",
+    playBtn: "খেলক (Play)",
+    testBtn: "পৰীক্ষা (Test)",
+    portalKeyTitle: "Google Gemini Key প্ৰয়োজন",
+    portalKeyDesc: "গণিত পাঠশালা ব্যৱহাৰ কৰিবলৈ আপোনাক এতিয়া Google ৰ বিনামূলীয়া Gemini Key পৃষ্ঠালৈ লৈ যোৱা হ’ব। তাত Key টো বনাই কপি কৰি পুনৰ ইয়ালৈ ঘূৰি আহক।",
+    redirectBtnText: "মোক Key পৃষ্ঠালৈ লৈ যাওক",
+    portalPasteTitle: "Key পেষ্ট কৰক",
+    portalPasteDesc: "Google AI Studio ৰ পৰা কপি কৰি অনা Key টো তলৰ বাকচত পেষ্ট কৰক:",
+    launchBtnText: "পৰীক্ষা কৰি এপ আৰম্ভ কৰক",
+    reopenGoogleBtnText: "↺ পুনৰ Google AI Studio লৈ যাওক",
+    keyInvalid: "ভুল Key! Gemini Key সাধাৰণতে 'AIza' ৰে আৰম্ভ হয়।",
+    verifyingKey: "Key পৰীক্ষা কৰি থকা হৈছে...",
+    keyValid: "✓ সংযোগ সফল হ’ল! গণিত পাঠশালালৈ স্বাগতম!",
+    keyFailed: "সংযোগ বিফল হ’ল। অনুগ্ৰহ কৰি সঠিক Key দিয়ক।",
+    hwTitle: "ঘৰুৱা কামৰ সহায়ক (Homework Helper)",
+    captureBtn: "ফটো তোলক",
+    uploadBtn: "ফটো বাছক",
+    hwPlaceholder: "বা ইয়াত আপোনাৰ অংকটো টাইপ কৰক...",
+    hwModeLabel: "সহায়ৰ ধৰণ বাছক:",
+    hwHint: "ইংগিত (Hint)",
+    hwStep: "স্তৰে স্তৰে (Steps)",
+    hwCheck: "পৰীক্ষা (Check)",
+    askBtn: "সহায় বিচাৰক",
+    analyzingHw: "AI গুৰুৱে অংকটো বিশ্লেষণ কৰি আছে...",
+    rescueTitle: "বাঃ, আপুনি প্ৰায় সমাধানৰ ওচৰ পাইছিলগৈ!",
+    tryAgainGuidance: "আহকচোন, এই খোজটো একেলগে পুনৰ পৰীক্ষা কৰোঁ:"
   },
   en: {
     brandTitle: "Gonit Pathshala",
-    brandTagline: "Touch, Play & Master Mathematics",
-    welcomeHeading: "Welcome to Gonit Pathshala",
-    welcomeSub: "From early sensory counting to higher mathematics—touch and master every concept.",
-    keyModalTitle: "Connect Google Gemini API",
-    keyModalDesc: "Gonit Pathshala uses Google Gemini AI to explain mathematical reasoning step-by-step. Connect your free personal key for unlimited usage.",
-    stepsTitle: "Get your key in 3 easy steps:",
-    step1: "Click the button below to open Google AI Studio.",
-    step2: "Sign in with your Google account and click 'Create API Key'.",
-    step3: "Copy the key and paste it in the box below.",
-    studioBtnText: "Get Free Key (Google AI Studio)",
-    pasteKeyLabel: "Paste Gemini API Key:",
-    saveKeyBtnText: "Test & Save Key",
-    cancelBtnText: "Do it later",
-    activeKeyStatus: "AI Active",
-    needKeyStatus: "Need Key",
-    testingKey: "Testing connection...",
-    keyValid: "Success! Your Gemini key is active and securely saved.",
-    keyInvalid: "Invalid Key format. Please verify and try again."
+    brandTagline: "Touch, Play and Master Mathematics",
+    searchPlaceholder: "Search any math concept (e.g., Fractions, Linear Equations)...",
+    selectClassLabel: "Select Grade / Level:",
+    hwNavText: "Homework Help",
+    learnBtn: "Learn",
+    playBtn: "Play",
+    testBtn: "Test",
+    portalKeyTitle: "Google Gemini Key Required",
+    portalKeyDesc: "To experience Gonit Pathshala, you will now be taken directly to Google to create your free Gemini API Key. Copy your key there and return to this tab.",
+    redirectBtnText: "Take me to my Key Page",
+    portalPasteTitle: "Paste Your Key",
+    portalPasteDesc: "Paste the key you copied from Google AI Studio below:",
+    launchBtnText: "Verify Key & Launch App",
+    reopenGoogleBtnText: "↺ Open Google AI Studio again",
+    keyInvalid: "Invalid Key format. Gemini keys begin with 'AIza'.",
+    verifyingKey: "Verifying connection...",
+    keyValid: "✓ Success! Welcome to Gonit Pathshala!",
+    keyFailed: "Verification failed. Please check your key.",
+    hwTitle: "Homework Helper",
+    captureBtn: "Take Photo",
+    uploadBtn: "Upload Photo",
+    hwPlaceholder: "Or type your math problem here...",
+    hwModeLabel: "Choose Assistance Level:",
+    hwHint: "Hint",
+    hwStep: "Step-by-Step",
+    hwCheck: "Check My Work",
+    askBtn: "Get Assistance",
+    analyzingHw: "AI Guru is analyzing the problem...",
+    rescueTitle: "Great try! You were super close!",
+    tryAgainGuidance: "Let's examine this specific step together:"
   }
 };
 
@@ -50,43 +74,18 @@ const asDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮',
 export const i18n = {
   currentLang: localStorage.getItem('omnimath_lang') || 'as',
 
-  init() {
-    this.applyTranslations();
+  t(key) {
+    return strings[this.currentLang][key] || key;
+  },
+
+  toDigits(num) {
+    if (this.currentLang === 'en') return num.toString();
+    return num.toString().replace(/\d/g, d => asDigits[d]);
   },
 
   setLanguage(lang) {
     this.currentLang = lang;
     localStorage.setItem('omnimath_lang', lang);
-    this.applyTranslations();
-  },
-
-  toggleLanguage() {
-    this.setLanguage(this.currentLang === 'as' ? 'en' : 'as');
-  },
-
-  t(key) {
-    return translations[this.currentLang][key] || key;
-  },
-
-  toAssameseDigits(num) {
-    return num.toString().replace(/\d/g, d => asDigits[d]);
-  },
-
-  applyTranslations() {
-    const isAs = this.currentLang === 'as';
-    document.documentElement.lang = this.currentLang;
-
-    // Toggle button label
-    const langLabel = document.getElementById('currentLangLabel');
-    if (langLabel) langLabel.innerText = isAs ? 'English' : 'অসমীয়া';
-
-    // Update all elements with data-i18n attribute
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
-      if (translations[this.currentLang][key]) {
-        el.innerHTML = translations[this.currentLang][key];
-      }
-    });
+    document.documentElement.lang = lang;
   }
 };
-
