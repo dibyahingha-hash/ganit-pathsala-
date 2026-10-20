@@ -1,1 +1,380 @@
 
+<!DOCTYPE html>
+<html lang="as">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>গণিত পাঠশালা | Gonit Pathshala</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- KaTeX for High-Performance Math Typesetting -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
+
+  <!-- Google Fonts for Assamese & Latin Scripts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@300;400;600;700;800&family=Fredoka:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Anek Bangla', 'Inter', sans-serif;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .font-kid {
+      font-family: 'Fredoka', 'Anek Bangla', cursive;
+    }
+    .draggable-fruit {
+      touch-action: none;
+      transition: transform 0.1s ease;
+      cursor: grab;
+    }
+    .draggable-fruit:active {
+      cursor: grabbing;
+      transform: scale(1.15) rotate(-5deg);
+    }
+    .basket-glow {
+      box-shadow: 0 0 30px rgba(245, 158, 11, 0.45);
+    }
+  </style>
+</head>
+<body class="bg-amber-50/40 text-slate-900 min-h-screen flex flex-col antialiased">
+
+  <!-- ================= TOP NAVIGATION ================= -->
+  <header class="bg-amber-600 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-2.5 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl">🧮</span>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-black tracking-tight leading-none" id="brandTitle">গণিত পাঠশালা</h1>
+          <p class="text-[10px] sm:text-xs text-amber-200 font-semibold" id="brandTagline">স্পৰ্শ কৰা, খেলা আৰু শিকা</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-4">
+        <!-- Language Switcher -->
+        <button onclick="toggleLanguage()" class="bg-amber-700/70 hover:bg-amber-800 border border-amber-400 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+          <span>🌐</span>
+          <span id="langLabel">English</span>
+        </button>
+
+        <!-- API Key Status / Onboarding Trigger -->
+        <button onclick="openKeyModal()" id="apiKeyBadge" class="bg-amber-700/70 hover:bg-amber-800 border border-amber-400 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+          <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-rose-400"></span>
+          <span id="apiStatusText">AI Key</span>
+        </button>
+
+        <!-- Student Profile Pill -->
+        <div onclick="openProfileModal()" class="cursor-pointer bg-amber-800/80 hover:bg-amber-900 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border border-amber-500">
+          <span>👤</span>
+          <span id="navUserName">শিক্ষাৰ্থী</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN APP WRAPPER ================= -->
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 py-5 flex-1 flex flex-col md:flex-row gap-5 w-full">
+
+    <!-- SIDEBAR: Curriculum Levels -->
+    <aside class="w-full md:w-64 shrink-0 bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-amber-200/70 h-fit">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-amber-900/60 mb-2 px-2" id="levelsHeading">শ্ৰেণী বা পৰ্যায়</h2>
+      <nav id="levelNavList" class="space-y-1.5 flex flex-col">
+        <!-- Injected via JavaScript -->
+      </nav>
+
+      <!-- AI Math Guru Floating Launcher -->
+      <div class="mt-6 pt-4 border-t border-amber-100">
+        <button onclick="openAiSolverModal()" class="w-full bg-gradient-to-r from-amber-600 to-indigo-600 hover:from-amber-700 hover:to-indigo-700 text-white font-bold py-2.5 px-3 rounded-xl shadow-md text-xs sm:text-sm flex items-center justify-center gap-2 transition transform active:scale-95">
+          <span class="text-lg">🤖</span>
+          <span id="aiSolverBtnLabel">গণিত গুৰু (AI সহায়ক)</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN INTERACTIVE STAGE -->
+    <main class="flex-1 flex flex-col gap-5">
+
+      <!-- Dynamic Level Banner -->
+      <section id="levelBanner" class="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-5 sm:p-6 rounded-2xl shadow-md">
+        <!-- Rendered by JS -->
+      </section>
+
+      <!-- PRIMARY ONLY: Tactile "Feel The Math" Sandbox -->
+      <section id="sensoryMathContainer" class="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border-2 border-amber-300">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 pb-4 border-b border-amber-100">
+          <div>
+            <span class="bg-amber-100 text-amber-800 text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-full" id="sensoryTag">হস্তানુભৱ গণিত (Sensory Play)</span>
+            <h3 class="text-xl sm:text-2xl font-black text-slate-800 mt-1 font-kid" id="sensoryTitle">আম গণনা খেল (Tactile Mango Counter)</h3>
+          </div>
+          <button onclick="resetSensoryGame()" class="self-start sm:self-center px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs font-bold transition flex items-center gap-1">
+            <span>🔄</span> <span id="reloadGameBtn">নতুন খেল</span>
+          </button>
+        </div>
+
+        <!-- Instructions & Speech prompt -->
+        <div class="mt-4 p-3 bg-amber-50/80 rounded-xl border border-amber-200 flex items-center justify-between">
+          <p class="text-base sm:text-lg font-bold text-amber-950 font-kid" id="sensoryChallengePrompt">
+            তলৰ আমবোৰ চুমি বা টানি আনি খৰাহীত থোৱা: <span class="text-amber-600 text-xl font-black" id="targetCountBadge">৫ টা</span>
+          </p>
+          <span class="text-2xl" id="mascotReaction">🐒</span>
+        </div>
+
+        <!-- The Play Area: Draggable / Clickable Items & The Collector Basket -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          
+          <!-- Source Yard: Free Floating Fruits -->
+          <div class="bg-amber-100/50 rounded-2xl p-4 border border-dashed-2 border-amber-300 min-h-[220px] flex flex-wrap gap-4 items-center justify-center relative" id="fruitYard">
+            <!-- Fruits injected dynamically -->
+          </div>
+
+          <!-- Target Drop Zone: The Assamese Basket / খৰাহী -->
+          <div id="basketDropZone" ondragover="event.preventDefault()" ondrop="handleDrop(event)" class="bg-orange-50/80 rounded-2xl p-4 border-4 border-dashed border-amber-400 min-h-[220px] flex flex-col items-center justify-between relative transition duration-200">
+            <div class="w-full flex justify-between items-center px-2">
+              <span class="text-xs font-bold uppercase text-amber-800" id="basketLabel">খৰাহী (দলঙা)</span>
+              <span class="text-base font-black text-amber-700 font-kid" id="inBasketCounter">০ / ৫</span>
+            </div>
+            
+            <!-- Items inside basket -->
+            <div id="basketItems" class="flex flex-wrap gap-2 items-center justify-center p-3 w-full flex-1">
+              <!-- Collected mangoes will appear here -->
+            </div>
+
+            <!-- Complete Celebration Banner -->
+            <div id="basketSuccessOverlay" class="hidden absolute inset-0 bg-emerald-600/95 text-white rounded-xl flex flex-col items-center justify-center gap-2 p-4 text-center z-10">
+              <span class="text-4xl">🎉 🌟</span>
+              <h4 class="text-xl font-black" id="congratsTitle">বৰ ধুনীয়া! গণনা সম্পূৰ্ণ হ’ল!</h4>
+              <p class="text-xs text-emerald-100" id="congratsSubtitle">আপুনি সকলো আম সঠিকভাৱে জমা কৰিলে।</p>
+              <button onclick="resetSensoryGame()" class="mt-2 px-4 py-1.5 bg-white text-emerald-800 font-bold text-xs rounded-full shadow hover:bg-emerald-50 transition" id="nextChallengeBtn">
+                পৰৱৰ্তী খেল &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CURRICULUM CHAPTER MODULES -->
+      <section>
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <span id="modulesHeading">অধ্যায় আৰু বিষয়সূচী</span>
+            <span id="topicCountBadge" class="text-xs bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold"></span>
+          </h3>
+        </div>
+        
+        <div id="chaptersContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Chapter cards injected dynamically -->
+        </div>
+      </section>
+
+      <!-- ACTIVE CHAPTER WORKSHOP (Theory, Worked Examples, Practice, Exam) -->
+      <section id="chapterWorkshop" class="hidden bg-white p-5 sm:p-6 rounded-2xl shadow-md border-2 border-amber-300">
+        <!-- Rendered by JS -->
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ================= FIRST-TIME ONBOARDING & API KEY MODAL ================= -->
+  <div id="keyModal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-amber-200 max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🔑</span>
+          <h3 class="text-lg font-bold text-slate-900" id="modalKeyHeading">Google Gemini API সংযোগ</h3>
+        </div>
+        <button onclick="closeKeyModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
+      </div>
+
+      <div class="mt-4 space-y-4 text-sm text-slate-600 leading-relaxed">
+        <p id="keyExplainText">
+          এই এপটোত যিকোনো জটিল অংক সমাধান কৰিবলৈ আৰু খোজবোৰ অসমীয়াত বুজিবলৈ Google Gemini AI ব্যৱহাৰ কৰা হয়। এপটো আজীৱন সম্পূৰ্ণ বিনামূলীয়াকৈ ব্যৱহাৰ কৰিবলৈ আপোনাৰ বিনামূলীয়া Google Gemini Key সংলগ্ন কৰক।
+        </p>
+
+        <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 text-amber-900 space-y-2">
+          <p class="font-bold text-xs uppercase tracking-wider" id="stepsGuideTitle">৩ টা সহজ খোজত Key লওক:</p>
+          <ol class="list-decimal list-inside text-xs space-y-1 font-medium" id="stepsGuideList">
+            <li>তলৰ বুটামত ক্লিক কৰি Google AI Studio খোলক।</li>
+            <li>Google একাউণ্টেৰে Sign In কৰি <b>"Create API Key"</b> ত ক্লিক কৰক।</li>
+            <li>Key টো কপি কৰি তলৰ বাকচত পেষ্ট (Paste) কৰক।</li>
+          </ol>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" 
+             class="inline-flex items-center gap-1.5 mt-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-4 py-2 rounded-lg transition shadow-sm">
+            <span>🚀</span> <span id="openStudioBtn">বিনামূলীয়া Key লওক (Google AI Studio)</span>
+          </a>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1" id="pasteInputLabel">Gemini API Key পেষ্ট কৰক:</label>
+          <input type="password" id="geminiKeyInput" placeholder="AIzaSy..." 
+                 class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none" />
+        </div>
+
+        <div id="keyTestResult" class="hidden p-3 rounded-xl text-xs font-semibold"></div>
+
+        <div class="flex gap-3 pt-2">
+          <button onclick="testAndSaveApiKey()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl transition shadow text-xs sm:text-sm flex items-center justify-center gap-2">
+            <span>💾</span> <span id="saveKeyBtnLabel">পৰীক্ষা কৰি সাঁচি থওক</span>
+          </button>
+          <button onclick="closeKeyModal()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs sm:text-sm transition">
+            <span id="closeModalBtnLabel">পাছত কৰিম</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= AI MATH GURU MODAL ================= -->
+  <div id="aiModal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl border border-indigo-200 max-h-[90vh] flex flex-col">
+      
+      <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🤖</span>
+          <div>
+            <h3 class="text-lg font-black text-slate-900" id="aiModalTitle">গণিত গুৰু (AI Math Solver)</h3>
+            <p class="text-xs text-indigo-600 font-semibold" id="aiModalSubtitle">যিকোনো শ্ৰেণীৰ অংক খোজ অনুসৰি সমাধান পাব</p>
+          </div>
+        </div>
+        <button onclick="closeAiSolverModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
+      </div>
+
+      <!-- Problem Query Input -->
+      <div class="mt-4 space-y-3">
+        <textarea id="aiProblemInput" rows="3" 
+                  placeholder="যেনে: এটা বৃত্তৰ ব্যাসাৰ্ধ ৭ চে.মি. হ'লে ইয়াৰ কালি নিৰ্ণয় কৰা... বা Solve: ∫ x sin(x) dx"
+                  class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+
+        <div class="flex justify-between items-center">
+          <span class="text-xs text-slate-400 font-medium" id="aiLanguageHint">উত্তৰ বৰ্তমান বাছনি কৰা ভাষাত প্ৰস্তুত কৰা হ’ব।</span>
+          <button onclick="solveWithGemini()" id="askGuruBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2 rounded-xl text-xs sm:text-sm transition shadow flex items-center gap-2">
+            <span>✨</span> <span id="solveActionLabel">সমাধান কৰক</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- AI Response Output Container -->
+      <div id="aiOutputContainer" class="mt-4 flex-1 overflow-y-auto bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm leading-relaxed hidden">
+        <div id="aiLoadingSpinner" class="hidden flex items-center justify-center gap-2 py-6 text-indigo-600 font-bold">
+          <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <span id="aiThinkingLabel">গণিত গুৰুৱে সমাধান চিন্তা কৰি আছে...</span>
+        </div>
+        <div id="aiSolutionBox" class="space-y-3 text-slate-800"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= CLIENT-SIDE DATA & APPLICATION ENGINE ================= -->
+  <script>
+    // Audio Synthesizer for tactile feedback
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function playPopSound(freq = 420) {
+      try {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.08);
+      } catch (e) {
+        console.warn('Web Audio not allowed yet');
+      }
+    }
+
+    function playSuccessChime() {
+      try {
+        if (!audioCtx) audioCtx = new AudioContext();
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.15, audioCtx.currentTime + idx * 0.1);
+          gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.1 + 0.3);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(audioCtx.currentTime + idx * 0.1);
+          osc.stop(audioCtx.currentTime + idx * 0.1 + 0.35);
+        });
+      } catch(e) {}
+    }
+
+    // Number conversion helper between English and Assamese
+    const asDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+    function toAssameseNumber(num) {
+      return num.toString().replace(/\d/g, d => asDigits[d]);
+    }
+
+    // ================= FULL CURRICULUM DATA (BILINGUAL) =================
+    const curriculumData = [
+      {
+        id: "lvl_foundation",
+        title: { as: "প্ৰাথমিক আৰম্ভণি (Foundation)", en: "Foundation Stage" },
+        subtitle: { as: "গণনা, আকৃতি আৰু প্ৰাথমিক তুলনা", en: "Counting, Shapes & Comparisons" },
+        icon: "🍎",
+        badge: { as: "প্ৰাক-প্ৰাথমিক", en: "Pre-Primary" },
+        isPrimary: true,
+        chapters: [
+          {
+            id: "f_counting",
+            title: { as: "১ ৰ পৰা ১০ লৈ গণনা", en: "Counting 1 to 10" },
+            desc: { as: "বস্তু চুই চুই সংখ্যাৰ চিনাকি আৰু গণনা শিকা।", en: "Touch items to recognize and count quantities." },
+            latex: "1, 2, 3, 4, 5, 6, 7, 8, 9, 10 \\quad \\Longleftrightarrow \\quad ১, ২, ৩, ৪, ৫, ৬, ৭, ৮, ৯, ১০",
+            theory: {
+              as: "গণনা হৈছে যিকোনো বস্তুৰ সংখ্যা নিৰ্ধাৰণ কৰা এক পদ্ধতি। প্ৰতিটো বস্তু এবাৰকৈ চুই এটা এটাকৈ সংখ্যা আগবঢ়াই নিব লাগে।",
+              en: "Counting is matching a number to a physical object using one-to-one correspondence."
+            },
+            example: {
+              as: "উদাহৰণ: যদি খৰাহীত তিনিটা আম আছে আৰু এটাত থোৱা হয়, তেন্তে মুঠ আম হ’ব: ৩ + ১ = ৪ টা।",
+              en: "Example: If there are 3 mangoes and you add 1 more, total is 3 + 1 = 4."
+            }
+          },
+          {
+            id: "f_shapes",
+            title: { as: "আকৃতি আৰু আৰ্হি", en: "Basic Shapes & Patterns" },
+            desc: { as: "বৃত্ত, বৰ্গ, ত্ৰিভুজ আৰু আয়ত চিনাক্তকৰণ।", en: "Circle, Square, Triangle, and Rectangles." },
+            latex: "\\bigcirc \\quad \\square \\quad \\triangle",
+            theory: {
+              as: "ত্ৰিভুজৰ তিনিটা বাহু আৰু তিনিটা কোণ থাকে। বৃত্তৰ কোনো কোণ নাথাকে, ই সম্পূৰ্ণ ঘূৰণীয়া।",
+              en: "A triangle has 3 sides and 3 corners. A circle is completely round with no corners."
+            },
+            example: {
+              as: "উদাহৰণ: আমাৰ হাতৰ ৰুটীখন এটা বৃত্ত, আৰু ছাতি এটাৰ ওপৰৰ অংশটো প্ৰায় ত্ৰিভুজাকাৰ।",
+              en: "Example: A flat roti is a circle; a sliced sandwich is a triangle."
+            }
+          }
+        ]
+      },
+      {
+        id: "lvl_class_1_2",
+        title: { as: "শ্ৰেণী ১–২", en: "Classes 1–2" },
+        subtitle: { as: "যোগ, বিয়োগ, মুদ্রা আৰু সময়", en: "Basic Arithmetic, Money & Time" },
+        icon: "🪙",
+        badge: { as: "নিম্ন প্ৰাথমিক", en: "Lower Primary" },
+        isPrimary: true,
+        chapters: [
+          {
+            id: "c1_addition",
+            title: { as: "যোগ আৰু বিয়োগৰ ধাৰণা", en: "Addition & Subtraction" },
+            desc: { as: "বস্তু একত্ৰিত কৰা আৰু পৃথক কৰাৰ প্ৰক্ৰিয়া।", en: "Combining and taking away quantities." },
+            latex: "৭ + ৫ = ১২, \\quad ১৫ - ৬ = ৯",
+            theory: {
+              as: "যোগ কৰা মানে দুটা বা ততোধিক সংখ্যা একেলগ কৰা। বিয়োগ মানে এটা 
