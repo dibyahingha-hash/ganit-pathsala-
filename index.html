@@ -550,55 +550,54 @@
 
       setTimeout(() => document.getElementById('geminiKeyInput').focus(), 250);
     }
+async function verifyAndLaunch() {
+  const input = document.getElementById('geminiKeyInput');
+  const feedback = document.getElementById('portalFeedback');
+  const btn = document.getElementById('saveAndLaunchBtn');
+  const key = input.value.trim();
 
-    async function verifyAndLaunch() {
-      const input = document.getElementById('geminiKeyInput');
-      const feedback = document.getElementById('portalFeedback');
-      const btn = document.getElementById('saveAndLaunchBtn');
-      const key = input.value.trim();
+  feedback.classList.remove('hidden');
 
-      feedback.classList.remove('hidden');
+  if (!key || key.length < 20) {
+    feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center";
+    feedback.innerText = t('keyInvalid');
+    return;
+  }
 
-      if (!key || key.length < 20) {
+  feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-amber-100 text-amber-800 text-center";
+  feedback.innerText = t('verifyingKey');
+  btn.disabled = true;
 
-        feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center";
-        feedback.innerText = t('keyInvalid');
-        return;
-      }
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`);
+    const data = await res.json();
 
-      feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-amber-100 text-amber-800 text-center";
-      feedback.innerText = t('verifyingKey');
-      btn.disabled = true;
+    if (res.ok) {
+      apiKey = key;
+      localStorage.setItem('omnimath_gemini_key', key);
+      sessionStorage.removeItem('omnimath_redirected');
 
-      try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }] })
-        });
+      feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 text-center";
+      feedback.innerText = t('keyValid');
 
-        if (res.ok) {
-          apiKey = key;
-          localStorage.setItem('omnimath_gemini_key', key);
-          sessionStorage.removeItem('omnimath_redirected');
-
-          feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 text-center";
-          feedback.innerText = t('keyValid');
-
-          setTimeout(() => {
-            document.getElementById('onboardingPortal').classList.add('hidden');
-            btn.disabled = false;
-            bootDashboard();
-          }, 700);
-        } else {
-          throw new Error();
-        }
-      } catch (err) {
+      setTimeout(() => {
+        document.getElementById('onboardingPortal').classList.add('hidden');
         btn.disabled = false;
-        feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center";
-        feedback.innerText = t('keyFailed');
-      }
+        bootDashboard();
+      }, 700);
+    } else {
+      const errMsg = data.error?.message || `Error ${res.status}: ${res.statusText}`;
+      feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center break-words";
+      feedback.innerText = errMsg;
+      btn.disabled = false;
     }
+  } catch (err) {
+    btn.disabled = false;
+    feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center break-words";
+    feedback.innerText = err.message || "Network error reaching Google API";
+  }
+}
+    
 
     function applyStaticTranslations() {
       document.getElementById('uiBrandTitle').innerText = t('brandTitle');
