@@ -436,7 +436,8 @@
     window.addEventListener('DOMContentLoaded', () => {
       setupUI();
 
-      if (!apiKey || !apiKey.startsWith('AIza')) {
+      if (!apiKey || apiKey.length < 20) {
+
         document.getElementById('onboardingPortal').classList.remove('hidden');
         document.getElementById('onboardingStepLang').classList.remove('hidden');
       } else {
@@ -515,7 +516,9 @@
       document.documentElement.lang = lang;
       applyStaticTranslations();
 
-      if (!apiKey || !apiKey.startsWith('AIza')) {
+      if (!apiKey || apiKey.length < 20) {
+        
+        
         document.getElementById('onboardingStepLang').classList.add('hidden');
         showKeyRedirectScreen();
       }
@@ -550,7 +553,8 @@
 
       feedback.classList.remove('hidden');
 
-      if (!key || !key.startsWith('AIza')) {
+      if (!key || key.length < 20) {
+
         feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center";
         feedback.innerText = t('keyInvalid');
         return;
