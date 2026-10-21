@@ -1,9 +1,8 @@
-
 {
-  "c1_cnt": {
-    "id": "c1_cnt",
+  "c1-count": {
+    "id": "c1-count",
     "class_level": "Class I",
-    "title": "Counting (1-9)",
+    "title": "Counting & Number Sense (1-9)",
     "stage1_hook": {
       "en": "How many apples are in the basket right now?",
       "as": "টোপোলাটোত এতিয়া কেইটা আপেল আছে?"
@@ -47,10 +46,10 @@
       }
     ]
   },
-  "c1_shp": {
-    "id": "c1_shp",
+  "c1-shapes": {
+    "id": "c1-shapes",
     "class_level": "Class I",
-    "title": "2D and 3D Shapes",
+    "title": "2D & 3D Shapes Identification",
     "stage1_hook": {
       "en": "Can you roll a flat square? Guess why not!",
       "as": "আপুনি এটা চেপেটা বৰ্গক ঘূৰাব পাৰেনে? কিয় নোৱাৰে অনুমান কৰক!"
@@ -61,7 +60,7 @@
       "max": 6,
       "default": 4,
       "instruction_en": "Count the flat sides of a square shape.",
-      "as": "এটা বৰ্গ আকৃতিৰ চেপেটা কাষবোৰ গণনা কৰক।"
+      "instruction_as": "এটা বৰ্গ আকৃতিৰ চেপেটা কাষবোৰ গণনা কৰক।"
     },
     "stage3_discovery": {
       "formula_latex": "\\text{Square} = \\text{4 Equal Sides}",
@@ -94,10 +93,10 @@
       }
     ]
   },
-  "c2_pv": {
-    "id": "c2_pv",
+  "c2-pv": {
+    "id": "c2-pv",
     "class_level": "Class II",
-    "title": "Place Value (Tens and Ones)",
+    "title": "Place Value: Tens and Ones (1-99)",
     "stage1_hook": {
       "en": "How many blocks make one big bundle of ten?",
       "as": "দহটা বস্তুৰ এটা মুঠি হ'বলৈ কিমানটা ব্লাক লাগে?"
@@ -141,8 +140,8 @@
       }
     ]
   },
-  "c8_sq": {
-    "id": "c8_sq",
+  "c8-sq": {
+    "id": "c8-sq",
     "class_level": "Class VIII",
     "title": "Squares & Square Roots",
     "stage1_hook": {
