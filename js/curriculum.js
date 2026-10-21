@@ -1,5 +1,6 @@
 // curriculum-tree.js - Universal Mathematics Taxonomy (Class I to Post-Graduate)
-window.MATH_CURRICULUM = [
+window.classesData = window.MATH_CURRICULUM = [
+  
   // --- PRIMARY ---
   {
     id: "class-1",
@@ -200,3 +201,22 @@ window.MATH_CURRICULUM = [
     ]
   }
 ];
+window.classesData.forEach(function(c) {
+  if (!c.name && c.label) c.name = c.label;
+  if (!c.chapters && c.topics) c.chapters = c.topics;
+  if (!c.chapters && c.streams) {
+    c.chapters = [];
+    c.streams.forEach(function(s) {
+      s.topics.forEach(function(t) {
+        c.chapters.push({
+          id: t.id,
+          title: {
+            as: s.streamName.as + ": " + t.title.as,
+            en: s.streamName.en + ": " + t.title.en
+          }
+        });
+      });
+    });
+  }
+});
+
