@@ -285,15 +285,12 @@ function renderPracticeArena(container) {
         <!-- Answer Input & Keypad -->
         <div class="max-w-[240px] mx-auto space-y-3">
           <input type="number" id="practiceInput" placeholder="?" readonly class="w-full text-center text-3xl font-black py-2 border-2 border-amber-400 rounded-2xl bg-amber-50/30 text-amber-950 focus:outline-none">
-          
-          <!-- Tactile Number Keypad -->
+                    <!-- Tactile Number Keypad -->
           <div class="grid grid-cols-5 gap-1.5">
-            ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(n => `
-              <button onclick="pressPracticeNum(${n})" class="py-2.5 bg-slate-100 hover:bg-amber-100 font-black text-sm text-slate-800 rounded-xl transition shadow-xs active:scale-95">
-                ${window.toDigits ? window.toDigits(n) : n}
-              </button>
-            `).join('')}
+            ${renderKeypadButtons()}
           </div>
+
+          
           <div class="flex gap-2">
             <button onclick="clearPracticeInput()" class="flex-1 py-1.5 bg-rose-100 text-rose-700 font-bold rounded-xl text-xs hover:bg-rose-200">⌫ Clear</button>
           </div>
@@ -316,7 +313,18 @@ function renderPracticeArena(container) {
       <div id="practiceHintBox" class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-950 hidden"></div>
     </div>
   `;
+}function renderKeypadButtons() {
+  const digits = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
+  let html = '';
+  for (let i = 0; i < digits.length; i++) {
+    const d = digits[i];
+    const display = (window.toDigits ? window.toDigits(d) : d);
+    
+    html += '<button onclick="pressPracticeNum(' + d + ')" class="py-2.5 bg-slate-100 hover:bg-amber-100 font-black text-sm text-slate-800 rounded-xl transition shadow-xs active:scale-95">' + display + '</button>';
+  }
+  return html;
 }
+
 
 function renderVisualTokens(problem) {
   if (!problem.operandA || !problem.operandB) return '';
