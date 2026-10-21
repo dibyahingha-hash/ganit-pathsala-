@@ -4,8 +4,13 @@
 // 0. OFFLINE / PRELOADED LESSON STORE
 // ----------------------------------------------------
 let preloadedLessons = {};
-let activeLesson = null;
-let currentStage = 1;
+let activeTopicContext = {
+  title: '',
+  standard: '',
+  topicId: '',
+  activeTab: 'practice'
+};
+
 
 // Fetch pre-compiled lessons on application start
 fetch('./data/lessons.json')
@@ -95,68 +100,10 @@ window.handleUniversalSearchQuery = async function(query) {
     `).join('');
   } else {
     resultsContainer.innerHTML = `
-      <div onclick="openWorkspaceDirect('${query}', 'Universal Query', '')" class="p-4 hover:bg-amber-50 cursor-pointer text-left">
-        <div class="text-xs text-amber-800 font-semibold">No direct chapter match in index.</div>
-        <div class="text-sm font-bold text-amber-950 mt-1">✨ Generate 6-Stage Lesson for: "${query}"</div>
-      </div>
+              <div class="text-sm font-bold text-amber-950 mt-1">✨ Open Practice Arena for: "${query}"</div>
+              
     `;
   }
-};
-// ----------------------------------------------------
-// 3. WORKSPACE ENTRY POINT (ROUTER)
-// ----------------------------------------------------
-window.openWorkspaceForTopic = async function(topicTitle, standardLevel, mode = 'learn', topicId = '') {
-  const modal = document.getElementById('workspaceModal');
-  const body = document.getElementById('wsBody');
-  const title = document.getElementById('wsChapterTitle');
-  const badge = document.getElementById('wsModeBadge');
-
-  if (!modal || !body) return;
-  modal.classList.remove('hidden');
-  if (title) title.textContent = topicTitle;
-  if (badge) badge.textContent = `${standardLevel} • ${mode.toUpperCase()}`;
-
-  // 1. Direct ID lookup in preloaded lessons
-  if (topicId && preloadedLessons[topicId]) {
-    render6StageLesson(preloadedLessons[topicId]);
-    return;
-  }
-
-  // 2. Resolve topic ID by searching curriculum-tree.js
-  let resolvedId = topicId;
-  if (!resolvedId && window.MATH_CURRICULUM) {
-    for (const cls of window.MATH_CURRICULUM) {
-      const allTopics = cls.chapters || cls.topics || [];
-      const match = allTopics.find(t => 
-        t.title?.en === topicTitle || 
-        t.title?.as === topicTitle || 
-        t.title === topicTitle
-      );
-      if (match) {
-        resolvedId = match.id;
-        break;
-      }
-    }
-  }
-
-  // 3. Check preloaded lessons with resolved ID
-  if (resolvedId && preloadedLessons[resolvedId]) {
-    render6StageLesson(preloadedLessons[resolvedId]);
-    return;
-  }
-
-  // 4. Check LocalStorage cache
-  const cacheKey = resolvedId || topicTitle;
-  const cached = localStorage.getItem(`lesson_${cacheKey}`);
-  if (cached) {
-    try {
-      render6StageLesson(JSON.parse(cached));
-      return;
-    } catch(e) {}
-  }
-
-  // 5. Dynamic fallback only if topic does not exist anywhere
-  fetchDynamicStructuredLesson(topicTitle, standardLevel);
 };
 
 
@@ -184,218 +131,318 @@ Return STRICT JSON matching this exact structure:
   "class_level": "${standardLevel}",
   "title": "${topicTitle}",
   "stage1_hook": {
-    "en": "Short puzzle or question in max 12 words",
-    "as": "Assamese translation of the hook question"
-  },
-  "stage2_sandbox": {
-    "type": "grid_or_slider",
-    "min": 1,
-    "max": 10,
-    "default": 4,
-    "instruction_en": "One punchy action instruction under 10 words",
-    "instruction_as": "Assamese instruction"
-  },
-  "stage3_discovery": {
-    "formula_latex": "\\\\text{Core formula or equation}",
-    "takeaway_en": "Plain English explanation in under 12 words",
-    "takeaway_as": "Plain Assamese explanation"
-  },
-  "stage4_trap": {
-    "trap_title_en": "The common trap name",
-    "trap_alert_en": "Why students make this mistake in 12 words",
-    "trap_alert_as": "Assamese warning"
-  },
-  "stage5_quiz": [
-    {
-      "q_en": "Question 1 (Easy)",
-      "q_as": "Assamese Q1",
-      "options": ["Option A", "Option B", "Option C"],
-      "answer_index": 0
-    },
-    {
-      "q_en": "Question 2 (Medium)",
-      "q_as": "Assamese Q2",
-      "options": ["Option A", "Option B", "Option C"],
-      "answer_index": 1
-    },
-    {
-      "q_en": "Question 3 (Trap Check)",
-      "q_as": "Assamese Q3",
-      "options": ["Option A", "Option B", "Option C"],
-      "answer_index": 2
-    }
-  ]
-}`;
-
-  const resText = await callGeminiDynamic(prompt, true);
-  if (resText) {
-    try {
-      const cleanJson = resText.replace(/```json|```/g, '').trim();
-      const lessonData = JSON.parse(cleanJson);
-      localStorage.setItem(`lesson_${topicTitle}`, JSON.stringify(lessonData));
-      render6StageLesson(lessonData);
-      return;
-    } catch (e) {
-      console.error("JSON parsing error", e);
-    }
-  }
-
-  body.innerHTML = `<div class="p-6 text-center text-rose-600 font-bold">Failed to generate lesson. Please retry.</div>`;
-}
-
 // ----------------------------------------------------
-// 5. 6-STAGE INTERACTIVE PLAYER
+// 3. 4-TAB WORKSPACE ARENA ROUTER
 // ----------------------------------------------------
-function render6StageLesson(lessonData) {
-  activeLesson = lessonData;
-  currentStage = 1;
-  renderStageUI();
-}
-
-function renderStageUI() {
-  if (!activeLesson) return;
-  const lang = window.currentLang || 'en';
+window.openWorkspaceForTopic = function(topicTitle, standardLevel, mode = 'practice', topicId = '') {
+  const modal = document.getElementById('workspaceModal');
   const body = document.getElementById('wsBody');
-  if (!body) return;
+  const title = document.getElementById('wsChapterTitle');
+  const badge = document.getElementById('wsModeBadge');
 
-  let contentHtml = '';
+  if (!modal || !body) return;
 
-  // Stage 1: The Hook
-  if (currentStage === 1) {
-    const text = lang === 'as' ? activeLesson.stage1_hook.as : activeLesson.stage1_hook.en;
-    contentHtml = `
-      <div class="p-6 text-center">
-        <span class="text-xs font-black text-amber-600 uppercase tracking-widest bg-amber-100 px-3 py-1 rounded-full">Stage 1 • The Hook</span>
-        <h2 class="text-2xl font-bold mt-6 text-slate-800 leading-snug">${text}</h2>
-      </div>
-    `;
-  }
-  // Stage 2: Sandbox
-  else if (currentStage === 2) {
-    const instr = lang === 'as' ? activeLesson.stage2_sandbox.instruction_as : activeLesson.stage2_sandbox.instruction_en;
-    const sb = activeLesson.stage2_sandbox;
-    contentHtml = `
-      <div class="p-6 text-center">
-        <span class="text-xs font-black text-indigo-600 uppercase tracking-widest bg-indigo-100 px-3 py-1 rounded-full">Stage 2 • Interactive Sandbox</span>
-        <p class="text-sm font-semibold text-slate-600 mt-4">${instr}</p>
-        <div class="my-6 max-w-xs mx-auto">
-          <input type="range" id="sb-slider" min="${sb.min}" max="${sb.max}" value="${sb.default}" class="w-full accent-indigo-600 cursor-pointer">
-          <div id="sb-val" class="text-4xl font-black text-indigo-600 mt-3">${sb.default}</div>
-        </div>
-      </div>
-    `;
-    setTimeout(() => {
-      const slider = document.getElementById('sb-slider');
-      const val = document.getElementById('sb-val');
-      if (slider && val) {
-        slider.addEventListener('input', (e) => { val.innerText = e.target.value; });
-      }
-    }, 50);
-  }
-  // Stage 3: Core Discovery & Formula
-  else if (currentStage === 3) {
-    const takeaway = lang === 'as' ? activeLesson.stage3_discovery.takeaway_as : activeLesson.stage3_discovery.takeaway_en;
-    contentHtml = `
-      <div class="p-6 text-center">
-        <span class="text-xs font-black text-emerald-600 uppercase tracking-widest bg-emerald-100 px-3 py-1 rounded-full">Stage 3 • Core Pattern</span>
-        <div id="math-render" class="text-2xl my-6 text-slate-900 font-serif font-bold">$$${activeLesson.stage3_discovery.formula_latex}$$</div>
-        <p class="text-base font-semibold text-slate-700">${takeaway}</p>
-      </div>
-    `;
-  }
-  // Stage 4: Trap
-  else if (currentStage === 4) {
-    const trapAlert = lang === 'as' ? activeLesson.stage4_trap.trap_alert_as : activeLesson.stage4_trap.trap_alert_en;
-    contentHtml = `
-      <div class="p-6 text-center bg-rose-50 rounded-2xl border border-rose-200">
-        <span class="text-xs font-black text-rose-600 uppercase tracking-widest bg-rose-100 px-3 py-1 rounded-full">Stage 4 • Misconception Trap</span>
-        <h3 class="text-lg font-bold text-rose-900 mt-4">${activeLesson.stage4_trap.trap_title_en}</h3>
-        <p class="text-sm font-semibold text-rose-700 mt-2">${trapAlert}</p>
-      </div>
-    `;
-  }
-  // Stage 5: Quiz
-  else if (currentStage === 5) {
-    const quiz = activeLesson.stage5_quiz;
-    contentHtml = `
-      <div class="p-4">
-        <div class="text-center mb-4">
-          <span class="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-100 px-3 py-1 rounded-full">Stage 5 • Mastery Check</span>
-        </div>
-        <div class="space-y-4">
-          ${quiz.map((q, idx) => `
-            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-              <p class="text-sm font-bold text-slate-800">${lang === 'as' ? q.q_as : q.q_en}</p>
-              <div class="grid grid-cols-3 gap-2 mt-3">
-                ${q.options.map((opt, optIdx) => `
-                  <button onclick="handleQuizAnswer(${idx}, ${optIdx}, ${q.answer_index}, this)" class="py-2 px-3 text-xs font-bold bg-white border border-slate-300 rounded-lg hover:border-indigo-500 shadow-sm transition">
-                    ${opt}
-                  </button>
-                `).join('')}
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    `;
-  }
+  activeTopicContext = {
+    title: topicTitle,
+    standard: standardLevel,
+    topicId: topicId,
+    activeTab: mode === 'learn' ? 'concept' : (mode === 'play' ? 'practice' : mode)
+  };
 
-  // Navigation Bar Footer
-  const controlsHtml = `
-    <div class="flex justify-between items-center border-t border-slate-200 pt-4 mt-6">
-      <button onclick="prevStage()" ${currentStage === 1 ? 'disabled class="px-4 py-2 text-xs font-bold text-slate-400 bg-slate-100 rounded-lg cursor-not-allowed"' : 'class="px-4 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50"'}>
-        Back
-      </button>
-      <span class="text-xs font-bold text-slate-500">Step ${currentStage} of 5</span>
-      <button onclick="nextStage()" class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700">
-        ${currentStage === 5 ? 'Finish' : 'Next'}
-      </button>
+  modal.classList.remove('hidden');
+  if (title) title.textContent = topicTitle;
+  if (badge) badge.textContent = standardLevel;
+
+  // Render the Tab Bar and Container Shell
+  body.innerHTML = `
+    <div class="flex border-b border-amber-200 bg-amber-50/70 p-1.5 rounded-2xl gap-1 mb-4 text-xs font-bold">
+      <button onclick="window.switchWorkspaceTab('concept')" id="tab-btn-concept" class="flex-1 py-2 rounded-xl text-slate-600 hover:text-amber-900 transition">📖 Concept</button>
+      <button onclick="window.switchWorkspaceTab('solved')" id="tab-btn-solved" class="flex-1 py-2 rounded-xl text-slate-600 hover:text-amber-900 transition">💡 Solved</button>
+      <button onclick="window.switchWorkspaceTab('practice')" id="tab-btn-practice" class="flex-1 py-2 rounded-xl bg-amber-600 text-white shadow-sm transition">🎯 Practice</button>
+      <button onclick="window.switchWorkspaceTab('test')" id="tab-btn-test" class="flex-1 py-2 rounded-xl text-slate-600 hover:text-amber-900 transition">⏱️ Test</button>
     </div>
+    <div id="arenaBody" class="min-h-[340px] flex flex-col justify-between"></div>
   `;
 
-  body.innerHTML = contentHtml + controlsHtml;
+  window.switchWorkspaceTab(activeTopicContext.activeTab);
+};
 
-  // Render Math equations via KaTeX if available
-  if (window.renderMathInElement) {
-    window.renderMathInElement(body, {
-      delimiters: [
-        { left: '$$', right: '$$', display: true },
-        { left: '$', right: '$', display: false }
-      ],
-      strict: false
-    });
-  }
+window.switchWorkspaceTab = function(tabName) {
+  activeTopicContext.activeTab = tabName;
+  ['concept', 'solved', 'practice', 'test'].forEach(t => {
+    const btn = document.getElementById(`tab-btn-${t}`);
+    if (btn) {
+      if (t === tabName) {
+        btn.className = 'flex-1 py-2 rounded-xl bg-amber-600 text-white shadow-sm font-bold transition';
+      } else {
+        btn.className = 'flex-1 py-2 rounded-xl text-slate-600 hover:text-amber-900 font-bold transition';
+      }
+    }
+  });
+
+  const arena = document.getElementById('arenaBody');
+  if (!arena) return;
+
+  if (tabName === 'concept') renderConceptTab(arena);
+  else if (tabName === 'solved') renderSolvedTab(arena);
+  else if (tabName === 'practice') renderPracticeArena(arena);
+  else if (tabName === 'test') renderTestSetup(arena);
+};
+
+// ----------------------------------------------------
+// 4. TAB IMPLEMENTATIONS
+// ----------------------------------------------------
+function renderConceptTab(container) {
+  const isAs = window.currentLang === 'as';
+  container.innerHTML = `
+    <div class="space-y-4">
+      <div class="bg-amber-50/50 p-4 rounded-2xl border border-amber-200">
+        <h4 class="text-xs font-black uppercase text-amber-700 tracking-wider mb-1">${isAs ? 'মূল ধাৰণা' : 'Core Concept'}</h4>
+        <p class="text-sm font-medium text-slate-700 leading-relaxed">
+          ${isAs ? 'বিষয়টোৰ মূল নিয়ম আৰু সংক্ষিপ্ত বুজাবুজি ইয়াত প্ৰদান কৰা হৈছে।' : 'Explore key fundamentals, rules, and formulas for this chapter.'}
+        </p>
+      </div>
+
+      <!-- Socratic Q&A Box -->
+      <div class="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
+        <label class="block text-xs font-bold text-slate-700 mb-2">
+          ${isAs ? '❓ সন্দেহ আছে? প্ৰশ্ন সোধক (Assamese / English):' : '❓ Have doubts? Ask Guru:'}
+        </label>
+        <div class="flex gap-2">
+          <input type="text" id="guruConceptInput" placeholder="${isAs ? 'যিকোনো প্ৰশ্ন লিখক...' : 'Type any question about this topic...'}" class="flex-1 border border-slate-300 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-amber-600">
+          <button onclick="handleGuruQuestion()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-xs">Ask</button>
+        </div>
+        <div id="guruResponseArea" class="mt-3 text-xs text-slate-700 hidden"></div>
+      </div>
+    </div>
+  `;
 }
 
-// Stage Navigation Controls
-window.nextStage = function() {
-  if (currentStage < 5) {
-    currentStage++;
-    renderStageUI();
+function renderSolvedTab(container) {
+  const isAs = window.currentLang === 'as';
+  container.innerHTML = `
+    <div class="space-y-3">
+      <div class="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <span class="text-[10px] font-black uppercase text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">${isAs ? 'উদাহৰণ ১' : 'Example 1'}</span>
+        <h4 class="font-bold text-slate-800 text-sm mt-2">${activeTopicContext.title} - Sample Problem</h4>
+        <div class="mt-3 p-3 bg-slate-50 rounded-xl text-xs space-y-2 text-slate-700">
+          <p><strong>Step 1:</strong> Identify the given values and applicable identity.</p>
+          <p><strong>Step 2:</strong> Substitute and simplify each component step by step.</p>
+          <p class="font-bold text-emerald-700">Result: Solved accurately.</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Practice State
+let currentPracticeProblem = null;
+let practiceStreak = 0;
+
+function generateArithmeticProblem(topicTitle, standard) {
+  const isClass1or2 = standard.includes('1') || standard.includes('2') || standard.toLowerCase().includes('primary');
+  
+  if (isClass1or2) {
+    const a = Math.floor(Math.random() * 8) + 1;
+    const b = Math.floor(Math.random() * 8) + 1;
+    const isAdd = Math.random() > 0.3; // 70% addition, 30% subtraction
+    
+    if (isAdd) {
+      return {
+        questionText: `${a} + ${b} = ?`,
+        operandA: a,
+        operandB: b,
+        operator: '+',
+        correctAnswer: a + b,
+        hint: `Start with ${a}, then count forward ${b} more steps!`
+      };
+    } else {
+      const bigger = Math.max(a, b);
+      const smaller = Math.min(a, b);
+      return {
+        questionText: `${bigger} - ${smaller} = ?`,
+        operandA: bigger,
+        operandB: smaller,
+        operator: '-',
+        correctAnswer: bigger - smaller,
+        hint: `You have ${bigger} items. Remove ${smaller} of them. How many remain?`
+      };
+    }
+  }
+
+  // Higher classes generic generator
+  const x = Math.floor(Math.random() * 12) + 2;
+  const mult = Math.floor(Math.random() * 9) + 2;
+  return {
+    questionText: `Solve: ${x} × ${mult} = ?`,
+    operandA: x,
+    operandB: mult,
+    operator: '×',
+    correctAnswer: x * mult,
+    hint: `Break it into parts: (${x} × 10) or add ${x} repeatedly.`
+  };
+}
+
+function renderPracticeArena(container) {
+  const isAs = window.currentLang === 'as';
+  currentPracticeProblem = generateArithmeticProblem(activeTopicContext.title, activeTopicContext.standard);
+
+  container.innerHTML = `
+    <div class="space-y-4">
+      <!-- Streak Header -->
+      <div class="flex justify-between items-center bg-amber-50 px-4 py-2 rounded-xl border border-amber-200">
+        <span class="text-xs font-black text-amber-900 uppercase">🎯 ${isAs ? 'অনুশীলন মঞ্চ' : 'Practice Arena'}</span>
+        <span class="text-xs font-bold text-amber-800">🔥 ${isAs ? 'ধাৰাবাহিক স্কোৰ' : 'Streak'}: <strong id="streakCount" class="text-sm font-black text-amber-600">${practiceStreak}</strong></span>
+      </div>
+
+      <!-- Problem Presentation Card -->
+      <div class="p-6 bg-white border-2 border-amber-300 rounded-3xl shadow-sm text-center">
+        <div class="text-3xl font-black text-slate-800 tracking-wider mb-4" id="practiceQuestionDisplay">
+          ${window.toDigits ? window.toDigits(currentPracticeProblem.questionText) : currentPracticeProblem.questionText}
+        </div>
+
+        <!-- Visual Counter Manipulatives for Young Learners -->
+        <div id="visualCounters" class="flex flex-wrap justify-center items-center gap-2 mb-6 min-h-[40px]">
+          ${renderVisualTokens(currentPracticeProblem)}
+        </div>
+
+        <!-- Answer Input & Keypad -->
+        <div class="max-w-[240px] mx-auto space-y-3">
+          <input type="number" id="practiceInput" placeholder="?" readonly class="w-full text-center text-3xl font-black py-2 border-2 border-amber-400 rounded-2xl bg-amber-50/30 text-amber-950 focus:outline-none">
+          
+          <!-- Tactile Number Keypad -->
+          <div class="grid grid-cols-5 gap-1.5">
+            ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(n => `
+              <button onclick="pressPracticeNum(${n})" class="py-2.5 bg-slate-100 hover:bg-amber-100 font-black text-sm text-slate-800 rounded-xl transition shadow-xs active:scale-95">
+                ${window.toDigits ? window.toDigits(n) : n}
+              </button>
+            `).join('')}
+          </div>
+          <div class="flex gap-2">
+            <button onclick="clearPracticeInput()" class="flex-1 py-1.5 bg-rose-100 text-rose-700 font-bold rounded-xl text-xs hover:bg-rose-200">⌫ Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feedback & Action Buttons -->
+      <div id="practiceFeedback" class="text-center font-bold text-sm min-h-[24px]"></div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="askPracticeHint()" class="flex-1 py-2.5 bg-amber-100 text-amber-900 hover:bg-amber-200 font-bold rounded-xl text-xs transition">
+          💡 ${isAs ? 'ইংগিত দিয়ক' : 'Need a Hint?'}
+        </button>
+        <button onclick="checkPracticeAnswer()" id="checkAnswerBtn" class="flex-1 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition shadow-sm">
+          ✓ ${isAs ? 'উত্তৰ পৰীক্ষা কৰক' : 'Check Answer'}
+        </button>
+      </div>
+
+      <!-- Hint Box -->
+      <div id="practiceHintBox" class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-950 hidden"></div>
+    </div>
+  `;
+}
+
+function renderVisualTokens(problem) {
+  if (!problem.operandA || !problem.operandB) return '';
+  let tokens = '';
+  for (let i = 0; i < problem.operandA; i++) {
+    tokens += `<span class="inline-block w-6 h-6 bg-amber-500 rounded-full text-white text-[10px] font-bold leading-6 text-center select-none shadow-xs">🍎</span>`;
+  }
+  tokens += `<span class="font-black text-amber-800 mx-2 text-sm">${problem.operator}</span>`;
+  for (let j = 0; j < problem.operandB; j++) {
+    tokens += `<span class="inline-block w-6 h-6 bg-emerald-500 rounded-full text-white text-[10px] font-bold leading-6 text-center select-none shadow-xs">🍏</span>`;
+  }
+  return tokens;
+}
+
+window.pressPracticeNum = function(num) {
+  const input = document.getElementById('practiceInput');
+  if (input) {
+    if (input.value.length < 4) input.value += num;
+  }
+};
+
+window.clearPracticeInput = function() {
+  const input = document.getElementById('practiceInput');
+  if (input) input.value = '';
+};
+
+window.checkPracticeAnswer = function() {
+  const input = document.getElementById('practiceInput');
+  const fb = document.getElementById('practiceFeedback');
+  const checkBtn = document.getElementById('checkAnswerBtn');
+  if (!input || !fb || !currentPracticeProblem) return;
+
+  const userVal = parseInt(input.value, 10);
+  const isAs = window.currentLang === 'as';
+
+  if (isNaN(userVal)) {
+    fb.innerHTML = `<span class="text-rose-600">${isAs ? 'অনুগ্ৰহ কৰি উত্তৰ লিখক।' : 'Please enter an answer first.'}</span>`;
+    return;
+  }
+
+  if (userVal === currentPracticeProblem.correctAnswer) {
+    practiceStreak++;
+    fb.innerHTML = `<span class="text-emerald-600 animate-bounce">🎉 ${isAs ? 'শুদ্ধ হৈছে! বহুত ভাল!' : 'Correct! Awesome job!'}</span>`;
+    checkBtn.textContent = isAs ? 'পৰৱৰ্তী প্ৰশ্ন ➔' : 'Next Problem ➔';
+    checkBtn.className = 'flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm';
+    checkBtn.onclick = function() {
+      const arena = document.getElementById('arenaBody');
+      if (arena) renderPracticeArena(arena);
+    };
   } else {
-    document.getElementById('workspaceModal')?.classList.add('hidden');
+    practiceStreak = 0;
+    fb.innerHTML = `<span class="text-rose-600">${isAs ? 'ভুল হৈছে, পুনৰ চেষ্টা কৰক বা ইংগিত লওক।' : 'Not quite right. Try again or check the hint!'}</span>`;
+    const streakEl = document.getElementById('streakCount');
+    if (streakEl) streakEl.innerText = practiceStreak;
   }
 };
 
-window.prevStage = function() {
-  if (currentStage > 1) {
-    currentStage--;
-    renderStageUI();
-  }
+window.askPracticeHint = function() {
+  const hintBox = document.getElementById('practiceHintBox');
+  if (!hintBox || !currentPracticeProblem) return;
+  hintBox.classList.remove('hidden');
+  hintBox.innerHTML = `<div class="font-medium">${currentPracticeProblem.hint}</div>`;
 };
+          
 
-window.handleQuizAnswer = function(qIdx, selectedIdx, correctIdx, btn) {
-  const parent = btn.parentElement;
-  const buttons = parent.querySelectorAll('button');
-  buttons.forEach(b => b.style.pointerEvents = 'none');
+function renderTestSetup(container) {
+  const isAs = window.currentLang === 'as';
+  container.innerHTML = `
+    <div class="p-5 text-center space-y-4">
+      <h3 class="text-base font-bold text-slate-800">${isAs ? 'পৰীক্ষাৰ প্ৰশ্ন সংখ্যা বাছক' : 'Select Question Count'}</h3>
+      <p class="text-xs text-slate-500">${isAs ? 'কোনো ইংগিত পোৱা নাযাব। সময় নিৰ্ধাৰিত থাকিব।' : 'Strict timed test. No hints allowed.'}</p>
+      
+      <div class="grid grid-cols-3 gap-3 max-w-xs mx-auto">
+        <button class="p-3 border-2 border-amber-600 text-amber-900 rounded-2xl font-black text-sm hover:bg-amber-50">10 Qs</button>
+        <button class="p-3 border-2 border-amber-600 text-amber-900 rounded-2xl font-black text-sm hover:bg-amber-50">15 Qs</button>
+        <button class="p-3 border-2 border-amber-600 text-amber-900 rounded-2xl font-black text-sm hover:bg-amber-50">20 Qs</button>
+      </div>
+    </div>
+  `;
+}
 
-  if (selectedIdx === correctIdx) {
-    btn.className = "py-2 px-3 text-xs font-bold text-white bg-emerald-600 rounded-lg shadow-sm";
-  } else {
-    btn.className = "py-2 px-3 text-xs font-bold text-white bg-rose-600 rounded-lg shadow-sm";
-    buttons[correctIdx].className = "py-2 px-3 text-xs font-bold text-white bg-emerald-600 rounded-lg shadow-sm";
-  }
+window.handleGuruQuestion = async function() {
+  const input = document.getElementById('guruConceptInput');
+  const respArea = document.getElementById('guruResponseArea');
+  if (!input || !respArea || !input.value.trim()) return;
+
+  respArea.classList.remove('hidden');
+  respArea.innerHTML = `<span class="animate-pulse text-amber-800 font-bold">Thinking...</span>`;
+
+  const q = input.value.trim();
+  const prompt = `You are an encouraging math teacher. The student is learning "${activeTopicContext.title}" (${activeTopicContext.standard}).
+Question: "${q}".
+Explain the answer clearly and concisely in maximum 3 sentences. Answer in ${window.currentLang === 'as' ? 'Assamese' : 'English'}.`;
+
+  const reply = await callGeminiDynamic(prompt, false);
+  respArea.innerHTML = `<div class="p-3 bg-amber-50 rounded-xl border border-amber-200 mt-2 font-medium">${reply || 'Unable to fetch response. Please try again.'}</div>`;
 };
+        
+
+  
+
+
 
 window.openWorkspaceDirect = function(title, standard, topicId = '') {
   document.getElementById('searchResultsDropdown')?.classList.add('hidden');
