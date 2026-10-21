@@ -1,6 +1,5 @@
 // js/curriculum.js
-
-export const classesData = [
+const classesData = [
   {
     id: "cls_primary_1_2",
     title: { as: "প্ৰাথমিক (১–২ শ্ৰেণী)", en: "Primary (Classes 1–2)" },
