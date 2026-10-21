@@ -107,30 +107,6 @@ window.handleUniversalSearchQuery = async function(query) {
 };
 
 
-
-// ----------------------------------------------------
-// 4. ON-DEMAND STRUCTURED GENERATOR
-// ----------------------------------------------------
-async function fetchDynamicStructuredLesson(topicTitle, standardLevel) {
-  const body = document.getElementById('wsBody');
-  body.innerHTML = `
-    <div class="p-8 text-center space-y-3">
-      <div class="text-3xl animate-bounce">⚡</div>
-      <div class="text-amber-900 font-bold text-sm animate-pulse">
-        ${window.currentLang === 'as' ? '৬-পৰ্যায়ৰ পাঠ প্ৰস্তুত কৰা হৈছে...' : 'Building interactive 6-stage lesson...'}
-      </div>
-    </div>
-  `;
-
-  const prompt = `You are a master mathematics educator creating a bite-sized, 6-stage interactive lesson.
-Target: ${standardLevel} - ${topicTitle}
-
-Return STRICT JSON matching this exact structure:
-{
-  "id": "gen_${Date.now()}",
-  "class_level": "${standardLevel}",
-  "title": "${topicTitle}",
-  "stage1_hook": {
 // ----------------------------------------------------
 // 3. 4-TAB WORKSPACE ARENA ROUTER
 // ----------------------------------------------------
