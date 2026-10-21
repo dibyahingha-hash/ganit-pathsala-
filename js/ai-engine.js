@@ -1,30 +1,61 @@
-// ai-engine.js - Gemini Dynamic Intelligence Engine for All Standards
+// ai-engine.js - Gemini Dynamic Intelligence Engine & 6-Stage Interactive Player
 
-async function callGeminiDynamic(promptText) {
+// ----------------------------------------------------
+// 0. OFFLINE / PRELOADED LESSON STORE
+// ----------------------------------------------------
+let preloadedLessons = {};
+let activeLesson = null;
+let currentStage = 1;
+
+// Fetch pre-compiled lessons on application start
+fetch('./data/lessons.json')
+  .then(res => res.json())
+  .then(data => {
+    preloadedLessons = data;
+    console.log("✓ Preloaded lessons loaded:", Object.keys(data));
+  })
+  .catch(err => {
+    console.warn("Static lessons.json not found, dynamic fallback active.", err);
+  });
+
+// ----------------------------------------------------
+// 1. GEMINI API CALLER (WITH RATE LIMIT & 2026 MODEL FALLBACKS)
+// ----------------------------------------------------
+async function callGeminiDynamic(promptText, isJson = false) {
   const models = [
-    'gemini-3.8-flash',
-    'gemini-3.7-flash',
     'gemini-3.5-flash-lite',
-    'gemini-2.5-flash',
-    'gemini-2.0-flash'
+    'gemini-3.8-flash'
   ];
+
   for (const m of models) {
     try {
+      const payload = {
+        contents: [{ parts: [{ text: promptText }] }]
+      };
+      if (isJson) {
+        payload.generationConfig = { responseMimeType: "application/json" };
+      }
+
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+        body: JSON.stringify(payload)
       });
+
       if (!res.ok) continue;
       const data = await res.json();
       const txt = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (txt) return txt;
-    } catch (e) {}
+    } catch (e) {
+      console.warn(`Model ${m} failed, trying next...`, e);
+    }
   }
   return null;
 }
 
-// 1. Universal Search Handler
+// ----------------------------------------------------
+// 2. UNIVERSAL SEARCH HANDLER
+// ----------------------------------------------------
 window.handleUniversalSearchQuery = async function(query) {
   const resultsContainer = document.getElementById('searchResultsDropdown');
   if (!resultsContainer) return;
@@ -34,44 +65,48 @@ window.handleUniversalSearchQuery = async function(query) {
   }
 
   resultsContainer.classList.remove('hidden');
-  resultsContainer.innerHTML = `<div class="p-4 text-xs font-bold text-amber-800 animate-pulse">🔍 Searching standard index and AI database...</div>`;
+  resultsContainer.innerHTML = `<div class="p-4 text-xs font-bold text-amber-800 animate-pulse">🔍 Searching standard index and database...</div>`;
 
-  // First match against curriculum-tree
   let matches = [];
   const qLower = query.toLowerCase();
-  window.MATH_CURRICULUM.forEach(cls => {
-    const checkTopic = (t, streamName) => {
-      const titleEn = (t.title.en || '').toLowerCase();
-      const titleAs = (t.title.as || '').toLowerCase();
-      if (titleEn.includes(qLower) || titleAs.includes(qLower)) {
-        matches.push({ classLabel: cls.label, topic: t, streamName: streamName });
+
+  if (window.MATH_CURRICULUM) {
+    window.MATH_CURRICULUM.forEach(cls => {
+      const checkTopic = (t, streamName) => {
+        const titleEn = (t.title?.en || t.title || '').toLowerCase();
+        const titleAs = (t.title?.as || '').toLowerCase();
+        if (titleEn.includes(qLower) || titleAs.includes(qLower)) {
+          matches.push({ classLabel: cls.label, topic: t, streamName: streamName });
+        }
+      };
+      if (cls.topics) cls.topics.forEach(t => checkTopic(t, null));
+      if (cls.streams) {
+        cls.streams.forEach(s => s.topics.forEach(t => checkTopic(t, s.streamName)));
       }
-    };
-    if (cls.topics) cls.topics.forEach(t => checkTopic(t, null));
-    if (cls.streams) {
-      cls.streams.forEach(s => s.topics.forEach(t => checkTopic(t, s.streamName)));
-    }
-  });
+    });
+  }
 
   if (matches.length > 0) {
     resultsContainer.innerHTML = matches.slice(0, 8).map(m => `
-      <div onclick="openWorkspaceDirect('${m.topic.title.en}', '${m.classLabel.en}')" class="p-3 border-b border-amber-100 hover:bg-amber-50 cursor-pointer text-left">
-        <div class="text-[10px] uppercase font-bold text-amber-700">${m.classLabel[window.currentLang] || m.classLabel.en} ${m.streamName ? '• ' + (m.streamName[window.currentLang] || m.streamName.en) : ''}</div>
-        <div class="text-sm font-bold text-slate-800">${m.topic.title[window.currentLang] || m.topic.title.en}</div>
+      <div onclick="openWorkspaceDirect('${m.topic.title?.en || m.topic.title}', '${m.classLabel?.en || m.classLabel}', '${m.topic.id || ''}')" class="p-3 border-b border-amber-100 hover:bg-amber-50 cursor-pointer text-left">
+        <div class="text-[10px] uppercase font-bold text-amber-700">${m.classLabel[window.currentLang] || m.classLabel.en || m.classLabel} ${m.streamName ? '• ' + (m.streamName[window.currentLang] || m.streamName.en) : ''}</div>
+        <div class="text-sm font-bold text-slate-800">${m.topic.title[window.currentLang] || m.topic.title.en || m.topic.title}</div>
       </div>
     `).join('');
   } else {
     resultsContainer.innerHTML = `
-      <div onclick="openWorkspaceDirect('${query}', 'Universal Query')" class="p-4 hover:bg-amber-50 cursor-pointer text-left">
-        <div class="text-xs text-amber-800 font-semibold">No direct chapter match in syllabus index.</div>
-        <div class="text-sm font-bold text-amber-950 mt-1">✨ Ask Gemini AI to generate full lesson for: "${query}"</div>
+      <div onclick="openWorkspaceDirect('${query}', 'Universal Query', '')" class="p-4 hover:bg-amber-50 cursor-pointer text-left">
+        <div class="text-xs text-amber-800 font-semibold">No direct chapter match in index.</div>
+        <div class="text-sm font-bold text-amber-950 mt-1">✨ Generate 6-Stage Lesson for: "${query}"</div>
       </div>
     `;
   }
 };
 
-// 2. Open Workspace for any topic at any level
-window.openWorkspaceForTopic = async function(topicTitle, standardLevel, mode) {
+// ----------------------------------------------------
+// 3. WORKSPACE ENTRY POINT (ROUTER)
+// ----------------------------------------------------
+window.openWorkspaceForTopic = async function(topicTitle, standardLevel, mode = 'learn', topicId = '') {
   const modal = document.getElementById('workspaceModal');
   const body = document.getElementById('wsBody');
   const title = document.getElementById('wsChapterTitle');
@@ -79,133 +114,270 @@ window.openWorkspaceForTopic = async function(topicTitle, standardLevel, mode) {
 
   if (!modal || !body) return;
   modal.classList.remove('hidden');
-  title.textContent = topicTitle;
-  badge.textContent = `${standardLevel} • ${mode.toUpperCase()}`;
+  if (title) title.textContent = topicTitle;
+  if (badge) badge.textContent = `${standardLevel} • ${mode.toUpperCase()}`;
 
+  // Find topic key in preloadedLessons
+  const lookupKey = topicId || Object.keys(preloadedLessons).find(k => 
+    preloadedLessons[k].title.toLowerCase() === topicTitle.toLowerCase()
+  );
+
+  // 1. Instant Static Retrieval
+  if (lookupKey && preloadedLessons[lookupKey]) {
+    render6StageLesson(preloadedLessons[lookupKey]);
+    return;
+  }
+
+  // 2. Instant LocalStorage Retrieval
+  const cached = localStorage.getItem(`lesson_${topicTitle}`);
+  if (cached) {
+    try {
+      render6StageLesson(JSON.parse(cached));
+      return;
+    } catch(e) {}
+  }
+
+  // 3. On-Demand Dynamic Generator
+  fetchDynamicStructuredLesson(topicTitle, standardLevel);
+};
+
+// ----------------------------------------------------
+// 4. ON-DEMAND STRUCTURED GENERATOR
+// ----------------------------------------------------
+async function fetchDynamicStructuredLesson(topicTitle, standardLevel) {
+  const body = document.getElementById('wsBody');
   body.innerHTML = `
     <div class="p-8 text-center space-y-3">
-      <div class="text-3xl animate-bounce">📐</div>
+      <div class="text-3xl animate-bounce">⚡</div>
       <div class="text-amber-900 font-bold text-sm animate-pulse">
-        ${window.currentLang === 'as' ? 'পাঠ্যক্ৰম অনুসৰি সমল প্ৰস্তুত কৰা হৈছে...' : 'Synthesizing pedagogical content for this standard...'}
+        ${window.currentLang === 'as' ? '৬-পৰ্যায়ৰ পাঠ প্ৰস্তুত কৰা হৈছে...' : 'Building interactive 6-stage lesson...'}
       </div>
     </div>
   `;
 
-  const isAs = window.currentLang === 'as';
-  const langPrompt = isAs
-    ? "Respond completely in Assamese using formal mathematical terminology. Wrap all equations, expressions, and values in LaTeX ($...$ or $$...$$)."
-    : "Respond completely in English with mathematical rigor. Wrap all equations and values in LaTeX ($...$ or $$...$$).";
-// Determine educational stage from standardLevel string
-const isPrimary = /class (i|ii|iii|iv|v)\b/i.test(standardLevel);
-const isMiddle = /class (vi|vii|viii)\b/i.test(standardLevel);
-const isHighSchool = /class (ix|x)\b/i.test(standardLevel);
-const isHigherSec = /class (xi|xii)\b/i.test(standardLevel);
-const isUniversity = /undergraduate|post-graduate|b\.sc|m\.sc/i.test(standardLevel);
+  const prompt = `You are a master mathematics educator creating a bite-sized, 6-stage interactive lesson.
+Target: ${standardLevel} - ${topicTitle}
 
-let stageInstruction = "";
-if (isPrimary) {
-  stageInstruction = `
-TARGET AUDIENCE: A young child (Age 5-10, Primary School).
-TONE: Playful, extremely simple, warm, visual.
-RULES:
-- DO NOT use college math, set theory symbols, cardinality notation, or complex words like 'discrete' or 'progression'.
-- Use bright emojis (🍎, ⭐, 🚗, 🎈, 🐶) to illustrate quantities.
-- Emphasize counting visually: show groupings with emojis.
-- Teach number names and simple actions.
-- Keep sentences short (5-8 words each).
-`;
-} else if (isMiddle) {
-  stageInstruction = `
-TARGET AUDIENCE: Middle school student (Age 11-14).
-TONE: Clear, conceptual, relatable with everyday examples (pocket money, sports scores, pizza slices).
-RULES: Introduce variables and negative numbers using concrete visual number-line analogies.
-`;
-} else if (isHighSchool || isHigherSec) {
-  stageInstruction = `
-TARGET AUDIENCE: High school / Senior secondary board exam student.
-TONE: Rigorous, focused on step-by-step algebraic derivations, formulas, standard theorems, and board exam accuracy.
-`;
-} else {
-  stageInstruction = `
-TARGET AUDIENCE: University / Research student (B.Sc. / M.Sc.).
-TONE: Pure mathematical rigor with formal definitions, lemmas, proofs, and vector/topological generalizations.
-`;
+Return STRICT JSON matching this exact structure:
+{
+  "id": "gen_${Date.now()}",
+  "class_level": "${standardLevel}",
+  "title": "${topicTitle}",
+  "stage1_hook": {
+    "en": "Short puzzle or question in max 12 words",
+    "as": "Assamese translation of the hook question"
+  },
+  "stage2_sandbox": {
+    "type": "grid_or_slider",
+    "min": 1,
+    "max": 10,
+    "default": 4,
+    "instruction_en": "One punchy action instruction under 10 words",
+    "instruction_as": "Assamese instruction"
+  },
+  "stage3_discovery": {
+    "formula_latex": "\\\\text{Core formula or equation}",
+    "takeaway_en": "Plain English explanation in under 12 words",
+    "takeaway_as": "Plain Assamese explanation"
+  },
+  "stage4_trap": {
+    "trap_title_en": "The common trap name",
+    "trap_alert_en": "Why students make this mistake in 12 words",
+    "trap_alert_as": "Assamese warning"
+  },
+  "stage5_quiz": [
+    {
+      "q_en": "Question 1 (Easy)",
+      "q_as": "Assamese Q1",
+      "options": ["Option A", "Option B", "Option C"],
+      "answer_index": 0
+    },
+    {
+      "q_en": "Question 2 (Medium)",
+      "q_as": "Assamese Q2",
+      "options": ["Option A", "Option B", "Option C"],
+      "answer_index": 1
+    },
+    {
+      "q_en": "Question 3 (Trap Check)",
+      "q_as": "Assamese Q3",
+      "options": ["Option A", "Option B", "Option C"],
+      "answer_index": 2
+    }
+  ]
+}`;
+
+  const resText = await callGeminiDynamic(prompt, true);
+  if (resText) {
+    try {
+      const cleanJson = resText.replace(/```json|```/g, '').trim();
+      const lessonData = JSON.parse(cleanJson);
+      localStorage.setItem(`lesson_${topicTitle}`, JSON.stringify(lessonData));
+      render6StageLesson(lessonData);
+      return;
+    } catch (e) {
+      console.error("JSON parsing error", e);
+    }
+  }
+
+  body.innerHTML = `<div class="p-6 text-center text-rose-600 font-bold">Failed to generate lesson. Please retry.</div>`;
 }
 
-  let prompt = "";
-  if (mode === 'learn') {
-    if (isPrimary) {
-      prompt = `You are an elementary school math teacher teaching young children.
-Level: ${standardLevel}
-Topic: ${topicTitle}
-${langPrompt}
-${stageInstruction}
+// ----------------------------------------------------
+// 5. 6-STAGE INTERACTIVE PLAYER
+// ----------------------------------------------------
+function render6StageLesson(lessonData) {
+  activeLesson = lessonData;
+  currentStage = 1;
+  renderStageUI();
+}
 
-Generate a visual, friendly lesson formatted strictly in clean HTML:
-1. <div class="text-center p-4 bg-amber-50 rounded-2xl mb-4 border border-amber-200">
-     <div class="text-4xl mb-2">🍎 🍎 🍎</div>
-     <h3 class="text-xl font-black text-amber-950">Let's Count! / আহা গণনা কৰোঁ!</h3>
-     <p class="text-slate-700 text-sm mt-1">Simple friendly explanation using items the child recognizes.</p>
-   </div>
-2. <div class="grid grid-cols-3 gap-2 text-center mb-4">
-     <div class="p-3 bg-white border border-amber-200 rounded-xl shadow-sm"><span class="text-2xl font-black text-amber-800">1</span><div class="text-lg">⭐</div><div class="text-xs font-bold text-slate-600">One / এক</div></div>
-     <div class="p-3 bg-white border border-amber-200 rounded-xl shadow-sm"><span class="text-2xl font-black text-amber-800">2</span><div class="text-lg">⭐⭐</div><div class="text-xs font-bold text-slate-600">Two / দুই</div></div>
-     <div class="p-3 bg-white border border-amber-200 rounded-xl shadow-sm"><span class="text-2xl font-black text-amber-800">3</span><div class="text-lg">⭐⭐⭐</div><div class="text-xs font-bold text-slate-600">Three / তিনি</div></div>
-   </div>
-3. <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-sm text-emerald-900 font-semibold">
-     💡 Fun Fact or Quick Activity for the child!
-   </div>`;
-    } else {
-      prompt = `You are a master mathematics instructor.
-Level: ${standardLevel}
-Topic: ${topicTitle}
-${langPrompt}
-${stageInstruction}
+function renderStageUI() {
+  if (!activeLesson) return;
+  const lang = window.currentLang || 'en';
+  const body = document.getElementById('wsBody');
+  if (!body) return;
 
-Structure your response strictly in HTML format (using Tailwind-friendly styles, without <html> or <body> tags):
-1. <div class="mb-4"><h4 class="font-bold text-amber-950 mb-1">Intuitive Concept / ধাৰণা:</h4><p class="text-slate-700 text-sm leading-relaxed">[Real-life context and intuition appropriate for this level]</p></div>
-2. <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-4"><h4 class="font-bold text-amber-900 text-xs uppercase mb-2">Core Identity / Theorem:</h4><div class="text-center text-lg font-bold">[Key formula or theorem in display LaTeX $$...$$]</div></div>
-3. <div class="mb-4"><h4 class="font-bold text-amber-950 mb-1">Step-by-Step Breakdown:</h4><p class="text-slate-700 text-sm">[Detailed algebraic derivation or proof]</p></div>`;
-    }
+  let contentHtml = '';
+
+  // Stage 1: The Hook
+  if (currentStage === 1) {
+    const text = lang === 'as' ? activeLesson.stage1_hook.as : activeLesson.stage1_hook.en;
+    contentHtml = `
+      <div class="p-6 text-center">
+        <span class="text-xs font-black text-amber-600 uppercase tracking-widest bg-amber-100 px-3 py-1 rounded-full">Stage 1 • The Hook</span>
+        <h2 class="text-2xl font-bold mt-6 text-slate-800 leading-snug">${text}</h2>
+      </div>
+    `;
   }
-   else if (mode === 'play') {
-    prompt = `You are a universal mathematics curriculum designer.
-Level/Standard: ${standardLevel}
-Topic: ${topicTitle}
-${langPrompt}
-Create an interactive mental or visual exploration challenge suited to this exact level.
-Format strictly in clean HTML:
-Provide a clear goal, a worked scenario where changing values changes the outcome, and 3 exploration questions that let the student mentally manipulate variables.`;
-  } else if (mode === 'test') {
-    prompt = `You are a diagnostic mathematics examiner.
-Level/Standard: ${standardLevel}
-Topic: ${topicTitle}
-${langPrompt}
-Generate 2 distinct practice problems strictly calibrated to this level:
-Problem 1: Conceptual Check.
-Problem 2: Analytical Application.
-Format cleanly in HTML with the problems and solutions enclosed inside a hidden toggle or expandable details block.`;
+  // Stage 2: Sandbox
+  else if (currentStage === 2) {
+    const instr = lang === 'as' ? activeLesson.stage2_sandbox.instruction_as : activeLesson.stage2_sandbox.instruction_en;
+    const sb = activeLesson.stage2_sandbox;
+    contentHtml = `
+      <div class="p-6 text-center">
+        <span class="text-xs font-black text-indigo-600 uppercase tracking-widest bg-indigo-100 px-3 py-1 rounded-full">Stage 2 • Interactive Sandbox</span>
+        <p class="text-sm font-semibold text-slate-600 mt-4">${instr}</p>
+        <div class="my-6 max-w-xs mx-auto">
+          <input type="range" id="sb-slider" min="${sb.min}" max="${sb.max}" value="${sb.default}" class="w-full accent-indigo-600 cursor-pointer">
+          <div id="sb-val" class="text-4xl font-black text-indigo-600 mt-3">${sb.default}</div>
+        </div>
+      </div>
+    `;
+    setTimeout(() => {
+      const slider = document.getElementById('sb-slider');
+      const val = document.getElementById('sb-val');
+      if (slider && val) {
+        slider.addEventListener('input', (e) => { val.innerText = e.target.value; });
+      }
+    }, 50);
+  }
+  // Stage 3: Core Discovery & Formula
+  else if (currentStage === 3) {
+    const takeaway = lang === 'as' ? activeLesson.stage3_discovery.takeaway_as : activeLesson.stage3_discovery.takeaway_en;
+    contentHtml = `
+      <div class="p-6 text-center">
+        <span class="text-xs font-black text-emerald-600 uppercase tracking-widest bg-emerald-100 px-3 py-1 rounded-full">Stage 3 • Core Pattern</span>
+        <div id="math-render" class="text-2xl my-6 text-slate-900 font-serif font-bold">$$${activeLesson.stage3_discovery.formula_latex}$$</div>
+        <p class="text-base font-semibold text-slate-700">${takeaway}</p>
+      </div>
+    `;
+  }
+  // Stage 4: Trap
+  else if (currentStage === 4) {
+    const trapAlert = lang === 'as' ? activeLesson.stage4_trap.trap_alert_as : activeLesson.stage4_trap.trap_alert_en;
+    contentHtml = `
+      <div class="p-6 text-center bg-rose-50 rounded-2xl border border-rose-200">
+        <span class="text-xs font-black text-rose-600 uppercase tracking-widest bg-rose-100 px-3 py-1 rounded-full">Stage 4 • Misconception Trap</span>
+        <h3 class="text-lg font-bold text-rose-900 mt-4">${activeLesson.stage4_trap.trap_title_en}</h3>
+        <p class="text-sm font-semibold text-rose-700 mt-2">${trapAlert}</p>
+      </div>
+    `;
+  }
+  // Stage 5: Quiz
+  else if (currentStage === 5) {
+    const quiz = activeLesson.stage5_quiz;
+    contentHtml = `
+      <div class="p-4">
+        <div class="text-center mb-4">
+          <span class="text-xs font-black text-blue-600 uppercase tracking-widest bg-blue-100 px-3 py-1 rounded-full">Stage 5 • Mastery Check</span>
+        </div>
+        <div class="space-y-4">
+          ${quiz.map((q, idx) => `
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <p class="text-sm font-bold text-slate-800">${lang === 'as' ? q.q_as : q.q_en}</p>
+              <div class="grid grid-cols-3 gap-2 mt-3">
+                ${q.options.map((opt, optIdx) => `
+                  <button onclick="handleQuizAnswer(${idx}, ${optIdx}, ${q.answer_index}, this)" class="py-2 px-3 text-xs font-bold bg-white border border-slate-300 rounded-lg hover:border-indigo-500 shadow-sm transition">
+                    ${opt}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
   }
 
-  const result = await callGeminiDynamic(prompt);
-  if (result) {
-    body.innerHTML = result;
-    if (window.renderMathInElement) {
-      window.renderMathInElement(body, {
-        delimiters: [
-          { left: '$$', right: '$$', display: true },
-          { left: '$', right: '$', display: false }
-        ],
-        strict: false
-      });
-    }
+  // Navigation Bar Footer
+  const controlsHtml = `
+    <div class="flex justify-between items-center border-t border-slate-200 pt-4 mt-6">
+      <button onclick="prevStage()" ${currentStage === 1 ? 'disabled class="px-4 py-2 text-xs font-bold text-slate-400 bg-slate-100 rounded-lg cursor-not-allowed"' : 'class="px-4 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-300 rounded-lg shadow-sm hover:bg-slate-50"'}>
+        Back
+      </button>
+      <span class="text-xs font-bold text-slate-500">Step ${currentStage} of 5</span>
+      <button onclick="nextStage()" class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700">
+        ${currentStage === 5 ? 'Finish' : 'Next'}
+      </button>
+    </div>
+  `;
+
+  body.innerHTML = contentHtml + controlsHtml;
+
+  // Render Math equations via KaTeX if available
+  if (window.renderMathInElement) {
+    window.renderMathInElement(body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false }
+      ],
+      strict: false
+    });
+  }
+}
+
+// Stage Navigation Controls
+window.nextStage = function() {
+  if (currentStage < 5) {
+    currentStage++;
+    renderStageUI();
   } else {
-    body.innerHTML = `<div class="p-6 text-center text-rose-600 font-bold">Failed to load content. Please check API connection and retry.</div>`;
+    document.getElementById('workspaceModal')?.classList.add('hidden');
   }
 };
 
-window.openWorkspaceDirect = function(title, standard) {
-  document.getElementById('searchResultsDropdown')?.classList.add('hidden');
-  window.openWorkspaceForTopic(title, standard, 'learn');
+window.prevStage = function() {
+  if (currentStage > 1) {
+    currentStage--;
+    renderStageUI();
+  }
 };
 
+window.handleQuizAnswer = function(qIdx, selectedIdx, correctIdx, btn) {
+  const parent = btn.parentElement;
+  const buttons = parent.querySelectorAll('button');
+  buttons.forEach(b => b.style.pointerEvents = 'none');
+
+  if (selectedIdx === correctIdx) {
+    btn.className = "py-2 px-3 text-xs font-bold text-white bg-emerald-600 rounded-lg shadow-sm";
+  } else {
+    btn.className = "py-2 px-3 text-xs font-bold text-white bg-rose-600 rounded-lg shadow-sm";
+    buttons[correctIdx].className = "py-2 px-3 text-xs font-bold text-white bg-emerald-600 rounded-lg shadow-sm";
+  }
+};
+
+window.openWorkspaceDirect = function(title, standard, topicId = '') {
+  document.getElementById('searchResultsDropdown')?.classList.add('hidden');
+  window.openWorkspaceForTopic(title, standard, 'learn', topicId);
+};
