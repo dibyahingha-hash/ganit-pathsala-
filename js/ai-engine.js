@@ -116,46 +116,49 @@ window.openWorkspaceForTopic = async function(topicTitle, standardLevel, mode = 
   if (title) title.textContent = topicTitle;
   if (badge) badge.textContent = `${standardLevel} • ${mode.toUpperCase()}`;
 
-  // Normalize input string for comparison (removes symbols and spaces)
-  const cleanStr = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  const targetClean = cleanStr(topicTitle);
-
-  // Flexible match across keys and titles
-  let matchedKey = null;
-
-  // Direct ID check
+  // 1. Direct ID lookup in preloaded lessons
   if (topicId && preloadedLessons[topicId]) {
-    matchedKey = topicId;
-  } else {
-    // Fuzzy title search inside lessons.json
-    matchedKey = Object.keys(preloadedLessons).find(k => {
-      const lesson = preloadedLessons[k];
-      const lessonTitleClean = cleanStr(lesson.title);
-      return targetClean.includes(lessonTitleClean) || lessonTitleClean.includes(targetClean);
-    });
-  }
-
-  // 1. Instant Static Retrieval (0ms)
-  if (matchedKey && preloadedLessons[matchedKey]) {
-    console.log("⚡ Zero-latency hit from lessons.json:", matchedKey);
-    render6StageLesson(preloadedLessons[matchedKey]);
+    render6StageLesson(preloadedLessons[topicId]);
     return;
   }
 
-  // 2. Instant LocalStorage Retrieval (0ms)
-  const cached = localStorage.getItem(`lesson_${targetClean}`);
+  // 2. Resolve topic ID by searching curriculum-tree.js
+  let resolvedId = topicId;
+  if (!resolvedId && window.MATH_CURRICULUM) {
+    for (const cls of window.MATH_CURRICULUM) {
+      const allTopics = cls.chapters || cls.topics || [];
+      const match = allTopics.find(t => 
+        t.title?.en === topicTitle || 
+        t.title?.as === topicTitle || 
+        t.title === topicTitle
+      );
+      if (match) {
+        resolvedId = match.id;
+        break;
+      }
+    }
+  }
+
+  // 3. Check preloaded lessons with resolved ID
+  if (resolvedId && preloadedLessons[resolvedId]) {
+    render6StageLesson(preloadedLessons[resolvedId]);
+    return;
+  }
+
+  // 4. Check LocalStorage cache
+  const cacheKey = resolvedId || topicTitle;
+  const cached = localStorage.getItem(`lesson_${cacheKey}`);
   if (cached) {
     try {
-      console.log("⚡ Hit from localStorage cache");
       render6StageLesson(JSON.parse(cached));
       return;
     } catch(e) {}
   }
 
-  // 3. Dynamic Structured Fallback (Only if not found in preloaded JSON)
-  console.log("Not found in preloaded lessons, fetching dynamically...");
+  // 5. Dynamic fallback only if topic does not exist anywhere
   fetchDynamicStructuredLesson(topicTitle, standardLevel);
 };
+
 
 
 // ----------------------------------------------------
