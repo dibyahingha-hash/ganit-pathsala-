@@ -928,30 +928,52 @@ async function verifyAndLaunch() {
       if (currentHwImageBase64) {
         contentsParts.push({ inline_data: { mime_type: "image/jpeg", data: currentHwImageBase64 } });
       }
+                const candidateModels = [
+        'gemini-3.8-flash',
+        'gemini-3.7-flash',
+        'gemini-3.5-flash-lite',
+        'gemini-2.5-flash',
+        'gemini-2.0-flash'
+      ];
 
-      try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: {
-  'Content-Type': 'application/json'
-},
-          
-  'x-goog-api-key': apiKey
-},
-          body: JSON.stringify({ contents: [{ parts: contentsParts }] })
-        });
-        const data = await res.json();
-        const candidate = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (candidate) {
-          output.innerHTML = candidate.replace(/\n/g, '<br/>');
-          if (window.renderMathInElement) {
-            renderMathInElement(output, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }] });
+      let candidateText = null;
+
+      for (const model of candidateModels) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ contents: [{ parts: contentsParts }] })
+          });
+
+          if (!res.ok) continue;
+
+          const data = await res.json();
+          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            candidateText = text;
+            break;
           }
-        } else {
-          throw new Error();
+        } catch (e) {
+          // Try next fallback model
         }
-      } catch (err) {
-        output.innerHTML = `<span class="text-rose-700 font-bold">${currentLang === 'as' ? 'বিশ্লেষণত সমস্যা হ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।' : 'Unable to complete analysis. Please try again.'}</span>`;
+      }
+
+      if (candidateText) {
+        output.innerHTML = candidateText.replace(/\n/g, '<br/>');
+        if (window.renderMathInElement) {
+          renderMathInElement(output, { 
+            delimiters: [
+              { left: '$$', right: '$$', display: true }, 
+              { left: '$', right: '$', display: false }
+            ] 
+          });
+        }
+      } else {
+        output.innerHTML = `<span class="text-rose-700 font-bold">${currentLang === 'as' ? 'সংযোগত সমস্যা হ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।' : 'Connection error. Please try again.'}</span>`;
+      }
       } finally {
         btn.disabled = false;
       }
