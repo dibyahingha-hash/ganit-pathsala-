@@ -903,7 +903,7 @@ async function verifyAndLaunch() {
       document.getElementById('hwFileInput').value = '';
     }
 
-    async function submitHomeworkQuery() {
+      async function submitHomeworkQuery() {
       const text = document.getElementById('hwTextInput').value.trim();
       const output = document.getElementById('hwOutput');
       const btn = document.getElementById('askHwBtn');
@@ -913,22 +913,23 @@ async function verifyAndLaunch() {
       output.innerHTML = `<span class="animate-pulse font-bold text-amber-800">⚡ ${t('analyzingHw')}</span>`;
       btn.disabled = true;
 
-      const langRule = currentLang === 'as' 
-        ? "Respond purely and strictly in Assamese. Use formal terminology (যেনে: অৱকলজ, সমীকৰণ, ভগ্নাংশ). Do not include English sentences."
+      const langRule = currentLang === 'as'
+        ? "Respond purely and strictly in Assamese. Use formal terminology (যেনে: অৱকলন, সমীকৰণ, ভগ্নাংশ). Do not include English words unless formulas."
         : "Respond purely and strictly in English with professional mathematical clarity. Do not mix any other language.";
 
-      let modeRule = currentHwType === "hint" 
+      let modeRule = currentHwType === "hint"
         ? "Give only a concise conceptual clue and the formula. Do not provide final answer."
-        : currentHwType === "step" 
+        : currentHwType === "step"
         ? "Derive step-by-step using LaTeX syntax ($...$) for formulas."
         : "Evaluate student working. Explain where the logic slipped constructively.";
 
-      const promptText = `OmniMath Guru. ${langRule} ${modeRule} Problem: ${text || "Please analyze attached image."}`;
+      const promptText = `OmniMath Guru. ${langRule} ${modeRule} Problem: ${text || 'Please analyze attached image.'}`;
       const contentsParts = [{ text: promptText }];
       if (currentHwImageBase64) {
         contentsParts.push({ inline_data: { mime_type: "image/jpeg", data: currentHwImageBase64 } });
       }
-                const candidateModels = [
+
+      const candidateModels = [
         'gemini-3.8-flash',
         'gemini-3.7-flash',
         'gemini-3.5-flash-lite',
@@ -951,13 +952,13 @@ async function verifyAndLaunch() {
           if (!res.ok) continue;
 
           const data = await res.json();
-          const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (text) {
-            candidateText = text;
+          const textRes = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (textRes) {
+            candidateText = textRes;
             break;
           }
         } catch (e) {
-          // Try next fallback model
+          // Fall through to next model
         }
       }
 
@@ -974,9 +975,10 @@ async function verifyAndLaunch() {
       } else {
         output.innerHTML = `<span class="text-rose-700 font-bold">${currentLang === 'as' ? 'সংযোগত সমস্যা হ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।' : 'Connection error. Please try again.'}</span>`;
       }
-        btn.disabled = false;
+
+      btn.disabled = false;
       }
-    }
+    
     
     
   </script>
