@@ -1,1 +1,191 @@
 
+{
+  "c1_cnt": {
+    "id": "c1_cnt",
+    "class_level": "Class I",
+    "title": "Counting (1-9)",
+    "stage1_hook": {
+      "en": "How many apples are in the basket right now?",
+      "as": "টোপোলাটোত এতিয়া কেইটা আপেল আছে?"
+    },
+    "stage2_sandbox": {
+      "type": "grid_or_slider",
+      "min": 1,
+      "max": 9,
+      "default": 4,
+      "instruction_en": "Slide to count up to nine stars.",
+      "instruction_as": "নটা তৰা গণনা কৰিবলৈ শ্লাইডাৰটো টানি দিয়ক।"
+    },
+    "stage3_discovery": {
+      "formula_latex": "1, 2, 3, 4, 5, 6, 7, 8, 9",
+      "takeaway_en": "Each number tells exactly how many items there are.",
+      "takeaway_as": "প্ৰতিটো সংখ্যাই বস্তুৰ প্ৰকৃত পৰিমাণ বুজায়।"
+    },
+    "stage4_trap": {
+      "trap_title_en": "Double Counting",
+      "trap_alert_en": "Pointing at one object twice gives a wrong count.",
+      "trap_alert_as": "এটা বস্তুক দুবাৰ গণিলে মুঠ সংখ্যা ভুল হয়।"
+    },
+    "stage5_quiz": [
+      {
+        "q_en": "Count these dots: • • •. How many?",
+        "q_as": "এই বিন্দুকেইটা গণনা কৰক: • • •। কেইটা আছে?",
+        "options": ["3", "2", "4"],
+        "answer_index": 0
+      },
+      {
+        "q_en": "Which number comes directly after 6?",
+        "q_as": "৬ ৰ ঠিক পাছত কোনটো সংখ্যা আহে?",
+        "options": ["5", "7", "8"],
+        "answer_index": 1
+      },
+      {
+        "q_en": "If you count 5 toy cars, how many cars are there?",
+        "q_as": "যদি আপুনি ৫ খন পুতলা গাড়ী গণে, তেন্তে তাত কেইখন গাড়ী আছে?",
+        "options": ["4", "6", "5"],
+        "answer_index": 2
+      }
+    ]
+  },
+  "c1_shp": {
+    "id": "c1_shp",
+    "class_level": "Class I",
+    "title": "2D and 3D Shapes",
+    "stage1_hook": {
+      "en": "Can you roll a flat square? Guess why not!",
+      "as": "আপুনি এটা চেপেটা বৰ্গক ঘূৰাব পাৰেনে? কিয় নোৱাৰে অনুমান কৰক!"
+    },
+    "stage2_sandbox": {
+      "type": "grid_or_slider",
+      "min": 1,
+      "max": 6,
+      "default": 4,
+      "instruction_en": "Count the flat sides of a square shape.",
+      "as": "এটা বৰ্গ আকৃতিৰ চেপেটা কাষবোৰ গণনা কৰক।"
+    },
+    "stage3_discovery": {
+      "formula_latex": "\\text{Square} = \\text{4 Equal Sides}",
+      "takeaway_en": "Flat shapes are 2D, solid shapes are 3D.",
+      "takeaway_as": "চেপেটা আকৃতিবোৰ 2D, কঠিন আকৃতিবোৰ 3D।"
+    },
+    "stage4_trap": {
+      "trap_title_en": "Square vs Cube",
+      "trap_alert_en": "A square is flat like paper, a cube is solid like a box.",
+      "trap_alert_as": "বৰ্গ কাগজৰ দৰে চেপেটা, কিউব বাকচৰ দৰে কঠিন।"
+    },
+    "stage5_quiz": [
+      {
+        "q_en": "Which shape has 3 corners?",
+        "q_as": "কোনটো আকৃতিৰ ৩ টা কোণ আছে?",
+        "options": ["Square", "Triangle", "Circle"],
+        "answer_index": 1
+      },
+      {
+        "q_en": "Is a ball a 2D or 3D shape?",
+        "q_as": "বল এটা 2D নে 3D আকৃতি?",
+        "options": ["2D Shape", "3D Shape", "Neither"],
+        "answer_index": 1
+      },
+      {
+        "q_en": "Which of these is completely flat?",
+        "q_as": "ইয়াৰ ভিতৰত কোনটো একেবাৰে চেপেটা?",
+        "options": ["Brick", "Ball", "Drawing of a star"],
+        "answer_index": 2
+      }
+    ]
+  },
+  "c2_pv": {
+    "id": "c2_pv",
+    "class_level": "Class II",
+    "title": "Place Value (Tens and Ones)",
+    "stage1_hook": {
+      "en": "How many blocks make one big bundle of ten?",
+      "as": "দহটা বস্তুৰ এটা মুঠি হ'বলৈ কিমানটা ব্লাক লাগে?"
+    },
+    "stage2_sandbox": {
+      "type": "grid_or_slider",
+      "min": 1,
+      "max": 10,
+      "default": 4,
+      "instruction_en": "Slide to group blocks into tens and ones.",
+      "instruction_as": "ব্লাকবোৰ দহ আৰু এক হিচাপে গোট কৰিবলৈ স্লাইড কৰক।"
+    },
+    "stage3_discovery": {
+      "formula_latex": "\\text{Number} = (\\text{Tens} \\times 10) + (\\text{Ones} \\times 1)",
+      "takeaway_en": "Digits change value based on their place.",
+      "takeaway_as": "অংকবোৰৰ স্থানৰ ওপৰত ভিত্তি কৰি মান সলনি হয়।"
+    },
+    "stage4_trap": {
+      "trap_title_en": "Digit Reversal Trap",
+      "trap_alert_en": "Do not confuse tens place with ones place!",
+      "trap_alert_as": "দহৰ স্থান আৰু একৰ স্থান সালসলনি নকৰিব!"
+    },
+    "stage5_quiz": [
+      {
+        "q_en": "What is 3 tens and 5 ones?",
+        "q_as": "3 টা দহ আৰু 5 টা এক মিলি কিমান হয়?",
+        "options": ["35", "53", "305"],
+        "answer_index": 0
+      },
+      {
+        "q_en": "In the number 42, which digit is in the tens place?",
+        "q_as": "42 সংখ্যাটোত দহৰ স্থানত কোনটো অংক আছে?",
+        "options": ["2", "4", "42"],
+        "answer_index": 1
+      },
+      {
+        "q_en": "Which of these equals 7 tens and 0 ones?",
+        "q_as": "তলৰ কোনটোৱে 7 টা দহ আৰু 0 টা এক বুজায়?",
+        "options": ["7", "70", "07"],
+        "answer_index": 1
+      }
+    ]
+  },
+  "c8_sq": {
+    "id": "c8_sq",
+    "class_level": "Class VIII",
+    "title": "Squares & Square Roots",
+    "stage1_hook": {
+      "en": "What is the area of a 4 by 4 grid?",
+      "as": "4 বাই 4 গ্ৰিড এটাৰ কালি কিমান?"
+    },
+    "stage2_sandbox": {
+      "type": "grid_or_slider",
+      "min": 1,
+      "max": 10,
+      "default": 4,
+      "instruction_en": "Drag to change the side and see the area.",
+      "instruction_as": "কাষৰ দৈৰ্ঘ্য সলনি কৰিবলৈ টানক।"
+    },
+    "stage3_discovery": {
+      "formula_latex": "n \\times n = n^2",
+      "takeaway_en": "Multiplying a number by itself gives its square.",
+      "takeaway_as": "এটা সংখ্যাকে সেই সংখ্যাটোৰে পূৰণ কৰিলে বৰ্গ পোৱা যায়।"
+    },
+    "stage4_trap": {
+      "trap_title_en": "Multiplying by 2",
+      "trap_alert_en": "Students often multiply by 2 instead of squaring the number.",
+      "trap_alert_as": "ছাত্ৰ-ছাত্ৰীয়ে প্ৰায়ে বৰ্গ কৰাৰ সলনি 2 ৰে পূৰণ কৰে।"
+    },
+    "stage5_quiz": [
+      {
+        "q_en": "What is the square of 5?",
+        "q_as": "5 ৰ বৰ্গ কিমান?",
+        "options": ["10", "25", "50"],
+        "answer_index": 1
+      },
+      {
+        "q_en": "What is the square root of 81?",
+        "q_as": "81 ৰ বৰ্গমূল কিমান?",
+        "options": ["8", "9", "18"],
+        "answer_index": 1
+      },
+      {
+        "q_en": "Which of these is a square number?",
+        "q_as": "তলৰ কোনটো এটা বৰ্গ সংখ্যা?",
+        "options": ["12", "18", "16"],
+        "answer_index": 2
+      }
+    ]
+  }
+}
