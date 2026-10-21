@@ -500,12 +500,27 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         }
       });
+            function renderClassSelector() {
+        const select = document.getElementById('classSelectDropdown');
+        if (!select || !classesData) return;
+        select.innerHTML = '';
+        classesData.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name ? (c.name[currentLang] || c.name.en || c.name) : c.id;
+          if (c.id === currentClassId) opt.selected = true;
+          select.appendChild(opt);
+        });
+            }
+      
 
       // Class Dropdown Change
       document.getElementById('classSelectDropdown').onchange = (e) => {
         currentClassId = e.target.value;
         renderChapterCards();
       };
+      renderClassSelector();
+      
 
       // Search Handler
       document.getElementById('conceptSearchInput').oninput = handleUniversalSearch;
