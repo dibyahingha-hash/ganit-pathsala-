@@ -461,16 +461,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (langScreen) langScreen.classList.remove('hidden');
 });
     
-  // First time or incomplete setup: show onboarding
-  if (onboardingPortal) onboardingPortal.classList.remove('hidden');
-  if (!savedLang && langScreen) {
-    langScreen.classList.remove('hidden');
-  } else if (!savedKey && typeof showKeyRedirectScreen === 'function') {
-    if (langScreen) langScreen.classList.add('hidden');
-    showKeyRedirectScreen();
-  }
-});
-    
+
 
     function setupUI() {
       // Language Selection in Modal
