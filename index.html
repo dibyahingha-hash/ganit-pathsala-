@@ -445,19 +445,22 @@ window.addEventListener('DOMContentLoaded', () => {
   const onboardingPortal = document.getElementById('onboardingPortal');
   const langScreen = document.getElementById('onboardingStepLang');
 
-  if (savedLang) {
-    currentLang = savedLang;
-    document.documentElement.lang = savedLang;
-  }
-
-  // Returning user: Language and Key exist -> skip onboarding straight to dashboard
-  if (savedLang && savedKey && savedKey.length >= 20) {
+  // If you already have your key from yesterday, launch straight into the app!
+  if (savedKey && savedKey.length >= 20) {
     apiKey = savedKey;
+    currentLang = savedLang || 'as';
+    document.documentElement.lang = currentLang;
+    if (typeof applyStaticTranslations === 'function') applyStaticTranslations();
     if (onboardingPortal) onboardingPortal.classList.add('hidden');
     bootDashboard();
     return;
   }
 
+  // Only show setup if there is no key saved at all
+  if (onboardingPortal) onboardingPortal.classList.remove('hidden');
+  if (langScreen) langScreen.classList.remove('hidden');
+});
+    
   // First time or incomplete setup: show onboarding
   if (onboardingPortal) onboardingPortal.classList.remove('hidden');
   if (!savedLang && langScreen) {
@@ -536,9 +539,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     function selectLang(lang) {
-  currentLang = lang;
+      currentLang = lang;
   localStorage.setItem('omnimath_lang', lang);
-  document.documentElement.lang = lang;
+      
+      
+       document.documentElement.lang = lang;
   if (typeof applyStaticTranslations === 'function') applyStaticTranslations();
 
   const savedKey = localStorage.getItem('omnimath_gemini_key');
@@ -559,6 +564,20 @@ window.addEventListener('DOMContentLoaded', () => {
 
 const setLanguage = selectLang;
     
+    function showKeyRedirectScreen() {
+  const pasteScreen = document.getElementById('onboardingStepKeyPaste');
+  const redirectScreen = document.getElementById('onboardingStepKeyRedirect');
+  if (pasteScreen) pasteScreen.classList.add('hidden');
+  if (redirectScreen) redirectScreen.classList.remove('hidden');
+
+  const title = document.getElementById('portalKeyTitle');
+  const desc = document.getElementById('portalKeyDesc');
+  const btn = document.getElementById('redirectBtnText');
+
+  if (title) title.innerText = t('portalKeyTitle');
+  if (desc) desc.innerText = t('portalKeyDesc');
+  if (btn) btn.innerText = t('redirectBtnText');
+    }
     
     function showKeyPasteScreen() {
       document.getElementById('onboardingStepKeyRedirect').classList.add('hidden');
