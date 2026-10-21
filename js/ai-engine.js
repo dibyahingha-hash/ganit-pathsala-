@@ -95,18 +95,80 @@ window.openWorkspaceForTopic = async function(topicTitle, standardLevel, mode) {
   const langPrompt = isAs
     ? "Respond completely in Assamese using formal mathematical terminology. Wrap all equations, expressions, and values in LaTeX ($...$ or $$...$$)."
     : "Respond completely in English with mathematical rigor. Wrap all equations and values in LaTeX ($...$ or $$...$$).";
+// Determine educational stage from standardLevel string
+const isPrimary = /class (i|ii|iii|iv|v)\b/i.test(standardLevel);
+const isMiddle = /class (vi|vii|viii)\b/i.test(standardLevel);
+const isHighSchool = /class (ix|x)\b/i.test(standardLevel);
+const isHigherSec = /class (xi|xii)\b/i.test(standardLevel);
+const isUniversity = /undergraduate|post-graduate|b\.sc|m\.sc/i.test(standardLevel);
+
+let stageInstruction = "";
+if (isPrimary) {
+  stageInstruction = `
+TARGET AUDIENCE: A young child (Age 5-10, Primary School).
+TONE: Playful, extremely simple, warm, visual.
+RULES:
+- DO NOT use college math, set theory symbols, cardinality notation, or complex words like 'discrete' or 'progression'.
+- Use bright emojis (🍎, ⭐, 🚗, 🎈, 🐶) to illustrate quantities.
+- Emphasize counting visually: show groupings with emojis.
+- Teach number names and simple actions.
+- Keep sentences short (5-8 words each).
+`;
+} else if (isMiddle) {
+  stageInstruction = `
+TARGET AUDIENCE: Middle school student (Age 11-14).
+TONE: Clear, conceptual, relatable with everyday examples (pocket money, sports scores, pizza slices).
+RULES: Introduce variables and negative numbers using concrete visual number-line analogies.
+`;
+} else if (isHighSchool || isHigherSec) {
+  stageInstruction = `
+TARGET AUDIENCE: High school / Senior secondary board exam student.
+TONE: Rigorous, focused on step-by-step algebraic derivations, formulas, standard theorems, and board exam accuracy.
+`;
+} else {
+  stageInstruction = `
+TARGET AUDIENCE: University / Research student (B.Sc. / M.Sc.).
+TONE: Pure mathematical rigor with formal definitions, lemmas, proofs, and vector/topological generalizations.
+`;
+}
 
   let prompt = "";
   if (mode === 'learn') {
-    prompt = `You are a universal master mathematics instructor. 
-Level/Standard: ${standardLevel}
+    if (isPrimary) {
+      prompt = `You are an elementary school math teacher teaching young children.
+Level: ${standardLevel}
 Topic: ${topicTitle}
 ${langPrompt}
+${stageInstruction}
+
+Generate a visual, friendly lesson formatted strictly in clean HTML:
+1. <div class="text-center p-4 bg-amber-50 rounded-2xl mb-4 border border-amber-200">
+     <div class="text-4xl mb-2">🍎 🍎 🍎</div>
+     <h3 class="text-xl font-black text-amber-950">Let's Count! / আহা গণনা কৰোঁ!</h3>
+     <p class="text-slate-700 text-sm mt-1">Simple friendly explanation using items the child recognizes.</p>
+   </div>
+2. <div class="grid grid-cols-3 gap-2 text-center mb-4">
+     <div class="p-3 bg-white border border-amber-200 rounded-xl shadow-sm"><span class="text-2xl font-black text-amber-800">1</span><div class="text-lg">⭐</div><div class="text-xs font-bold text-slate-600">One / এক</div></div>
+     <div class="p-3 bg-white border border-amber-200 rounded-xl shadow-sm"><span class="text-2xl font-black text-amber-800">2</span><div class="text-lg">⭐⭐</div><div class="text-xs font-bold text-slate-600">Two / দুই</div></div>
+     <div class="p-3 bg-white border border-amber-200 rounded-xl shadow-sm"><span class="text-2xl font-black text-amber-800">3</span><div class="text-lg">⭐⭐⭐</div><div class="text-xs font-bold text-slate-600">Three / তিনি</div></div>
+   </div>
+3. <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-sm text-emerald-900 font-semibold">
+     💡 Fun Fact or Quick Activity for the child!
+   </div>`;
+    } else {
+      prompt = `You are a master mathematics instructor.
+Level: ${standardLevel}
+Topic: ${topicTitle}
+${langPrompt}
+${stageInstruction}
+
 Structure your response strictly in HTML format (using Tailwind-friendly styles, without <html> or <body> tags):
-1. <div class="mb-4"><h4 class="font-bold text-amber-950 mb-1">Intuitive Concept / ধাৰণা:</h4><p class="text-slate-700 text-sm leading-relaxed">[Explain intuitively with real-life context suited precisely to this student's standard]</p></div>
+1. <div class="mb-4"><h4 class="font-bold text-amber-950 mb-1">Intuitive Concept / ধাৰণা:</h4><p class="text-slate-700 text-sm leading-relaxed">[Real-life context and intuition appropriate for this level]</p></div>
 2. <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 mb-4"><h4 class="font-bold text-amber-900 text-xs uppercase mb-2">Core Identity / Theorem:</h4><div class="text-center text-lg font-bold">[Key formula or theorem in display LaTeX $$...$$]</div></div>
-3. <div class="mb-4"><h4 class="font-bold text-amber-950 mb-1">Step-by-Step Breakdown:</h4><p class="text-slate-700 text-sm">[Detailed working/derivation]</p></div>`;
-  } else if (mode === 'play') {
+3. <div class="mb-4"><h4 class="font-bold text-amber-950 mb-1">Step-by-Step Breakdown:</h4><p class="text-slate-700 text-sm">[Detailed algebraic derivation or proof]</p></div>`;
+    }
+  }
+   else if (mode === 'play') {
     prompt = `You are a universal mathematics curriculum designer.
 Level/Standard: ${standardLevel}
 Topic: ${topicTitle}
