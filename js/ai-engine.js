@@ -102,7 +102,6 @@ window.handleUniversalSearchQuery = async function(query) {
     `;
   }
 };
-
 // ----------------------------------------------------
 // 3. WORKSPACE ENTRY POINT (ROUTER)
 // ----------------------------------------------------
@@ -117,29 +116,47 @@ window.openWorkspaceForTopic = async function(topicTitle, standardLevel, mode = 
   if (title) title.textContent = topicTitle;
   if (badge) badge.textContent = `${standardLevel} • ${mode.toUpperCase()}`;
 
-  // Find topic key in preloadedLessons
-  const lookupKey = topicId || Object.keys(preloadedLessons).find(k => 
-    preloadedLessons[k].title.toLowerCase() === topicTitle.toLowerCase()
-  );
+  // Normalize input string for comparison (removes symbols and spaces)
+  const cleanStr = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const targetClean = cleanStr(topicTitle);
 
-  // 1. Instant Static Retrieval
-  if (lookupKey && preloadedLessons[lookupKey]) {
-    render6StageLesson(preloadedLessons[lookupKey]);
+  // Flexible match across keys and titles
+  let matchedKey = null;
+
+  // Direct ID check
+  if (topicId && preloadedLessons[topicId]) {
+    matchedKey = topicId;
+  } else {
+    // Fuzzy title search inside lessons.json
+    matchedKey = Object.keys(preloadedLessons).find(k => {
+      const lesson = preloadedLessons[k];
+      const lessonTitleClean = cleanStr(lesson.title);
+      return targetClean.includes(lessonTitleClean) || lessonTitleClean.includes(targetClean);
+    });
+  }
+
+  // 1. Instant Static Retrieval (0ms)
+  if (matchedKey && preloadedLessons[matchedKey]) {
+    console.log("⚡ Zero-latency hit from lessons.json:", matchedKey);
+    render6StageLesson(preloadedLessons[matchedKey]);
     return;
   }
 
-  // 2. Instant LocalStorage Retrieval
-  const cached = localStorage.getItem(`lesson_${topicTitle}`);
+  // 2. Instant LocalStorage Retrieval (0ms)
+  const cached = localStorage.getItem(`lesson_${targetClean}`);
   if (cached) {
     try {
+      console.log("⚡ Hit from localStorage cache");
       render6StageLesson(JSON.parse(cached));
       return;
     } catch(e) {}
   }
 
-  // 3. On-Demand Dynamic Generator
+  // 3. Dynamic Structured Fallback (Only if not found in preloaded JSON)
+  console.log("Not found in preloaded lessons, fetching dynamically...");
   fetchDynamicStructuredLesson(topicTitle, standardLevel);
 };
+
 
 // ----------------------------------------------------
 // 4. ON-DEMAND STRUCTURED GENERATOR
