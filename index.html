@@ -169,15 +169,17 @@
         </p>
 
         <div class="grid grid-cols-2 gap-3">
-          <button id="chooseLangAsBtn" class="p-4 rounded-2xl border-2 border-amber-400 bg-amber-50 hover:bg-amber-100 font-black text-amber-950 transition transform active:scale-95 flex flex-col items-center gap-1 shadow-sm">
+          <button id="chooseLangAsBtn" onclick="selectLang('as')" class="p-4 rounded-2xl border-2 border-amber-400 bg-amber-50 hover:bg-amber-100 font-black text-amber-950 transition transform active:scale-95 flex flex-col items-center gap-1 shadow-sm">
             <span class="text-2xl">অ</span>
+
             <span class="text-base font-bold">অসমীয়া</span>
           </button>
 
-          <button id="chooseLangEnBtn" class="p-4 rounded-2xl border-2 border-slate-300 bg-slate-50 hover:bg-slate-100 font-black text-slate-900 transition transform active:scale-95 flex flex-col items-center gap-1 shadow-sm">
-            <span class="text-2xl">En</span>
-            <span class="text-base font-bold">English</span>
-          </button>
+         <button id="chooseLangEnBtn" onclick="selectLang('en')" class="p-4 rounded-2xl border-2 border-slate-300 bg-slate-50 hover:bg-slate-100 font-black text-slate-800 transition transform active:scale-95 flex flex-col items-center gap-1 shadow-sm">
+    <span class="text-2xl font-bold">En</span>
+    <span class="text-base font-bold">English</span>
+         </button>
+          
         </div>
       </div>
 
@@ -435,20 +437,37 @@
       if (currentLang === 'en') return num.toString();
       return num.toString().replace(/\d/g, d => asDigits[d]);
     }
+window.addEventListener('DOMContentLoaded', () => {
+  setupUI();
 
-    // Force Open Key Gateway if key is not verified
-    window.addEventListener('DOMContentLoaded', () => {
-      setupUI();
+  const savedLang = localStorage.getItem('omnimath_lang');
+  const savedKey = localStorage.getItem('omnimath_gemini_key');
+  const onboardingPortal = document.getElementById('onboardingPortal');
+  const langScreen = document.getElementById('onboardingStepLang');
 
-      if (!apiKey || apiKey.length < 20) {
+  if (savedLang) {
+    currentLang = savedLang;
+    document.documentElement.lang = savedLang;
+  }
 
-        document.getElementById('onboardingPortal').classList.remove('hidden');
-        document.getElementById('onboardingStepLang').classList.remove('hidden');
-      } else {
-        document.getElementById('onboardingPortal').classList.add('hidden');
-        bootDashboard();
-      }
-    });
+  // Returning user: Language and Key exist -> skip onboarding straight to dashboard
+  if (savedLang && savedKey && savedKey.length >= 20) {
+    apiKey = savedKey;
+    if (onboardingPortal) onboardingPortal.classList.add('hidden');
+    bootDashboard();
+    return;
+  }
+
+  // First time or incomplete setup: show onboarding
+  if (onboardingPortal) onboardingPortal.classList.remove('hidden');
+  if (!savedLang && langScreen) {
+    langScreen.classList.remove('hidden');
+  } else if (!savedKey && typeof showKeyRedirectScreen === 'function') {
+    if (langScreen) langScreen.classList.add('hidden');
+    showKeyRedirectScreen();
+  }
+});
+    
 
     function setupUI() {
       // Language Selection in Modal
@@ -517,65 +536,29 @@
     }
 
     function selectLang(lang) {
-      currentLang = lang;
-      localStorage.setItem('omnimath_lang', lang);
-      document.documentElement.lang = lang;
-      applyStaticTranslations();
-
-      if (!apiKey || apiKey.length < 20) {
-        
-        
-        document.getElementById('onboardingStepLang').classList.add('hidden');
-        showKeyRedirectScreen();
-      }
-    }
-
-    function showKeyRedirectScreen() {
-      document.getElementById('onboardingStepKeyPaste').classList.add('hidden');
-      document.getElementById('onboardingStepKeyRedirect').classList.remove('hidden');
-
-      document.getElementById('portalKeyTitle').innerText = t('portalKeyTitle');
-      document.getElementById('portalKeyDesc').innerText = t('portalKeyDesc');
-      document.getElementById('redirectBtnText').innerText = t('redirectBtnText');
-    }
-function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('omnimath_lang', lang);
   document.documentElement.lang = lang;
   if (typeof applyStaticTranslations === 'function') applyStaticTranslations();
-  
-  const langPortal = document.getElementById('langSelectionPortal') || document.getElementById('onboardingStepLang');
-  if (langPortal) langPortal.classList.add('hidden');
 
   const savedKey = localStorage.getItem('omnimath_gemini_key');
+  const onboardingPortal = document.getElementById('onboardingPortal');
+  const langScreen = document.getElementById('onboardingStepLang');
+
   if (savedKey && savedKey.length >= 20) {
     apiKey = savedKey;
+    if (onboardingPortal) onboardingPortal.classList.add('hidden');
     bootDashboard();
   } else {
-    const keyPortal = document.getElementById('onboardingPortal');
-    if (keyPortal) keyPortal.classList.remove('hidden');
-    if (typeof showKeyRedirectScreen === 'function') showKeyRedirectScreen();
+    if (langScreen) langScreen.classList.add('hidden');
+    if (typeof showKeyRedirectScreen === 'function') {
+      showKeyRedirectScreen();
+    }
   }
 }
 
-// Make selectLang an alias so existing buttons don't break
-const selectLang = setLanguage;
+const setLanguage = selectLang;
     
-  currentLang = lang;
-  localStorage.setItem('omnimath_lang', lang);
-  
-  const langPortal = document.getElementById('langSelectionPortal');
-  if (langPortal) langPortal.classList.add('hidden');
-
-  const savedKey = localStorage.getItem('omnimath_gemini_key');
-  if (savedKey) {
-    apiKey = savedKey;
-    bootDashboard();
-  } else {
-    const keyPortal = document.getElementById('onboardingPortal');
-    if (keyPortal) keyPortal.classList.remove('hidden');
-  }
-}
     
     function showKeyPasteScreen() {
       document.getElementById('onboardingStepKeyRedirect').classList.add('hidden');
@@ -963,31 +946,7 @@ async function verifyAndLaunch() {
         btn.disabled = false;
       }
     }
-    window.addEventListener('DOMContentLoaded', () => {
-  const savedLang = localStorage.getItem('omnimath_lang');
-  const savedKey = localStorage.getItem('omnimath_gemini_key');
-
-  if (savedLang) {
-    currentLang = savedLang;
-    document.documentElement.lang = savedLang;
-  }
-
-  if (savedKey && savedKey.length >= 20) {
-    apiKey = savedKey;
-    if (savedLang) {
-      bootDashboard();
-      return;
-    }
-  }
-
-  const langPortal = document.getElementById('langSelectionPortal') || document.getElementById('onboardingStepLang');
-  if (!savedLang && langPortal) {
-    langPortal.classList.remove('hidden');
-  } else if (!savedKey) {
-    const keyPortal = document.getElementById('onboardingPortal');
-    if (keyPortal) keyPortal.classList.remove('hidden');
-  }
-});
+    
     
   </script>
 </body>
