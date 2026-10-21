@@ -538,7 +538,45 @@
       document.getElementById('portalKeyDesc').innerText = t('portalKeyDesc');
       document.getElementById('redirectBtnText').innerText = t('redirectBtnText');
     }
+function setLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('omnimath_lang', lang);
+  document.documentElement.lang = lang;
+  if (typeof applyStaticTranslations === 'function') applyStaticTranslations();
+  
+  const langPortal = document.getElementById('langSelectionPortal') || document.getElementById('onboardingStepLang');
+  if (langPortal) langPortal.classList.add('hidden');
 
+  const savedKey = localStorage.getItem('omnimath_gemini_key');
+  if (savedKey && savedKey.length >= 20) {
+    apiKey = savedKey;
+    bootDashboard();
+  } else {
+    const keyPortal = document.getElementById('onboardingPortal');
+    if (keyPortal) keyPortal.classList.remove('hidden');
+    if (typeof showKeyRedirectScreen === 'function') showKeyRedirectScreen();
+  }
+}
+
+// Make selectLang an alias so existing buttons don't break
+const selectLang = setLanguage;
+    
+  currentLang = lang;
+  localStorage.setItem('omnimath_lang', lang);
+  
+  const langPortal = document.getElementById('langSelectionPortal');
+  if (langPortal) langPortal.classList.add('hidden');
+
+  const savedKey = localStorage.getItem('omnimath_gemini_key');
+  if (savedKey) {
+    apiKey = savedKey;
+    bootDashboard();
+  } else {
+    const keyPortal = document.getElementById('onboardingPortal');
+    if (keyPortal) keyPortal.classList.remove('hidden');
+  }
+}
+    
     function showKeyPasteScreen() {
       document.getElementById('onboardingStepKeyRedirect').classList.add('hidden');
       document.getElementById('onboardingStepKeyPaste').classList.remove('hidden');
@@ -626,10 +664,24 @@ async function verifyAndLaunch() {
     }
 
     function bootDashboard() {
-      applyStaticTranslations();
-      populateClassDropdown();
-      renderChapterCards();
+  if (typeof classesData === 'undefined' || !Array.isArray(classesData) || classesData.length === 0) {
+    console.error("classesData is missing or not loaded!");
+    return;
+  }
+
+  const langPortal = document.getElementById('langSelectionPortal') || document.getElementById('onboardingStepLang');
+  const keyPortal = document.getElementById('onboardingPortal');
+  const appContainer = document.getElementById('appContainer') || document.getElementById('mainDashboard');
+
+  if (langPortal) langPortal.classList.add('hidden');
+  if (keyPortal) keyPortal.classList.add('hidden');
+  if (appContainer) appContainer.classList.remove('hidden');
+
+  if (typeof applyStaticTranslations === 'function') applyStaticTranslations();
+  if (typeof populateClassDropdown === 'function') populateClassDropdown();
+  if (typeof renderChapterCards === 'function') renderChapterCards();
     }
+    
 
     function populateClassDropdown() {
       const dd = document.getElementById('classSelectDropdown');
@@ -911,6 +963,32 @@ async function verifyAndLaunch() {
         btn.disabled = false;
       }
     }
+    window.addEventListener('DOMContentLoaded', () => {
+  const savedLang = localStorage.getItem('omnimath_lang');
+  const savedKey = localStorage.getItem('omnimath_gemini_key');
+
+  if (savedLang) {
+    currentLang = savedLang;
+    document.documentElement.lang = savedLang;
+  }
+
+  if (savedKey && savedKey.length >= 20) {
+    apiKey = savedKey;
+    if (savedLang) {
+      bootDashboard();
+      return;
+    }
+  }
+
+  const langPortal = document.getElementById('langSelectionPortal') || document.getElementById('onboardingStepLang');
+  if (!savedLang && langPortal) {
+    langPortal.classList.remove('hidden');
+  } else if (!savedKey) {
+    const keyPortal = document.getElementById('onboardingPortal');
+    if (keyPortal) keyPortal.classList.remove('hidden');
+  }
+});
+    
   </script>
 </body>
 </html>
