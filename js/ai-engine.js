@@ -2,6 +2,7 @@
 // GANIT PATHSHALA - AI & DYNAMIC PRACTICE / TEST ENGINE
 // ============================================================================
 
+window.activeTopicContext = { title: '', standard: '' };
 let currentPracticeProblem = null;
 let practiceStreak = 0;
 
@@ -11,7 +12,56 @@ let currentTestIndex = 0;
 let testScore = 0;
 
 // ----------------------------------------------------
-// 1. GEMINI API RUNNER (Dynamic AI Queries)
+// 1. WORKSPACE MODAL CONTROLLER & TAB SWITCHERS
+// ----------------------------------------------------
+window.openWorkspaceForTopic = function(title, standard) {
+  window.activeTopicContext = { title: title || '', standard: standard || '' };
+  
+  practiceStreak = 0;
+  testQuestions = [];
+  currentTestIndex = 0;
+  testScore = 0;
+
+  const modal = document.getElementById('topicWorkspaceModal') || document.getElementById('practiceArenaModal');
+  const titleEl = document.getElementById('modalTopicTitle');
+  const stdBadge = document.getElementById('modalTopicStandard');
+  const arenaBody = document.getElementById('arenaBody') || document.querySelector('.arena-container');
+
+  if (titleEl) titleEl.innerText = title;
+  if (stdBadge) stdBadge.innerText = standard;
+
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+
+  // Set default view to Practice tab
+  if (arenaBody) {
+    renderPracticeArena(arenaBody);
+  }
+};
+
+window.closeTopicWorkspace = function() {
+  const modal = document.getElementById('topicWorkspaceModal') || document.getElementById('practiceArenaModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+};
+
+window.switchWorkspaceTab = function(tabName) {
+  const arenaBody = document.getElementById('arenaBody') || document.querySelector('.arena-container');
+  if (!arenaBody) return;
+
+  if (tabName === 'practice') {
+    renderPracticeArena(arenaBody);
+  } else if (tabName === 'test') {
+    renderTestSetup(arenaBody);
+  }
+};
+
+// ----------------------------------------------------
+// 2. GEMINI API RUNNER
 // ----------------------------------------------------
 async function callGeminiDynamic(promptText, returnJson = false) {
   const apiKey = window.GEMINI_API_KEY || (typeof GEMINI_API_KEY !== 'undefined' ? GEMINI_API_KEY : '');
@@ -48,13 +98,12 @@ async function callGeminiDynamic(promptText, returnJson = false) {
 }
 
 // ----------------------------------------------------
-// 2. COMPREHENSIVE CURRICULUM-AWARE QUESTION GENERATOR
+// 3. CURRICULUM-AWARE QUESTION GENERATOR
 // ----------------------------------------------------
 function generateArithmeticProblem(topicTitle, standard) {
   const t = (topicTitle || '').toLowerCase();
   const rawStd = (standard || '').toLowerCase().trim();
 
-  // Accurate Grade Classification
   const isUndergrad = rawStd.includes('undergraduate') || rawStd.includes('b.sc') || rawStd.includes('b.tech') || rawStd.includes('degree');
   const isClass11or12 = rawStd.includes('class xi') || rawStd.includes('class xii') || rawStd.includes('11') || rawStd.includes('12');
   const isClass9or10 = rawStd.includes('class ix') || rawStd.includes('class x') || rawStd.includes('9') || rawStd.includes('10');
@@ -62,7 +111,6 @@ function generateArithmeticProblem(topicTitle, standard) {
                          rawStd.includes('class 6') || rawStd.includes('class 7') || rawStd.includes('class 8');
   const isUpperPrimary = rawStd.includes('class iii') || rawStd.includes('class iv') || rawStd.includes('class v') ||
                          rawStd.includes('class 3') || rawStd.includes('class 4') || rawStd.includes('class 5');
-  const isClass1 = rawStd === 'class i' || rawStd.includes('class 1') || rawStd === '1';
 
   let qText = '';
   let correct = 0;
@@ -73,17 +121,15 @@ function generateArithmeticProblem(topicTitle, standard) {
   let op = '';
   let explicitDistractors = null;
 
-  // --------------------------------------------------
-  // TIER 1: UNDERGRADUATE / UNIVERSITY
-  // --------------------------------------------------
+  // TIER 1: UNDERGRADUATE
   if (isUndergrad) {
-    if (t.includes('real analysis') || t.includes('sequence') || t.includes('series') || t.includes('riemann') || t.includes('cauchy')) {
+    if (t.includes('real analysis') || t.includes('sequence') || t.includes('series') || t.includes('cauchy')) {
       const p = Math.floor(Math.random() * 3) + 2;
       correct = 0;
       qText = `Evaluate the limit as n → ∞ for sequence aₙ = 1 / n^${p}:`;
       hint = `As n grows infinitely large, 1/n^${p} converges to 0.`;
       explicitDistractors = [0, 1, '∞', p];
-    } else if (t.includes('matrix') || t.includes('linear algebra') || t.includes('determinant') || t.includes('eigen')) {
+    } else if (t.includes('matrix') || t.includes('linear algebra') || t.includes('determinant')) {
       const a = Math.floor(Math.random() * 3) + 2;
       const d = Math.floor(Math.random() * 3) + 2;
       const b = 1;
@@ -91,22 +137,11 @@ function generateArithmeticProblem(topicTitle, standard) {
       correct = (a * d) - (b * c);
       qText = `For matrix [[${a}, ${b}], [${c}, ${d}]], calculate determinant |A|:`;
       hint = `|A| = (${a} × ${d}) - (${b} × ${c}) = ${correct}.`;
-    } else if (t.includes('differential') || t.includes('ode') || t.includes('pde')) {
-      correct = 2;
-      qText = `State the order of the ODE: (d²y/dx²) + 4(dy/dx)³ + y = 0:`;
-      hint = `Order is determined by the highest derivative present (d²y/dx² = order 2).`;
-      explicitDistractors = [1, 2, 3, 4];
     } else if (t.includes('group') || t.includes('ring') || t.includes('field') || t.includes('algebra')) {
       correct = 0;
       qText = `In the additive group of integers (ℤ, +), what is the identity element?`;
       hint = `For any integer a, a + 0 = a. The identity is 0.`;
       explicitDistractors = [0, 1, -1, 'None'];
-    } else if (t.includes('vector') || t.includes('curl') || t.includes('gradient')) {
-      const x = Math.floor(Math.random() * 3) + 1;
-      const y = Math.floor(Math.random() * 3) + 1;
-      correct = (2 * x) + (2 * y);
-      qText = `For f(x, y) = x² + y², find sum of gradient components ∇f at (${x}, ${y}):`;
-      hint = `∇f = (2x, 2y). Sum = 2(${x}) + 2(${y}) = ${correct}.`;
     } else {
       const k = Math.floor(Math.random() * 3) + 2;
       correct = k * 2;
@@ -115,149 +150,81 @@ function generateArithmeticProblem(topicTitle, standard) {
     }
   }
 
-  // --------------------------------------------------
-  // TIER 2: HIGHER SECONDARY (Class 11 & 12)
-  // --------------------------------------------------
+  // TIER 2: CLASS 11 & 12
   else if (isClass11or12) {
     if (t.includes('calculus') || t.includes('derivative') || t.includes('differentiat')) {
       const p = Math.floor(Math.random() * 3) + 2;
-      const xVal = 2;
-      correct = p * Math.pow(xVal, p - 1);
-      qText = `If f(x) = x^${p}, evaluate derivative f'(${xVal}):`;
+      correct = p * Math.pow(2, p - 1);
+      qText = `If f(x) = x^${p}, evaluate derivative f'(2):`;
       hint = `Power rule: d/dx(x^${p}) = ${p}x^${p - 1}. At x=2, it equals ${correct}.`;
-    } else if (t.includes('limit') || t.includes('continuity')) {
+    } else if (t.includes('limit')) {
       const a = Math.floor(Math.random() * 4) + 2;
       correct = 2 * a;
       qText = `Evaluate: lim (x → ${a}) [ (x² - ${a * a}) / (x - ${a}) ]:`;
       hint = `Factor as (x - ${a})(x + ${a}) / (x - ${a}) = x + ${a}. At x = ${a}, answer is ${2 * a}.`;
-    } else if (t.includes('complex')) {
+    } else {
       correct = -1;
-      qText = `Evaluate the imaginary unit power: i² = ?`;
+      qText = `Evaluate imaginary unit: i² = ?`;
       hint = `By definition of imaginary unit, i = √(-1), so i² = -1.`;
       explicitDistractors = [-1, 1, 0, 'i'];
-    } else {
-      const a = Math.floor(Math.random() * 3) + 2;
-      correct = a * a;
-      qText = `If a 2D vector is (${a}, 0), what is its magnitude squared?`;
-      hint = `Magnitude squared = (${a})² + 0² = ${correct}.`;
     }
   }
 
-  // --------------------------------------------------
-  // TIER 3: HIGH SCHOOL (Class 9 & 10)
-  // --------------------------------------------------
+  // TIER 3: CLASS 9 & 10
   else if (isClass9or10) {
     if (t.includes('triangle') || t.includes('similar') || t.includes('ত্ৰিভুজ')) {
-      const sideRatio = Math.floor(Math.random() * 3) + 2;
-      correct = sideRatio * sideRatio;
-      qText = `If the side ratio of two similar triangles is 1 : ${sideRatio}, what is their Area ratio?`;
-      hint = `Area ratio equals square of side ratio: 1² : ${sideRatio}² = 1 : ${correct}.`;
-    } else if (t.includes('surface') || t.includes('volume') || t.includes('area') || t.includes('আয়তন')) {
-      const factor = Math.floor(Math.random() * 2) + 2;
-      correct = Math.pow(factor, 3);
-      qText = `If each edge of a cube is multiplied by ${factor}, its volume increases by:`;
-      hint = `Volume scales cubically: (${factor})³ = ${correct} times.`;
-    } else if (t.includes('permutation') || t.includes('combination') || t.includes('বিন্যাস')) {
-      const n = Math.floor(Math.random() * 3) + 3;
-      const factorials = { 3: 6, 4: 24, 5: 120 };
-      correct = factorials[n];
-      qText = `Find the number of ways to arrange ${n} distinct items in a row (${n}!):`;
-      hint = `${n}! = ${Array.from({ length: n }, (_, i) => n - i).join(' × ')} = ${correct}.`;
-    } else if (t.includes('quadratic') || t.includes('সমীকৰণ')) {
-      const r1 = Math.floor(Math.random() * 4) + 1;
-      const r2 = Math.floor(Math.random() * 4) + 2;
-      const sum = r1 + r2;
-      const prod = r1 * r2;
-      correct = prod;
-      qText = `For quadratic x² - ${sum}x + ${prod} = 0, find product of roots (α·β):`;
-      hint = `For x² - (sum)x + (product) = 0, product of roots c/a = ${prod}.`;
+      const ratio = Math.floor(Math.random() * 3) + 2;
+      correct = ratio * ratio;
+      qText = `If the side ratio of two similar triangles is 1 : ${ratio}, what is their Area ratio?`;
+      hint = `Area ratio equals square of side ratio: 1² : ${ratio}² = 1 : ${correct}.`;
     } else if (t.includes('trig') || t.includes('ত্রিকোণমিতি')) {
       correct = 1;
-      qText = `Evaluate standard identity: sin²(45°) + cos²(45°) = ?`;
+      qText = `Evaluate identity: sin²(45°) + cos²(45°) = ?`;
       hint = `Pythagorean identity sin²θ + cos²θ = 1 for any angle.`;
       explicitDistractors = [1, 0, 0.5, 2];
     } else if (t.includes('circle') || t.includes('বৃত্ত') || t.includes('tangent')) {
       correct = 90;
       qText = `Angle between a tangent and the radius at the point of contact is:`;
-      hint = `The tangent at any point of a circle is perpendicular (90°) to the radius.`;
+      hint = `The tangent to a circle is perpendicular (90°) to the radius.`;
       explicitDistractors = [90, 45, 60, 180];
-    } else if (t.includes('coordinate') || t.includes('line') || t.includes('geometry') || t.includes('জ্যামিতি')) {
-      const m = Math.floor(Math.random() * 3) + 2;
-      const c = Math.floor(Math.random() * 4) + 1;
-      const x = 3;
-      correct = (m * x) + c;
-      qText = `For line y = ${m}x + ${c}, evaluate y when x = ${x}:`;
-      hint = `y = (${m} × ${x}) + ${c} = ${correct}.`;
-    } else if (t.includes('probab') || t.includes('সম্ভাৱিতা')) {
-      correct = 3;
-      qText = `A standard 6-sided die is rolled. How many outcomes are prime numbers (2, 3, 5)?`;
-      hint = `The primes are 2, 3, and 5 (total 3 outcomes).`;
-      explicitDistractors = [3, 2, 4, 1];
     } else {
-      const a = Math.floor(Math.random() * 4) + 3;
-      const b = 2;
-      correct = (a * a) - (b * b);
-      qText = `Evaluate (${a} + ${b})(${a} - ${b}) using identity a² - b²:`;
-      hint = `(${a})² - (${b})² = ${a * a} - ${b * b} = ${correct}.`;
+      const r1 = Math.floor(Math.random() * 3) + 2;
+      const r2 = Math.floor(Math.random() * 3) + 3;
+      correct = r1 * r2;
+      qText = `For quadratic x² - ${r1 + r2}x + ${r1 * r2} = 0, find product of roots (α·β):`;
+      hint = `For x² - (sum)x + (product) = 0, product of roots c/a = ${correct}.`;
     }
   }
 
-  // --------------------------------------------------
-  // TIER 4: MIDDLE SCHOOL (Class 6, 7, 8)
-  // --------------------------------------------------
+  // TIER 4: CLASS 6, 7 & 8
   else if (isMiddleSchool) {
-    if (t.includes('fraction') || t.includes('ভগ্নাংশ') || t.includes('decimal')) {
+    if (t.includes('fraction') || t.includes('ভগ্নাংশ') || t.includes('percent')) {
       correct = 75;
       qText = `Convert the fraction 3/4 into a percentage (%):`;
       hint = `(3 / 4) × 100% = 75%.`;
       explicitDistractors = [75, 25, 50, 80];
     } else if (t.includes('integer') || t.includes('অখণ্ড সংখ্যা') || t.includes('negative')) {
-      const a = Math.floor(Math.random() * 5) + 3;
+      const a = Math.floor(Math.random() * 5) + 2;
       const b = Math.floor(Math.random() * 5) + 8;
       correct = a - b;
       qText = `Calculate: ${a} - ${b} = ?`;
       hint = `Subtracting a larger number leaves a negative result: ${a} - ${b} = ${correct}.`;
-    } else if (t.includes('exponent') || t.includes('power') || t.includes('সূচক')) {
-      const p = Math.floor(Math.random() * 2) + 3;
-      correct = Math.pow(2, p);
-      qText = `Evaluate: 2^${p} = ?`;
-      hint = `Multiply 2 by itself ${p} times = ${correct}.`;
-    } else if (t.includes('perimeter') || t.includes('পৰিসীমা') || t.includes('area') || t.includes('কালি')) {
+    } else {
       const l = Math.floor(Math.random() * 5) + 4;
       const w = Math.floor(Math.random() * 3) + 2;
       correct = 2 * (l + w);
       qText = `Perimeter of a rectangle with length ${l} cm and width ${w} cm:`;
       hint = `Perimeter = 2 × (${l} + ${w}) = ${correct} cm.`;
-    } else if (t.includes('equation') || t.includes('সমীকৰণ') || t.includes('variable')) {
-      const ans = Math.floor(Math.random() * 6) + 2;
-      const add = Math.floor(Math.random() * 5) + 3;
-      correct = ans;
-      qText = `Solve for x: x + ${add} = ${ans + add}:`;
-      hint = `Subtract ${add} from both sides: x = ${correct}.`;
-    } else {
-      const a = Math.floor(Math.random() * 8) + 3;
-      const b = Math.floor(Math.random() * 7) + 3;
-      correct = a * b;
-      qText = `Evaluate: ${a} × ${b} = ?`;
-      hint = `Multiply ${a} by ${b}.`;
     }
   }
 
-  // --------------------------------------------------
-  // TIER 5: UPPER PRIMARY (Class 3, 4, 5)
-  // --------------------------------------------------
+  // TIER 5: CLASS 3, 4 & 5
   else if (isUpperPrimary) {
-    if (t.includes('divis') || t.includes('ভাগ') || t.includes('divide')) {
+    if (t.includes('divis') || t.includes('ভাগ')) {
       const div = Math.floor(Math.random() * 5) + 3;
       correct = Math.floor(Math.random() * 7) + 2;
       qText = `Solve: ${div * correct} ÷ ${div} = ?`;
-      hint = `How many times does ${div} fit into ${div * correct}? Answer is ${correct}.`;
-    } else if (t.includes('sub') || t.includes('বিয়োগ') || t.includes('minus')) {
-      const a = Math.floor(Math.random() * 40) + 25;
-      const b = Math.floor(Math.random() * 15) + 5;
-      correct = a - b;
-      qText = `Solve: ${a} - ${b} = ?`;
-      hint = `Subtract ${b} from ${a}.`;
+      hint = `Divide ${div * correct} by ${div} to get ${correct}.`;
     } else {
       const a = Math.floor(Math.random() * 7) + 3;
       const b = Math.floor(Math.random() * 6) + 3;
@@ -267,11 +234,8 @@ function generateArithmeticProblem(topicTitle, standard) {
     }
   }
 
-  // --------------------------------------------------
-  // TIER 6: FOUNDATIONAL PRIMARY (Class 1 & 2)
-  // --------------------------------------------------
+  // TIER 6: CLASS 1 & 2
   else {
-    // 1. 2D & 3D Shapes Identification
     if (t.includes('shape') || t.includes('আকৃতি') || t.includes('জ্যামিতি')) {
       const shapes = [
         { q: 'How many sides does a Triangle have? 🔺', ans: 3, opts: [3, 4, 0, 5], h: 'A triangle has 3 sides.' },
@@ -285,18 +249,14 @@ function generateArithmeticProblem(topicTitle, standard) {
       hint = pick.h;
       explicitDistractors = pick.opts;
       showTokens = false;
-    }
-    // 2. Patterns & Sequencing
-    else if (t.includes('pattern') || t.includes('sequence') || t.includes('ক্ৰম')) {
+    } else if (t.includes('pattern') || t.includes('sequence') || t.includes('ক্ৰম')) {
       const start = Math.floor(Math.random() * 4) + 1;
       const step = Math.random() > 0.5 ? 1 : 2;
       correct = start + (step * 3);
       qText = `Find the next number: ${start}, ${start + step}, ${start + step * 2}, ___ ?`;
       hint = `Notice the pattern: adding ${step} each time! Next is ${correct}.`;
       showTokens = false;
-    }
-    // 3. Counting & Number Sense
-    else if (t.includes('counting') || t.includes('sense') || t.includes('গণনা') || t.includes('(1-9)')) {
+    } else if (t.includes('counting') || t.includes('sense') || t.includes('গণনা') || t.includes('(1-9)')) {
       const count = Math.floor(Math.random() * 6) + 3;
       correct = count;
       qText = `How many apples are there in total?`;
@@ -305,9 +265,7 @@ function generateArithmeticProblem(topicTitle, standard) {
       op = '';
       hint = `Count them one by one: total is ${correct}!`;
       showTokens = true;
-    }
-    // 4. Subtraction
-    else if (t.includes('sub') || t.includes('বিয়োগ') || t.includes('minus')) {
+    } else if (t.includes('sub') || t.includes('বিয়োগ') || t.includes('minus')) {
       const a = Math.floor(Math.random() * 5) + 4;
       const b = Math.floor(Math.random() * 3) + 1;
       correct = a - b;
@@ -315,11 +273,9 @@ function generateArithmeticProblem(topicTitle, standard) {
       opA = a;
       opB = b;
       op = '-';
-      hint = `Start with ${a} apples, remove ${b}. You have ${correct} remaining.`;
+      hint = `Start with ${a} apples, take away ${b}. You have ${correct} remaining.`;
       showTokens = true;
-    }
-    // 5. Addition
-    else {
+    } else {
       const a = Math.floor(Math.random() * 5) + 1;
       const b = Math.floor(Math.random() * 4) + 1;
       correct = a + b;
@@ -332,7 +288,7 @@ function generateArithmeticProblem(topicTitle, standard) {
     }
   }
 
-  // Generate 4 randomized options
+  // Build 4 distinct choices
   let finalOptions = [];
   if (explicitDistractors && explicitDistractors.length === 4) {
     finalOptions = [...explicitDistractors].sort(() => Math.random() - 0.5);
@@ -359,7 +315,7 @@ function generateArithmeticProblem(topicTitle, standard) {
 }
 
 // ----------------------------------------------------
-// 3. PRIMARY VISUAL TOKEN RENDERER (Apples / Counters)
+// 4. PRIMARY TOKEN RENDERER (Counters)
 // ----------------------------------------------------
 function renderVisualTokens(problem) {
   if (!problem.showTokens || problem.operandA == null) return '';
@@ -377,7 +333,7 @@ function renderVisualTokens(problem) {
 }
 
 // ----------------------------------------------------
-// 4. PRACTICE ARENA UI & TAP HANDLERS
+// 5. PRACTICE ARENA UI & TAP HANDLERS
 // ----------------------------------------------------
 function renderPracticeArena(container) {
   const isAs = window.currentLang === 'as';
@@ -426,7 +382,7 @@ function renderPracticeArena(container) {
         </button>
       </div>
 
-                  <div id="practiceHintBox" class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-950 hidden"></div>
+      <div id="practiceHintBox" class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-950 hidden"></div>
     </div>
   `;
 }
@@ -443,7 +399,7 @@ window.handleOptionSelect = function(selectedVal, btnElement) {
     if (fb) fb.innerHTML = `<span class="text-emerald-600 text-base animate-bounce">🎉 ${isAs ? 'শুদ্ধ হৈছে! বহুত ভাল!' : 'Correct! Awesome job!'}</span>`;
 
     setTimeout(() => {
-      const arena = document.getElementById('arenaBody');
+      const arena = document.getElementById('arenaBody') || document.querySelector('.arena-container');
       if (arena) renderPracticeArena(arena);
     }, 1000);
   } else {
@@ -471,7 +427,7 @@ window.askPracticeHint = function() {
 };
 
 // ----------------------------------------------------
-// 5. TEST MODE ENGINE & HANDLERS
+// 6. TEST MODE ENGINE & HANDLERS
 // ----------------------------------------------------
 function renderTestSetup(container) {
   const isAs = window.currentLang === 'as';
@@ -574,7 +530,7 @@ window.handleTestSelect = function(val) {
 };
 
 // ----------------------------------------------------
-// 6. GURU CONCEPT Q&A HANDLER
+// 7. GURU CONCEPT Q&A HANDLER
 // ----------------------------------------------------
 window.handleGuruQuestion = async function() {
   const input = document.getElementById('guruConceptInput');
@@ -589,7 +545,6 @@ window.handleGuruQuestion = async function() {
 Question: "${q}".
 Explain the answer clearly and concisely in maximum 3 sentences. Answer in ${window.currentLang === 'as' ? 'Assamese' : 'English'}.`;
 
-    const reply = await callGeminiDynamic(prompt, false);
+  const reply = await callGeminiDynamic(prompt, false);
   respArea.innerHTML = `<div class="p-3 bg-amber-50 rounded-xl border border-amber-200 mt-2 font-medium">${reply || 'Unable to fetch response. Please try again.'}</div>`;
 };
-
