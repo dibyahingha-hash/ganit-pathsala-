@@ -426,8 +426,170 @@ function renderPracticeArena(container) {
         </button>
       </div>
 
-            <div id="practiceHintBox" class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-950 hidden"></div>
+                  <div id="practiceHintBox" class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-950 hidden"></div>
     </div>
   `;
 }
+
+window.handleOptionSelect = function(selectedVal, btnElement) {
+  const fb = document.getElementById('practiceFeedback');
+  const isAs = window.currentLang === 'as';
+
+  document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+
+  if (String(selectedVal) === String(currentPracticeProblem.correctAnswer)) {
+    practiceStreak++;
+    btnElement.className = 'option-btn py-4 bg-emerald-500 border-2 border-emerald-600 rounded-2xl text-xl font-black text-white shadow-md scale-105 transition';
+    if (fb) fb.innerHTML = `<span class="text-emerald-600 text-base animate-bounce">🎉 ${isAs ? 'শুদ্ধ হৈছে! বহুত ভাল!' : 'Correct! Awesome job!'}</span>`;
+
+    setTimeout(() => {
+      const arena = document.getElementById('arenaBody');
+      if (arena) renderPracticeArena(arena);
+    }, 1000);
+  } else {
+    practiceStreak = 0;
+    btnElement.className = 'option-btn py-4 bg-rose-500 border-2 border-rose-600 rounded-2xl text-xl font-black text-white shadow-sm transition';
+    if (fb) fb.innerHTML = `<span class="text-rose-600">${isAs ? 'ভুল হৈছে, পুনৰ চেষ্টা কৰক!' : 'Oops! Try again!'}</span>`;
+
+    const streakEl = document.getElementById('streakCount');
+    if (streakEl) streakEl.innerText = practiceStreak;
+
+    setTimeout(() => {
+      document.querySelectorAll('.option-btn').forEach(b => {
+        b.disabled = false;
+        b.className = 'option-btn py-4 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-xl font-black text-slate-800 shadow-sm active:scale-95 transition';
+      });
+    }, 600);
+  }
+};
+
+window.askPracticeHint = function() {
+  const hintBox = document.getElementById('practiceHintBox');
+  if (!hintBox || !currentPracticeProblem) return;
+  hintBox.classList.remove('hidden');
+  hintBox.innerHTML = `<div class="font-medium">${currentPracticeProblem.hint}</div>`;
+};
+
+// ----------------------------------------------------
+// 5. TEST MODE ENGINE & HANDLERS
+// ----------------------------------------------------
+function renderTestSetup(container) {
+  const isAs = window.currentLang === 'as';
+  container.innerHTML = `
+    <div class="p-5 text-center space-y-4">
+      <h3 class="text-base font-bold text-slate-800">${isAs ? 'পৰীক্ষাৰ প্ৰশ্ন সংখ্যা বাছক:' : 'Select Question Count'}</h3>
+      <p class="text-xs text-slate-500">${isAs ? 'কোনো ইংগিত পোৱা নাযাব। সময় নিৰ্ধাৰিত পৰীক্ষা।' : 'Strict timed test. No hints allowed.'}</p>
+      
+      <div class="grid grid-cols-3 gap-3 max-w-xs mx-auto pt-2">
+        <button onclick="startTestMode(10)" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">
+          10 Qs
+        </button>
+        <button onclick="startTestMode(15)" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">
+          15 Qs
+        </button>
+        <button onclick="startTestMode(20)" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">
+          20 Qs
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+window.startTestMode = function(count) {
+  testQuestions = [];
+  currentTestIndex = 0;
+  testScore = 0;
+
+  for (let i = 0; i < count; i++) {
+    testQuestions.push(generateArithmeticProblem(activeTopicContext.title, activeTopicContext.standard));
+  }
+
+  const container = document.getElementById('arenaBody') || document.querySelector('.arena-container');
+  if (container) renderTestQuestion(container);
+};
+
+function renderTestQuestion(container) {
+  const q = testQuestions[currentTestIndex];
+  const isAs = window.currentLang === 'as';
+  const total = testQuestions.length;
+
+  let optionsHtml = '<div class="grid grid-cols-2 gap-3 max-w-xs mx-auto my-4">';
+  q.options.forEach(opt => {
+    const displayOpt = window.toDigits ? window.toDigits(opt) : opt;
+    const optArg = typeof opt === 'string' ? `'${opt.replace(/'/g, "\\'")}'` : opt;
+    optionsHtml += `
+      <button onclick="handleTestSelect(${optArg})" class="option-btn py-4 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-xl font-black text-slate-800 shadow-sm active:scale-95 transition">
+        ${displayOpt}
+      </button>
+    `;
+  });
+  optionsHtml += '</div>';
+
+  container.innerHTML = `
+    <div class="space-y-4">
+      <div class="flex justify-between items-center bg-amber-50 px-4 py-2 rounded-xl border border-amber-200 text-xs font-bold text-amber-900">
+        <span>⏱️ ${isAs ? 'পৰীক্ষা চলি আছে' : 'Test Mode'}</span>
+        <span>${isAs ? 'প্ৰশ্ন' : 'Question'}: <strong>${currentTestIndex + 1} / ${total}</strong></span>
+      </div>
+
+      <div class="p-6 bg-white border-2 border-amber-300 rounded-3xl text-center shadow-sm">
+        <div class="text-2xl font-black text-slate-800 tracking-wider mb-4">
+          ${window.toDigits ? window.toDigits(q.questionText) : q.questionText}
+        </div>
+        ${optionsHtml}
+      </div>
+    </div>
+  `;
+}
+
+window.handleTestSelect = function(val) {
+  const q = testQuestions[currentTestIndex];
+  if (String(val) === String(q.correctAnswer)) {
+    testScore++;
+  }
+
+  currentTestIndex++;
+  const container = document.getElementById('arenaBody') || document.querySelector('.arena-container');
+
+  if (currentTestIndex < testQuestions.length) {
+    if (container) renderTestQuestion(container);
+  } else {
+    const isAs = window.currentLang === 'as';
+    const total = testQuestions.length;
+    if (container) {
+      container.innerHTML = `
+        <div class="p-6 bg-white border-2 border-amber-300 rounded-3xl text-center space-y-4">
+          <div class="text-4xl">🏆</div>
+          <h3 class="text-xl font-black text-slate-800">${isAs ? 'পৰীক্ষা সম্পূৰ্ণ হ’ল!' : 'Test Completed!'}</h3>
+          <p class="text-lg font-bold text-amber-900">
+            ${isAs ? 'আপোনাৰ নম্বৰ' : 'Your Score'}: <span class="text-2xl font-black text-emerald-600">${testScore}</span> / ${total}
+          </p>
+          <button onclick="renderTestSetup(document.getElementById('arenaBody') || document.querySelector('.arena-container'))" class="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition">
+            ${isAs ? 'পুনৰ পৰীক্ষা দিয়ক' : 'Take Another Test'}
+          </button>
+        </div>
+      `;
+    }
+  }
+};
+
+// ----------------------------------------------------
+// 6. GURU CONCEPT Q&A HANDLER
+// ----------------------------------------------------
+window.handleGuruQuestion = async function() {
+  const input = document.getElementById('guruConceptInput');
+  const respArea = document.getElementById('guruResponseArea');
+  if (!input || !respArea || !input.value.trim()) return;
+
+  respArea.classList.remove('hidden');
+  respArea.innerHTML = '<span class="animate-pulse text-amber-800 font-bold">Thinking...</span>';
+
+  const q = input.value.trim();
+  const prompt = `You are an encouraging math teacher. The student is learning "${activeTopicContext.title}" (${activeTopicContext.standard}).
+Question: "${q}".
+Explain the answer clearly and concisely in maximum 3 sentences. Answer in ${window.currentLang === 'as' ? 'Assamese' : 'English'}.`;
+
+    const reply = await callGeminiDynamic(prompt, false);
+  respArea.innerHTML = `<div class="p-3 bg-amber-50 rounded-xl border border-amber-200 mt-2 font-medium">${reply || 'Unable to fetch response. Please try again.'}</div>`;
+};
 
