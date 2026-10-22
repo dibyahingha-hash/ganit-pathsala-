@@ -1,7 +1,7 @@
-// ai-engine.js - Gemini Dynamic Intelligence Engine & Practice Arena
+// ai-engine.js - Gemini Dynamic Intelligence Engine & Gamified Tap-to-Play Arena
 
 // ----------------------------------------------------
-// 0. OFFLINE / PRELOADED LESSON STORE & STATE
+// 0. STATE MANAGEMENT & OFFLINE PRELOAD
 // ----------------------------------------------------
 let preloadedLessons = {};
 let activeTopicContext = {
@@ -14,7 +14,6 @@ let activeTopicContext = {
 let currentPracticeProblem = null;
 let practiceStreak = 0;
 
-// Fetch pre-compiled lessons on application start
 fetch('./data/lessons.json')
   .then(res => res.json())
   .then(data => {
@@ -29,11 +28,10 @@ fetch('./data/lessons.json')
 // 1. GEMINI API CALLER
 // ----------------------------------------------------
 async function callGeminiDynamic(promptText, isJson = false) {
-    const models = [
+  const models = [
     'gemini-3.8-flash',
     'gemini-3.5-flash-lite'
   ];
-  
 
   const apiKey = window.GEMINI_API_KEY || '';
   if (!apiKey) {
@@ -248,73 +246,136 @@ function renderTestSetup(container) {
 }
 
 // ----------------------------------------------------
-// 5. GRADE- & TOPIC-AWARE PRACTICE ENGINE
+// 5. GRADE- & TOPIC-AWARE TAP PROBLEM ENGINE
 // ----------------------------------------------------
 function generateArithmeticProblem(topicTitle, standard) {
   const t = (topicTitle || '').toLowerCase();
   const rawStd = (standard || '').toLowerCase().trim();
 
-  const isUndergrad = rawStd.includes('undergraduate') || rawStd.includes('b.sc') || rawStd.includes('b.tech');
-  const isHighSchool = rawStd.includes('class ix') || rawStd.includes('class x') || rawStd.includes('class xi') || rawStd.includes('class xii');
-  const isClass1or2 = rawStd.includes('class i') || rawStd.includes('class ii') || rawStd.includes('class 1') || rawStd.includes('class 2');
+  const isUndergrad = rawStd.includes('undergraduate') || rawStd.includes('b.sc') || rawStd.includes('b.tech') || rawStd.includes('degree');
+  const isHighSchool = rawStd.includes('class ix') || rawStd.includes('class x') || rawStd.includes('class xi') || rawStd.includes('class xii') || rawStd.includes('9') || rawStd.includes('10');
+  const isMiddleSchool = rawStd.includes('class vi') || rawStd.includes('class vii') || rawStd.includes('class viii') || rawStd.includes('class 6') || rawStd.includes('class 7') || rawStd.includes('class 8');
+  const isUpperPrimary = rawStd.includes('class iii') || rawStd.includes('class iv') || rawStd.includes('class v') || rawStd.includes('class 3') || rawStd.includes('class 4') || rawStd.includes('class 5');
+  const isClass1 = rawStd === 'class i' || rawStd.includes('class 1') || rawStd === '1';
+  const isClass2 = rawStd === 'class ii' || rawStd.includes('class 2') || rawStd === '2';
 
   let qText = '';
   let correct = 0;
   let hint = '';
+  let showTokens = false;
+  let opA = null;
+  let opB = null;
+  let op = '';
 
-  // 1. UNDERGRADUATE (Real Analysis, Calculus)
+  // 1. UNDERGRADUATE (Real Analysis, Calculus, Differential Equations)
   if (isUndergrad) {
-    if (t.includes('real analysis') || t.includes('sequence') || t.includes('series')) {
+    if (t.includes('real analysis') || t.includes('sequence') || t.includes('series') || t.includes('riemann')) {
       const n = Math.floor(Math.random() * 4) + 2;
       correct = (n * n) + 1;
       qText = `For sequence aₙ = n² + 1, find term a₍${n}₎:`;
-      hint = `Compute (${n} × ${n}) + 1.`;
+      hint = `Substitute n = ${n}: (${n} × ${n}) + 1 = ${correct}.`;
     } else {
       const c = Math.floor(Math.random() * 4) + 2;
       correct = c * 2;
       qText = `Evaluate ∫₀² (${c}x) dx:`;
-      hint = `Antiderivative is (${c}/2)x². Put x=2.`;
+      hint = `Antiderivative is (${c}/2)x². Evaluated at 2: (${c}/2) × 4 = ${correct}.`;
     }
   }
-  // 2. HIGH SCHOOL (Coordinate Geometry, Algebra)
+  // 2. HIGH SCHOOL (Class 9 - 10: Euclid, Geometry, Quadratics, Trig)
   else if (isHighSchool) {
-    if (t.includes('line') || t.includes('coordinate') || t.includes('geometry') || t.includes('জ্যামিতি')) {
+    if (t.includes('euclid') || t.includes('real number')) {
+      const base = Math.floor(Math.random() * 4) + 2;
+      const num1 = base * 3;
+      const num2 = base * 4;
+      correct = base;
+      qText = `Find HCF of ${num1} and ${num2}:`;
+      hint = `Find the highest common factor dividing both ${num1} and ${num2}.`;
+    } else if (t.includes('line') || t.includes('coordinate') || t.includes('geometry') || t.includes('জ্যামিতি')) {
       const m = Math.floor(Math.random() * 3) + 2;
       const c = Math.floor(Math.random() * 5) + 1;
       const x = Math.floor(Math.random() * 4) + 1;
       correct = (m * x) + c;
-      qText = `For line y = ${m}x + ${c}, find y at x = ${x}:`;
-      hint = `Multiply ${m} × ${x}, then add ${c}.`;
+      qText = `For line y = ${m}x + ${c}, find y when x = ${x}:`;
+      hint = `Compute (${m} × ${x}) + ${c} = ${correct}.`;
+    } else if (t.includes('trig') || t.includes('ত্রিকোণমিতি')) {
+      correct = 1;
+      qText = `Evaluate: sin²(45°) + cos²(45°) = ?`;
+      hint = `Pythagorean Identity states sin²θ + cos²θ is always 1.`;
     } else {
       const root = Math.floor(Math.random() * 5) + 2;
       correct = root;
       qText = `If x² = ${root * root}, find positive x:`;
-      hint = `Square root of ${root * root}.`;
+      hint = `Take positive square root: √${root * root} = ${root}.`;
     }
   }
-  // 3. PRIMARY (Class 1 & 2)
-  else if (isClass1or2) {
+  // 3. MIDDLE SCHOOL (Class 6 - 8: Ratios, Integers, Pre-Algebra)
+  else if (isMiddleSchool) {
+    if (t.includes('ratio') || t.includes('proportion')) {
+      const mult = Math.floor(Math.random() * 3) + 2;
+      correct = 4 * mult;
+      qText = `If 3 : 4 = ${3 * mult} : x, find x:`;
+      hint = `Multiply 4 by ${mult} = ${correct}.`;
+    } else if (t.includes('divis') || t.includes('ভাগ')) {
+      const div = Math.floor(Math.random() * 6) + 3;
+      correct = Math.floor(Math.random() * 7) + 2;
+      qText = `Evaluate: ${div * correct} ÷ ${div} = ?`;
+      hint = `Divide ${div * correct} by ${div}.`;
+    } else {
+      const a = Math.floor(Math.random() * 8) + 3;
+      const b = Math.floor(Math.random() * 7) + 3;
+      correct = a * b;
+      qText = `${a} × ${b} = ?`;
+      hint = `Multiply ${a} by ${b}.`;
+    }
+  }
+  // 4. UPPER PRIMARY (Class 3 - 5)
+  else if (isUpperPrimary) {
+    if (t.includes('subtract') || t.includes('বিয়োগ')) {
+      const a = Math.floor(Math.random() * 40) + 20;
+      const b = Math.floor(Math.random() * 15) + 4;
+      correct = a - b;
+      qText = `${a} - ${b} = ?`;
+      hint = `Take away ${b} from ${a}.`;
+    } else {
+      const a = Math.floor(Math.random() * 8) + 2;
+      const b = Math.floor(Math.random() * 8) + 2;
+      correct = a * b;
+      qText = `${a} × ${b} = ?`;
+      hint = `Recall the multiplication table for ${a}.`;
+    }
+  }
+  // 5. FOUNDATIONAL PRIMARY (Class 1 & 2)
+  else {
+    const isSub = t.includes('sub') || t.includes('বিয়োগ') || t.includes('minus');
     const a = Math.floor(Math.random() * 5) + 1;
     const b = Math.floor(Math.random() * 4) + 1;
-    correct = a + b;
-    qText = `${a} + ${b} = ?`;
-    hint = `Count ${a} items and add ${b} more.`;
-  }
-  // 4. ELEMENTARY / MIDDLE DEFAULT
-  else {
-    const a = Math.floor(Math.random() * 8) + 2;
-    const b = Math.floor(Math.random() * 7) + 2;
-    correct = a * b;
-    qText = `${a} × ${b} = ?`;
-    hint = `Multiply ${a} by ${b}.`;
+    showTokens = true;
+
+    if (isSub) {
+      const bigger = Math.max(a, b);
+      const smaller = Math.min(a, b);
+      correct = bigger - smaller;
+      qText = `${bigger} - ${smaller} = ?`;
+      opA = bigger;
+      opB = smaller;
+      op = '-';
+      hint = `Start with ${bigger} apples, remove ${smaller}.`;
+    } else {
+      correct = a + b;
+      qText = `${a} + ${b} = ?`;
+      opA = a;
+      opB = b;
+      op = '+';
+      hint = `Count ${a} red apples, then add ${b} green apples!`;
+    }
   }
 
-  // Create 3 plausible distractors + shuffle
+  // Generate 4 distinct options (1 correct + 3 smart distractors)
   const options = new Set([correct]);
   while (options.size < 4) {
-    const offset = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 1);
-    const fake = correct + offset;
-    if (fake >= 0) options.add(fake);
+    const delta = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 1);
+    const candidate = correct + delta;
+    if (candidate >= 0) options.add(candidate);
   }
   const shuffledOptions = Array.from(options).sort(() => Math.random() - 0.5);
 
@@ -322,21 +383,38 @@ function generateArithmeticProblem(topicTitle, standard) {
     questionText: qText,
     correctAnswer: correct,
     options: shuffledOptions,
+    operandA: opA,
+    operandB: opB,
+    operator: op,
+    showTokens: showTokens,
     hint: hint
   };
 }
 
 // ----------------------------------------------------
-// 6. PRACTICE ARENA UI RENDERING
+// 6. PRACTICE ARENA UI & TAP HANDLERS
 // ----------------------------------------------------
+function renderVisualTokens(problem) {
+  if (!problem.showTokens || !problem.operandA || !problem.operandB) return '';
+  let tokens = '';
+  for (let i = 0; i < problem.operandA; i++) {
+    tokens += '<span class="inline-block w-6 h-6 bg-amber-500 rounded-full text-white text-[10px] font-bold leading-6 text-center select-none shadow-xs">🍎</span>';
+  }
+  tokens += '<span class="font-black text-amber-800 mx-2 text-sm">' + problem.operator + '</span>';
+  for (let j = 0; j < problem.operandB; j++) {
+    tokens += '<span class="inline-block w-6 h-6 bg-emerald-500 rounded-full text-white text-[10px] font-bold leading-6 text-center select-none shadow-xs">🍏</span>';
+  }
+  return tokens;
+}
+
 function renderPracticeArena(container) {
   const isAs = window.currentLang === 'as';
   currentPracticeProblem = generateArithmeticProblem(activeTopicContext.title, activeTopicContext.standard);
 
   const displayQuestion = window.toDigits ? window.toDigits(currentPracticeProblem.questionText) : currentPracticeProblem.questionText;
 
-  // Render 4 large, tactile game choice buttons
-  let optionsHtml = '<div class="grid grid-cols-2 gap-3 max-w-xs mx-auto my-6">';
+  // Build 4 large tactile choice buttons
+  let optionsHtml = '<div class="grid grid-cols-2 gap-3 max-w-xs mx-auto my-5">';
   currentPracticeProblem.options.forEach(opt => {
     const displayOpt = window.toDigits ? window.toDigits(opt) : opt;
     optionsHtml += `
@@ -349,117 +427,68 @@ function renderPracticeArena(container) {
 
   container.innerHTML = `
     <div class="space-y-4">
-      <!-- Streak & Level Header -->
       <div class="flex justify-between items-center bg-amber-50 px-4 py-2 rounded-xl border border-amber-200">
         <span class="text-xs font-black text-amber-900 uppercase">🎯 ${isAs ? 'অনুশীলন মঞ্চ' : 'Practice Arena'}</span>
-        <span class="text-xs font-bold text-amber-800">🔥 ${isAs ? 'স্কোৰ' : 'Streak'}: <strong id="streakCount" class="text-sm font-black text-amber-600">${practiceStreak}</strong></span>
+        <span class="text-xs font-bold text-amber-800">🔥 ${isAs ? 'ধাৰাবাহিক স্কোৰ' : 'Streak'}: <strong id="streakCount" class="text-sm font-black text-amber-600">${practiceStreak}</strong></span>
       </div>
 
-      <!-- Problem Presentation Card -->
       <div class="p-6 bg-white border-2 border-amber-300 rounded-3xl shadow-sm text-center">
         <div class="text-2xl font-black text-slate-800 tracking-wider mb-2">
           ${displayQuestion}
         </div>
-        <p class="text-xs text-slate-400 font-bold mb-4">${isAs ? 'শুদ্ধ উত্তৰত স্পৰ্শ কৰক:' : 'Tap the correct answer:'}</p>
 
-        <!-- Tap-To-Solve Game Cards -->
+        <div id="visualCounters" class="flex flex-wrap justify-center items-center gap-2 mb-2 min-h-[26px]">
+          ${renderVisualTokens(currentPracticeProblem)}
+        </div>
+
+        <p class="text-xs text-slate-400 font-bold mb-2">${isAs ? 'শুদ্ধ উত্তৰত স্পৰ্শ কৰক:' : 'Tap the correct answer:'}</p>
+
         ${optionsHtml}
       </div>
 
-      <!-- Feedback Banner -->
       <div id="practiceFeedback" class="text-center font-bold text-sm min-h-[28px]"></div>
 
-      <!-- Action Buttons -->
       <div class="flex gap-2 pt-2">
         <button onclick="askPracticeHint()" class="flex-1 py-2.5 bg-amber-100 text-amber-900 hover:bg-amber-200 font-bold rounded-xl text-xs transition">
           💡 ${isAs ? 'ইংগিত দিয়ক' : 'Need a Hint?'}
         </button>
       </div>
 
-      <!-- Hint Box -->
       <div id="practiceHintBox" class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-950 hidden"></div>
     </div>
   `;
 }
- window.handleOptionSelect = function(selectedVal, btnElement) {
+
+window.handleOptionSelect = function(selectedVal, btnElement) {
   const fb = document.getElementById('practiceFeedback');
   const isAs = window.currentLang === 'as';
 
-  // Disable all option buttons immediately to prevent multiple clicks
+  // Disable buttons immediately
   document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
 
   if (selectedVal === currentPracticeProblem.correctAnswer) {
     practiceStreak++;
     btnElement.className = 'option-btn py-4 bg-emerald-500 border-2 border-emerald-600 rounded-2xl text-xl font-black text-white shadow-md scale-105 transition';
-    if (fb) fb.innerHTML = `<span class="text-emerald-600 text-base animate-bounce">🎉 ${isAs ? 'শুদ্ধ হৈছে! বহুত ভাল!' : 'Brilliant! Correct!'}</span>`;
+    if (fb) fb.innerHTML = `<span class="text-emerald-600 text-base animate-bounce">🎉 ${isAs ? 'শুদ্ধ হৈছে! বহুত ভাল!' : 'Correct! Awesome job!'}</span>`;
 
-    // Automatically load the next challenge after a quick 1-second celebration
     setTimeout(() => {
       const arena = document.getElementById('arenaBody');
       if (arena) renderPracticeArena(arena);
-    }, 1100);
+    }, 1000);
   } else {
     practiceStreak = 0;
     btnElement.className = 'option-btn py-4 bg-rose-500 border-2 border-rose-600 rounded-2xl text-xl font-black text-white shadow-sm transition';
-    if (fb) {
-      fb.innerHTML = `<span class="text-rose-600">${isAs ? 'ভুল হৈছে, পুনৰ চেষ্টা কৰক!' : 'Oops! Try again!'}</span>`;
-    }
+    if (fb) fb.innerHTML = `<span class="text-rose-600">${isAs ? 'ভুল হৈছে, পুনৰ চেষ্টা কৰক!' : 'Oops! Try again!'}</span>`;
+    
     const streakEl = document.getElementById('streakCount');
     if (streakEl) streakEl.innerText = practiceStreak;
 
-    // Allow them to try again after half a second
     setTimeout(() => {
       document.querySelectorAll('.option-btn').forEach(b => {
         b.disabled = false;
         b.className = 'option-btn py-4 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-xl font-black text-slate-800 shadow-sm active:scale-95 transition';
       });
     }, 600);
-  }
-};
-
-// ----------------------------------------------------
-// 7. INPUT & ACTION HANDLERS
-// ----------------------------------------------------
-window.pressPracticeNum = function(num) {
-  const input = document.getElementById('practiceInput');
-  if (input && input.value.length < 5) {
-    input.value += num;
-  }
-};
-
-window.clearPracticeInput = function() {
-  const input = document.getElementById('practiceInput');
-  if (input) input.value = '';
-};
-
-window.checkPracticeAnswer = function() {
-  const input = document.getElementById('practiceInput');
-  const fb = document.getElementById('practiceFeedback');
-  const checkBtn = document.getElementById('checkAnswerBtn');
-  if (!input || !fb || !currentPracticeProblem) return;
-
-  const userVal = parseInt(input.value, 10);
-  const isAs = window.currentLang === 'as';
-
-  if (isNaN(userVal)) {
-    fb.innerHTML = `<span class="text-rose-600">${isAs ? 'অনুগ্ৰহ কৰি উত্তৰ লিখক।' : 'Please enter an answer first.'}</span>`;
-    return;
-  }
-
-  if (userVal === currentPracticeProblem.correctAnswer) {
-    practiceStreak++;
-    fb.innerHTML = `<span class="text-emerald-600 animate-bounce">🎉 ${isAs ? 'শুদ্ধ হৈছে! বহুত ভাল!' : 'Correct! Awesome job!'}</span>`;
-    checkBtn.textContent = isAs ? 'পৰৱৰ্তী প্ৰশ্ন ➔' : 'Next Problem ➔';
-    checkBtn.className = 'flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow-sm';
-    checkBtn.onclick = function() {
-      const arena = document.getElementById('arenaBody');
-      if (arena) renderPracticeArena(arena);
-    };
-  } else {
-    practiceStreak = 0;
-    fb.innerHTML = `<span class="text-rose-600">${isAs ? 'ভুল হৈছে, পুনৰ চেষ্টা কৰক বা ইংগিত লওক।' : 'Not quite right. Try again or check the hint!'}</span>`;
-    const streakEl = document.getElementById('streakCount');
-    if (streakEl) streakEl.innerText = practiceStreak;
   }
 };
 
