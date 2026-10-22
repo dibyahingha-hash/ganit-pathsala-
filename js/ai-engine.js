@@ -400,7 +400,8 @@ window.handleOptionSelect = function(selectedVal, btnElement) {
     if (fb) fb.innerHTML = `<span class="text-emerald-600 text-base animate-bounce">🎉 ${isAs ? 'শুদ্ধ হৈছে! বহুত ভাল!' : 'Correct! Awesome job!'}</span>`;
 
     setTimeout(() => {
-      const arena = document.getElementById('arenaBody') || document.querySelector('.arena-container');
+      const arena = document.getElementById('wsBody') || document.getElementById('arenaBody');
+
       if (arena) renderPracticeArena(arena);
     }, 1000);
   } else {
@@ -461,7 +462,8 @@ window.startTestMode = function(count) {
     testQuestions.push(generateArithmeticProblem(activeTopicContext.title, activeTopicContext.standard));
   }
 
-  const container = document.getElementById('arenaBody') || document.querySelector('.arena-container');
+  const container = document.getElementById('wsBody') || document.getElementById('arenaBody');
+
   if (container) renderTestQuestion(container);
 };
 
