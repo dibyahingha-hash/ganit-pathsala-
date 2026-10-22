@@ -248,14 +248,23 @@ function renderTestSetup(container) {
 // ----------------------------------------------------
 // 5. GRADE- & TOPIC-AWARE TAP PROBLEM ENGINE
 // ----------------------------------------------------
+// ============================================================================
+// COMPREHENSIVE CURRICULUM-AWARE PRACTICE GENERATOR (ALL GRADES & CHAPTERS)
+// ============================================================================
 function generateArithmeticProblem(topicTitle, standard) {
   const t = (topicTitle || '').toLowerCase();
   const rawStd = (standard || '').toLowerCase().trim();
 
+  // ----------------------------------------------------
+  // GRADE CLASSIFIER (Exact Roman & Keyword Mapping)
+  // ----------------------------------------------------
   const isUndergrad = rawStd.includes('undergraduate') || rawStd.includes('b.sc') || rawStd.includes('b.tech') || rawStd.includes('degree');
-  const isHighSchool = rawStd.includes('class ix') || rawStd.includes('class x') || rawStd.includes('class xi') || rawStd.includes('class xii') || rawStd.includes('9') || rawStd.includes('10');
-  const isMiddleSchool = rawStd.includes('class vi') || rawStd.includes('class vii') || rawStd.includes('class viii') || rawStd.includes('class 6') || rawStd.includes('class 7') || rawStd.includes('class 8');
-  const isUpperPrimary = rawStd.includes('class iii') || rawStd.includes('class iv') || rawStd.includes('class v') || rawStd.includes('class 3') || rawStd.includes('class 4') || rawStd.includes('class 5');
+  const isClass11or12 = rawStd.includes('class xi') || rawStd.includes('class xii') || rawStd.includes('11') || rawStd.includes('12');
+  const isClass9or10 = rawStd.includes('class ix') || rawStd.includes('class x') || rawStd.includes('9') || rawStd.includes('10');
+  const isMiddleSchool = rawStd.includes('class vi') || rawStd.includes('class vii') || rawStd.includes('class viii') ||
+                         rawStd.includes('class 6') || rawStd.includes('class 7') || rawStd.includes('class 8');
+  const isUpperPrimary = rawStd.includes('class iii') || rawStd.includes('class iv') || rawStd.includes('class v') ||
+                         rawStd.includes('class 3') || rawStd.includes('class 4') || rawStd.includes('class 5');
   const isClass1 = rawStd === 'class i' || rawStd.includes('class 1') || rawStd === '1';
   const isClass2 = rawStd === 'class ii' || rawStd.includes('class 2') || rawStd === '2';
 
@@ -266,85 +275,285 @@ function generateArithmeticProblem(topicTitle, standard) {
   let opA = null;
   let opB = null;
   let op = '';
+  let explicitDistractors = null; // Used when options are non-integer or formulaic
 
-  // 1. UNDERGRADUATE (Real Analysis, Calculus, Differential Equations)
+  // ==========================================================================
+  // TIER 1: UNDERGRADUATE (B.Sc. / B.Tech / University)
+  // ==========================================================================
   if (isUndergrad) {
-    if (t.includes('real analysis') || t.includes('sequence') || t.includes('series') || t.includes('riemann')) {
-      const n = Math.floor(Math.random() * 4) + 2;
-      correct = (n * n) + 1;
-      qText = `For sequence aₙ = n² + 1, find term a₍${n}₎:`;
-      hint = `Substitute n = ${n}: (${n} × ${n}) + 1 = ${correct}.`;
-    } else {
-      const c = Math.floor(Math.random() * 4) + 2;
-      correct = c * 2;
-      qText = `Evaluate ∫₀² (${c}x) dx:`;
-      hint = `Antiderivative is (${c}/2)x². Evaluated at 2: (${c}/2) × 4 = ${correct}.`;
+    // 1. Real Analysis & Sequences
+    if (t.includes('real analysis') || t.includes('sequence') || t.includes('series') || t.includes('riemann') || t.includes('cauchy')) {
+      const p = Math.floor(Math.random() * 3) + 2;
+      correct = 0;
+      qText = `Evaluate the limit as n → ∞ for sequence aₙ = 1 / n^${p}:`;
+      hint = `As n grows infinitely large, 1/n^${p} converges to 0.`;
+      explicitDistractors = [0, 1, '∞', p];
+    }
+    // 2. Linear Algebra & Matrices
+    else if (t.includes('matrix') || t.includes('linear algebra') || t.includes('determinant') || t.includes('eigen')) {
+      const a = Math.floor(Math.random() * 3) + 2;
+      const d = Math.floor(Math.random() * 3) + 2;
+      const b = 1;
+      const c = 2;
+      correct = (a * d) - (b * c);
+      qText = `For matrix [[${a}, ${b}], [${c}, ${d}]], calculate determinant |A|:`;
+      hint = `|A| = (${a} × ${d}) - (${b} × ${c}) = ${correct}.`;
+    }
+    // 3. Differential Equations
+    else if (t.includes('differential') || t.includes('ode') || t.includes('pde')) {
+      const deg = Math.floor(Math.random() * 2) + 2;
+      correct = 2;
+      qText = `State the order of the ODE: (d²y/dx²) + 5(dy/dx)^${deg} + y = 0:`;
+      hint = `The order is the highest derivative present (d²y/dx² = order 2).`;
+      explicitDistractors = [1, 2, deg, deg + 1];
+    }
+    // 4. Abstract Algebra (Groups, Rings, Fields)
+    else if (t.includes('group') || t.includes('ring') || t.includes('field') || t.includes('algebra')) {
+      correct = 0;
+      qText = `In the additive group (ℤ, +), what is the identity element?`;
+      hint = `For any integer a, a + 0 = a. The identity is 0.`;
+      explicitDistractors = [0, 1, -1, 'None'];
+    }
+    // 5. Multivariable / Vector Calculus
+    else if (t.includes('vector') || t.includes('curl') || t.includes('divergence') || t.includes('gradient')) {
+      const x = Math.floor(Math.random() * 3) + 1;
+      const y = Math.floor(Math.random() * 3) + 1;
+      correct = (2 * x) + (2 * y);
+      qText = `For f(x, y) = x² + y², find magnitude of ∇f at (${x}, ${y}) if ∇f = (2x, 2y) sum:`;
+      hint = `2(${x}) + 2(${y}) = ${correct}.`;
+    }
+    // Undergrad Fallback
+    else {
+      const k = Math.floor(Math.random() * 3) + 2;
+      correct = k * 2;
+      qText = `Evaluate definite integral: ∫₀² (${k}) dx:`;
+      hint = `Area under constant ${k} from 0 to 2 is ${k} × 2 = ${correct}.`;
     }
   }
-  // 2. HIGH SCHOOL (Class 9 - 10: Euclid, Geometry, Quadratics, Trig)
-  else if (isHighSchool) {
-    if (t.includes('euclid') || t.includes('real number')) {
-      const base = Math.floor(Math.random() * 4) + 2;
-      const num1 = base * 3;
-      const num2 = base * 4;
-      correct = base;
-      qText = `Find HCF of ${num1} and ${num2}:`;
-      hint = `Find the highest common factor dividing both ${num1} and ${num2}.`;
-    } else if (t.includes('line') || t.includes('coordinate') || t.includes('geometry') || t.includes('জ্যামিতি')) {
-      const m = Math.floor(Math.random() * 3) + 2;
-      const c = Math.floor(Math.random() * 5) + 1;
-      const x = Math.floor(Math.random() * 4) + 1;
-      correct = (m * x) + c;
-      qText = `For line y = ${m}x + ${c}, find y when x = ${x}:`;
-      hint = `Compute (${m} × ${x}) + ${c} = ${correct}.`;
-    } else if (t.includes('trig') || t.includes('ত্রিকোণমিতি')) {
+
+  // ==========================================================================
+  // TIER 2: HIGHER SECONDARY (Class 11 & 12)
+  // ==========================================================================
+  else if (isClass11or12) {
+    // 1. Calculus & Derivatives
+    if (t.includes('calculus') || t.includes('derivative') || t.includes('differentiat')) {
+      const p = Math.floor(Math.random() * 3) + 2;
+      const xVal = 2;
+      correct = p * Math.pow(xVal, p - 1);
+      qText = `If f(x) = x^${p}, evaluate derivative f'(${xVal}):`;
+      hint = `Power rule: d/dx(x^${p}) = ${p}x^${p - 1}. At x=2, it equals ${correct}.`;
+    }
+    // 2. Limits & Continuity
+    else if (t.includes('limit') || t.includes('continuity')) {
+      const a = Math.floor(Math.random() * 4) + 2;
+      correct = 2 * a;
+      qText = `Evaluate: lim (x → ${a}) [ (x² - ${a * a}) / (x - ${a}) ]:`;
+      hint = `Factor as (x - ${a})(x + ${a}) / (x - ${a}) = x + ${a}. At x = ${a}, answer is ${2 * a}.`;
+    }
+    // 3. Complex Numbers
+    else if (t.includes('complex')) {
+      correct = -1;
+      qText = `Evaluate the imaginary unit power: i² = ?`;
+      hint = `By definition of imaginary unit, i = √(-1), so i² = -1.`;
+      explicitDistractors = [-1, 1, 0, 'i'];
+    }
+    // 4. Relations & Functions
+    else if (t.includes('relation') || t.includes('function')) {
+      const n = Math.floor(Math.random() * 2) + 2;
+      correct = Math.pow(2, n * n);
+      qText = `If set A has ${n} elements, how many binary relations exist on A?`;
+      hint = `Total relations on set with n elements is 2^(n²) = 2^${n * n} = ${correct}.`;
+    }
+    // Class 11/12 Fallback
+    else {
+      const a = Math.floor(Math.random() * 3) + 2;
+      correct = a * a;
+      qText = `If a vector has components (${a}, 0), what is its magnitude squared?`;
+      hint = `Magnitude squared = (${a})² + 0² = ${correct}.`;
+    }
+  }
+
+  // ==========================================================================
+  // TIER 3: SECONDARY / HIGH SCHOOL (Class 9 & 10)
+  // ==========================================================================
+  else if (isClass9or10) {
+    // 1. Similar Triangles & Area Theorems
+    if (t.includes('triangle') || t.includes('similar') || t.includes('ত্ৰিভুজ')) {
+      const sideRatio = Math.floor(Math.random() * 3) + 2;
+      correct = sideRatio * sideRatio;
+      qText = `If side ratio of two similar triangles is 1 : ${sideRatio}, what is their Area ratio?`;
+      hint = `Area ratio equals square of side ratio: 1² : ${sideRatio}² = 1 : ${correct}.`;
+    }
+    // 2. Surface Areas & Volumes
+    else if (t.includes('surface') || t.includes('volume') || t.includes('area') || t.includes('আয়তন')) {
+      const factor = Math.floor(Math.random() * 2) + 2; // 2 or 3
+      correct = Math.pow(factor, 3);
+      qText = `If edge of a cube is scaled by ${factor}×, its volume increases by:`;
+      hint = `Volume scales cubically: (${factor})³ = ${correct} times.`;
+    }
+    // 3. Permutations & Combinations
+    else if (t.includes('permutation') || t.includes('combination') || t.includes('বিন্যাস')) {
+      const n = Math.floor(Math.random() * 3) + 3; // 3, 4, 5
+      const factorials = { 3: 6, 4: 24, 5: 120 };
+      correct = factorials[n];
+      qText = `Number of unique arrangements for ${n} distinct books on a shelf (${n}!):`;
+      hint = `${n}! = ${Array.from({length: n}, (_, i) => n - i).join(' × ')} = ${correct}.`;
+    }
+    // 4. Quadratic Equations
+    else if (t.includes('quadratic') || t.includes('সমীকৰণ')) {
+      const r1 = Math.floor(Math.random() * 4) + 1;
+      const r2 = Math.floor(Math.random() * 4) + 2;
+      const sum = r1 + r2;
+      const prod = r1 * r2;
+      correct = prod;
+      qText = `For quadratic x² - ${sum}x + ${prod} = 0, find product of roots (α·β):`;
+      hint = `For x² - (sum)x + (prod) = 0, product of roots c/a = ${prod}.`;
+    }
+    // 5. Trigonometry
+    else if (t.includes('trig') || t.includes('ত্রিকোণমিতি')) {
       correct = 1;
-      qText = `Evaluate: sin²(45°) + cos²(45°) = ?`;
-      hint = `Pythagorean Identity states sin²θ + cos²θ is always 1.`;
-    } else {
-      const root = Math.floor(Math.random() * 5) + 2;
-      correct = root;
-      qText = `If x² = ${root * root}, find positive x:`;
-      hint = `Take positive square root: √${root * root} = ${root}.`;
+      qText = `Evaluate standard identity: sin²(30°) + cos²(30°) = ?`;
+      hint = `Pythagorean trigonometric identity sin²θ + cos²θ = 1 for any angle θ.`;
+      explicitDistractors = [1, 0, 0.5, 2];
+    }
+    // 6. Circles & Tangents
+    else if (t.includes('circle') || t.includes('বৃত্ত') || t.includes('tangent')) {
+      correct = 90;
+      qText = `What is the angle between a tangent to a circle and the radius at point of contact?`;
+      hint = `The tangent at any point of a circle is perpendicular (90°) to the radius.`;
+      explicitDistractors = [90, 45, 60, 180];
+    }
+    // 7. Coordinate Geometry
+    else if (t.includes('coordinate') || t.includes('line') || t.includes('geometry') || t.includes('জ্যামিতি')) {
+      const m = Math.floor(Math.random() * 3) + 2;
+      const c = Math.floor(Math.random() * 4) + 1;
+      const x = 3;
+      correct = (m * x) + c;
+      qText = `For line y = ${m}x + ${c}, evaluate y when x = ${x}:`;
+      hint = `y = (${m} × ${x}) + ${c} = ${correct}.`;
+    }
+    // 8. Real Numbers & Euclid's Lemma
+    else if (t.includes('euclid') || t.includes('real number')) {
+      const base = Math.floor(Math.random() * 4) + 2;
+      correct = base;
+      qText = `Find HCF of ${base * 3} and ${base * 5}:`;
+      hint = `The greatest common factor dividing both ${base * 3} and ${base * 5} is ${base}.`;
+    }
+    // 9. Probability
+    else if (t.includes('probab') || t.includes('সম্ভাৱিতা')) {
+      correct = 3;
+      qText = `A standard 6-sided die is rolled. How many outcomes give a prime number (2, 3, 5)?`;
+      hint = `The prime outcomes are 2, 3, and 5 (total 3 outcomes).`;
+      explicitDistractors = [3, 2, 4, 1];
+    }
+    // Class 9/10 Fallback: Algebraic Identity
+    else {
+      const a = Math.floor(Math.random() * 4) + 3;
+      const b = 2;
+      correct = (a * a) - (b * b);
+      qText = `Evaluate (${a} + ${b})(${a} - ${b}) using identity a² - b²:`;
+      hint = `(${a})² - (${b})² = ${a * a} - ${b * b} = ${correct}.`;
     }
   }
-  // 3. MIDDLE SCHOOL (Class 6 - 8: Ratios, Integers, Pre-Algebra)
+
+  // ==========================================================================
+  // TIER 4: MIDDLE SCHOOL (Class 6, 7, 8)
+  // ==========================================================================
   else if (isMiddleSchool) {
-    if (t.includes('ratio') || t.includes('proportion')) {
-      const mult = Math.floor(Math.random() * 3) + 2;
-      correct = 4 * mult;
-      qText = `If 3 : 4 = ${3 * mult} : x, find x:`;
-      hint = `Multiply 4 by ${mult} = ${correct}.`;
-    } else if (t.includes('divis') || t.includes('ভাগ')) {
-      const div = Math.floor(Math.random() * 6) + 3;
-      correct = Math.floor(Math.random() * 7) + 2;
-      qText = `Evaluate: ${div * correct} ÷ ${div} = ?`;
-      hint = `Divide ${div * correct} by ${div}.`;
-    } else {
+    // 1. Fractions, Decimals, Percentages
+    if (t.includes('fraction') || t.includes('ভগ্নাংশ') || t.includes('decimal')) {
+      correct = 75;
+      qText = `Convert the fraction 3/4 into a percentage (%):`;
+      hint = `(3 / 4) × 100% = 75%.`;
+      explicitDistractors = [75, 25, 50, 80];
+    }
+    // 2. Integers (Signed Math)
+    else if (t.includes('integer') || t.includes('অখণ্ড সংখ্যা') || t.includes('negative')) {
+      const a = Math.floor(Math.random() * 5) + 3;
+      const b = Math.floor(Math.random() * 5) + 8;
+      correct = a - b;
+      qText = `Calculate: ${a} - ${b} = ?`;
+      hint = `Subtracting a larger number leaves a negative result: ${a} - ${b} = ${correct}.`;
+    }
+    // 3. Exponents & Powers
+    else if (t.includes('exponent') || t.includes('power') || t.includes('সূচক')) {
+      const p = Math.floor(Math.random() * 2) + 3; // 3 or 4
+      correct = Math.pow(2, p);
+      qText = `Evaluate: 2^${p} = ?`;
+      hint = `Multiply 2 by itself ${p} times: ${correct}.`;
+    }
+    // 4. Perimeter & Area
+    else if (t.includes('perimeter') || t.includes('পৰিসীমা') || t.includes('area') || t.includes('কালি')) {
+      const l = Math.floor(Math.random() * 5) + 4;
+      const w = Math.floor(Math.random() * 3) + 2;
+      correct = 2 * (l + w);
+      qText = `Perimeter of a rectangle with length ${l} cm and width ${w} cm:`;
+      hint = `Perimeter = 2 × (${l} + ${w}) = ${correct} cm.`;
+    }
+    // 5. Ratio & Proportion
+    else if (t.includes('ratio') || t.includes('proportion') || t.includes('অনুপাত')) {
+      const k = Math.floor(Math.random() * 3) + 2;
+      correct = 5 * k;
+      qText = `If 2 : 5 = ${2 * k} : x, solve for x:`;
+      hint = `Cross-multiply: x = 5 × ${k} = ${correct}.`;
+    }
+    // 6. Linear Equations in 1 Variable
+    else if (t.includes('equation') || t.includes('সমীকৰণ') || t.includes('variable')) {
+      const ans = Math.floor(Math.random() * 6) + 2;
+      const add = Math.floor(Math.random() * 5) + 3;
+      correct = ans;
+      qText = `Solve for x: x + ${add} = ${ans + add}:`;
+      hint = `Subtract ${add} from both sides: x = ${ans + add} - ${add} = ${correct}.`;
+    }
+    // Middle School Fallback
+    else {
       const a = Math.floor(Math.random() * 8) + 3;
       const b = Math.floor(Math.random() * 7) + 3;
       correct = a * b;
-      qText = `${a} × ${b} = ?`;
+      qText = `Evaluate: ${a} × ${b} = ?`;
       hint = `Multiply ${a} by ${b}.`;
     }
   }
-  // 4. UPPER PRIMARY (Class 3 - 5)
+
+  // ==========================================================================
+  // TIER 5: UPPER PRIMARY (Class 3, 4, 5)
+  // ==========================================================================
   else if (isUpperPrimary) {
-    if (t.includes('subtract') || t.includes('বিয়োগ')) {
-      const a = Math.floor(Math.random() * 40) + 20;
-      const b = Math.floor(Math.random() * 15) + 4;
+    // 1. Division & Remainders
+    if (t.includes('divis') || t.includes('ভাগ') || t.includes('divide')) {
+      const div = Math.floor(Math.random() * 5) + 3;
+      correct = Math.floor(Math.random() * 7) + 2;
+      qText = `Solve: ${div * correct} ÷ ${div} = ?`;
+      hint = `How many times does ${div} fit into ${div * correct}? Answer is ${correct}.`;
+    }
+    // 2. Subtraction
+    else if (t.includes('sub') || t.includes('বিয়োগ') || t.includes('minus')) {
+      const a = Math.floor(Math.random() * 40) + 25;
+      const b = Math.floor(Math.random() * 15) + 5;
       correct = a - b;
-      qText = `${a} - ${b} = ?`;
-      hint = `Take away ${b} from ${a}.`;
-    } else {
-      const a = Math.floor(Math.random() * 8) + 2;
-      const b = Math.floor(Math.random() * 8) + 2;
+      qText = `Solve: ${a} - ${b} = ?`;
+      hint = `Subtract ${b} from ${a}.`;
+    }
+    // 3. Shapes & Geometry
+    else if (t.includes('shape') || t.includes('geometry') || t.includes('জ্যামিতি')) {
+      correct = 3;
+      qText = `How many sides does a triangle have?`;
+      hint = `Tri = 3 sides.`;
+      explicitDistractors = [3, 4, 5, 6];
+    }
+    // Upper Primary Fallback: Times Tables
+    else {
+      const a = Math.floor(Math.random() * 7) + 3;
+      const b = Math.floor(Math.random() * 6) + 3;
       correct = a * b;
-      qText = `${a} × ${b} = ?`;
-      hint = `Recall the multiplication table for ${a}.`;
+      qText = `Solve: ${a} × ${b} = ?`;
+      hint = `Multiply ${a} by ${b}.`;
     }
   }
-  // 5. FOUNDATIONAL PRIMARY (Class 1 & 2)
+
+  // ==========================================================================
+  // TIER 6: FOUNDATIONAL PRIMARY (Class 1 & 2)
+  // ==========================================================================
   else {
     const isSub = t.includes('sub') || t.includes('বিয়োগ') || t.includes('minus');
     const a = Math.floor(Math.random() * 5) + 1;
@@ -359,7 +568,7 @@ function generateArithmeticProblem(topicTitle, standard) {
       opA = bigger;
       opB = smaller;
       op = '-';
-      hint = `Start with ${bigger} apples, remove ${smaller}.`;
+      hint = `Start with ${bigger} apples, take away ${smaller}.`;
     } else {
       correct = a + b;
       qText = `${a} + ${b} = ?`;
@@ -370,37 +579,45 @@ function generateArithmeticProblem(topicTitle, standard) {
     }
   }
 
-  // Generate 4 distinct options (1 correct + 3 smart distractors)
-  const options = new Set([correct]);
-  while (options.size < 4) {
-    const delta = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 1);
-    const candidate = correct + delta;
-    if (candidate >= 0) options.add(candidate);
+  // ----------------------------------------------------
+  // SMART OPTION CHIP GENERATOR (4 Distinct Options)
+  // ----------------------------------------------------
+  let finalOptions = [];
+  if (explicitDistractors && explicitDistractors.length === 4) {
+    finalOptions = [...explicitDistractors].sort(() => Math.random() - 0.5);
+  } else {
+    const optionsSet = new Set([correct]);
+    while (optionsSet.size < 4) {
+      const delta = (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 4) + 1);
+      const candidate = correct + delta;
+      optionsSet.add(candidate);
+    }
+    finalOptions = Array.from(optionsSet).sort(() => Math.random() - 0.5);
   }
-  const shuffledOptions = Array.from(options).sort(() => Math.random() - 0.5);
 
   return {
     questionText: qText,
     correctAnswer: correct,
-    options: shuffledOptions,
+    options: finalOptions,
     operandA: opA,
     operandB: opB,
     operator: op,
     showTokens: showTokens,
     hint: hint
   };
-}
+                             }
+      
 
 // ----------------------------------------------------
 // 6. PRACTICE ARENA UI & TAP HANDLERS
 // ----------------------------------------------------
 function renderVisualTokens(problem) {
-  if (!problem.showTokens || !problem.operandA || !problem.operandB) return '';
+  if (!problem.showTokens || problem.operandA == null || problem.operandB == null) return '';
   let tokens = '';
   for (let i = 0; i < problem.operandA; i++) {
     tokens += '<span class="inline-block w-6 h-6 bg-amber-500 rounded-full text-white text-[10px] font-bold leading-6 text-center select-none shadow-xs">🍎</span>';
   }
-  tokens += '<span class="font-black text-amber-800 mx-2 text-sm">' + problem.operator + '</span>';
+  tokens += `<span class="font-black text-amber-800 mx-2 text-sm">${problem.operator}</span>`;
   for (let j = 0; j < problem.operandB; j++) {
     tokens += '<span class="inline-block w-6 h-6 bg-emerald-500 rounded-full text-white text-[10px] font-bold leading-6 text-center select-none shadow-xs">🍏</span>';
   }
@@ -413,12 +630,13 @@ function renderPracticeArena(container) {
 
   const displayQuestion = window.toDigits ? window.toDigits(currentPracticeProblem.questionText) : currentPracticeProblem.questionText;
 
-  // Build 4 large tactile choice buttons
+  // Build 4 large tactile choice buttons with safe argument escaping
   let optionsHtml = '<div class="grid grid-cols-2 gap-3 max-w-xs mx-auto my-5">';
   currentPracticeProblem.options.forEach(opt => {
     const displayOpt = window.toDigits ? window.toDigits(opt) : opt;
+    const optArg = typeof opt === 'string' ? `'${opt.replace(/'/g, "\\'")}'` : opt;
     optionsHtml += `
-      <button onclick="handleOptionSelect(${opt}, this)" class="option-btn py-4 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-xl font-black text-slate-800 shadow-sm active:scale-95 transition">
+      <button onclick="handleOptionSelect(${optArg}, this)" class="option-btn py-4 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-xl font-black text-slate-800 shadow-sm active:scale-95 transition">
         ${displayOpt}
       </button>
     `;
@@ -463,10 +681,10 @@ window.handleOptionSelect = function(selectedVal, btnElement) {
   const fb = document.getElementById('practiceFeedback');
   const isAs = window.currentLang === 'as';
 
-  // Disable buttons immediately
+  // Disable all choice buttons immediately to prevent duplicate triggers
   document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
 
-  if (selectedVal === currentPracticeProblem.correctAnswer) {
+  if (String(selectedVal) === String(currentPracticeProblem.correctAnswer)) {
     practiceStreak++;
     btnElement.className = 'option-btn py-4 bg-emerald-500 border-2 border-emerald-600 rounded-2xl text-xl font-black text-white shadow-md scale-105 transition';
     if (fb) fb.innerHTML = `<span class="text-emerald-600 text-base animate-bounce">🎉 ${isAs ? 'শুদ্ধ হৈছে! বহুত ভাল!' : 'Correct! Awesome job!'}</span>`;
