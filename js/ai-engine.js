@@ -426,4 +426,8 @@ function renderPracticeArena(container) {
         </button>
       </div>
 
-      <div id="practiceHintBox" class="p-3 bg-indigo-50 border borde
+            <div id="practiceHintBox" class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-950 hidden"></div>
+    </div>
+  `;
+}
+
