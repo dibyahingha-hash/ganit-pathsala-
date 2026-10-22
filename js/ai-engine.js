@@ -1,3 +1,50 @@
+window.activeTopicContext = { title: '', standard: '' };
+
+window.openWorkspaceForTopic = function(title, standard) {
+  window.activeTopicContext = { title: title || '', standard: standard || '' };
+  
+  if (typeof practiceStreak !== 'undefined') practiceStreak = 0;
+  if (typeof testQuestions !== 'undefined') testQuestions = [];
+  if (typeof currentTestIndex !== 'undefined') currentTestIndex = 0;
+  if (typeof testScore !== 'undefined') testScore = 0;
+
+  const modal = document.getElementById('topicWorkspaceModal') || document.getElementById('practiceArenaModal');
+  const titleEl = document.getElementById('modalTopicTitle');
+  const stdBadge = document.getElementById('modalTopicStandard');
+  const arenaBody = document.getElementById('arenaBody') || document.querySelector('.arena-container');
+
+  if (titleEl) titleEl.innerText = title;
+  if (stdBadge) stdBadge.innerText = standard;
+
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+
+  if (arenaBody && typeof renderPracticeArena === 'function') {
+    renderPracticeArena(arenaBody);
+  }
+};
+
+window.closeTopicWorkspace = function() {
+  const modal = document.getElementById('topicWorkspaceModal') || document.getElementById('practiceArenaModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+};
+
+window.switchWorkspaceTab = function(tabName) {
+  const arenaBody = document.getElementById('arenaBody') || document.querySelector('.arena-container');
+  if (!arenaBody) return;
+
+  if (tabName === 'practice' && typeof renderPracticeArena === 'function') {
+    renderPracticeArena(arenaBody);
+  } else if (tabName === 'test' && typeof renderTestSetup === 'function') {
+    renderTestSetup(arenaBody);
+  }
+};
+
 // ============================================================================
 // GANIT PATHSHALA - AI & DYNAMIC PRACTICE / TEST ENGINE
 // ============================================================================
