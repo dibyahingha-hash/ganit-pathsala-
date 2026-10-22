@@ -866,48 +866,49 @@ async function verifyAndLaunch() {
         output.innerHTML = `<span class="text-rose-700 font-bold">${currentLang === 'as' ? 'সংযোগত সমস্যা হ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।' : 'Connection error. Please try again.'}</span>`;
       }
 
-      btn.disabled = false;
-      }
-    
-    
-    
-  <script src="js/curriculum.js"></script>
-  <script src="js/ai-engine.js?v=10"></script>
+    btn.disabled = false;
+  }
+</script>
 
-  <script>
-  window.openWorkspaceForTopic = function(title, standard) {
-    window.activeTopicContext = { title: title || '', standard: standard || '' };
-    
-    if (typeof practiceStreak !== 'undefined') practiceStreak = 0;
-    if (typeof testQuestions !== 'undefined') testQuestions = [];
-    if (typeof currentTestIndex !== 'undefined') currentTestIndex = 0;
-    if (typeof testScore !== 'undefined') testScore = 0;
+<!-- EXTERNAL SCRIPTS -->
+<script src="js/curriculum.js"></script>
+<script src="js/ai-engine.js?v=20"></script>
 
-    const modal = document.getElementById('workspaceModal');
-    const titleEl = document.getElementById('modalTopicTitle');
-    const stdBadge = document.getElementById('modalTopicStandard');
-    const arenaBody = document.getElementById('arenaBody') || (modal ? modal.querySelector('#arenaBody') : null);
+<!-- MODAL CONTROLLER -->
+<script>
+window.openWorkspaceForTopic = function(title, standard) {
+  window.activeTopicContext = { title: title || '', standard: standard || '' };
+  
+  if (typeof practiceStreak !== 'undefined') practiceStreak = 0;
+  if (typeof testQuestions !== 'undefined') testQuestions = [];
+  if (typeof currentTestIndex !== 'undefined') currentTestIndex = 0;
+  if (typeof testScore !== 'undefined') testScore = 0;
 
-    if (titleEl) titleEl.innerText = title;
-    if (stdBadge) stdBadge.innerText = standard;
+  const modal = document.getElementById('workspaceModal');
+  const titleEl = document.getElementById('modalTopicTitle');
+  const stdBadge = document.getElementById('modalTopicStandard');
+  const arenaBody = document.getElementById('arenaBody') || (modal ? modal.querySelector('#arenaBody') : null);
 
-    if (modal) {
-      modal.classList.remove('hidden');
-      modal.style.display = 'flex';
-    }
+  if (titleEl) titleEl.innerText = title;
+  if (stdBadge) stdBadge.innerText = standard;
 
-    if (arenaBody && typeof renderPracticeArena === 'function') {
-      renderPracticeArena(arenaBody);
-    }
-  };
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
 
-  window.closeTopicWorkspace = function() {
-    const modal = document.getElementById('workspaceModal');
-    if (modal) {
-      modal.classList.add('hidden');
-      modal.style.display = 'none';
-    }
-  };
-  </script>
+  if (arenaBody && typeof renderPracticeArena === 'function') {
+    renderPracticeArena(arenaBody);
+  }
+};
+
+window.closeTopicWorkspace = function() {
+  const modal = document.getElementById('workspaceModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+};
+</script>
 </body>
 </html>
