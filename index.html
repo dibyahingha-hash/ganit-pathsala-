@@ -871,12 +871,43 @@ async function verifyAndLaunch() {
     
     
     
+  <script src="js/curriculum.js"></script>
+  <script src="js/ai-engine.js?v=10"></script>
+
+  <script>
+  window.openWorkspaceForTopic = function(title, standard) {
+    window.activeTopicContext = { title: title || '', standard: standard || '' };
+    
+    if (typeof practiceStreak !== 'undefined') practiceStreak = 0;
+    if (typeof testQuestions !== 'undefined') testQuestions = [];
+    if (typeof currentTestIndex !== 'undefined') currentTestIndex = 0;
+    if (typeof testScore !== 'undefined') testScore = 0;
+
+    const modal = document.getElementById('workspaceModal');
+    const titleEl = document.getElementById('modalTopicTitle');
+    const stdBadge = document.getElementById('modalTopicStandard');
+    const arenaBody = document.getElementById('arenaBody') || (modal ? modal.querySelector('#arenaBody') : null);
+
+    if (titleEl) titleEl.innerText = title;
+    if (stdBadge) stdBadge.innerText = standard;
+
+    if (modal) {
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
+    }
+
+    if (arenaBody && typeof renderPracticeArena === 'function') {
+      renderPracticeArena(arenaBody);
+    }
+  };
+
+  window.closeTopicWorkspace = function() {
+    const modal = document.getElementById('workspaceModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+    }
+  };
   </script>
-      <script src="js/curriculum.js"></script>
-  <script src="./js/ai-engine.js?v=4"></script>
-  
-  
-  
-  
 </body>
 </html>
