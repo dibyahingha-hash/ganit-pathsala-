@@ -1,4 +1,4 @@
-// ai-engine.js - Gemini Dynamic Intelligence Engine & Gamified Tap-to-Play Arena
+
 
 // ----------------------------------------------------
 // 0. STATE MANAGEMENT & OFFLINE PRELOAD
