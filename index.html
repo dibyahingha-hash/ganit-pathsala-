@@ -876,7 +876,7 @@ async function verifyAndLaunch() {
 
 <!-- MODAL CONTROLLER -->
 <script>
-window.openWorkspaceForTopic = function(title, standard) {
+window.openWorkspaceForTopic = function(title, standard, mode) {
   window.activeTopicContext = { title: title || '', standard: standard || '' };
   
   if (typeof practiceStreak !== 'undefined') practiceStreak = 0;
@@ -885,20 +885,31 @@ window.openWorkspaceForTopic = function(title, standard) {
   if (typeof testScore !== 'undefined') testScore = 0;
 
   const modal = document.getElementById('workspaceModal');
-  const titleEl = document.getElementById('modalTopicTitle');
-  const stdBadge = document.getElementById('modalTopicStandard');
-  const arenaBody = document.getElementById('arenaBody') || (modal ? modal.querySelector('#arenaBody') : null);
+  const titleEl = document.getElementById('wsChapterTitle');
+  const badgeEl = document.getElementById('wsModeBadge');
+  const bodyEl = document.getElementById('wsBody');
+  const closeBtn = document.getElementById('closeWsBtn');
 
-  if (titleEl) titleEl.innerText = title;
-  if (stdBadge) stdBadge.innerText = standard;
+  if (titleEl) titleEl.innerText = title || 'Mathematics';
+  if (badgeEl) badgeEl.innerText = standard || 'Class 1';
+
+  if (closeBtn) {
+    closeBtn.onclick = window.closeTopicWorkspace;
+  }
 
   if (modal) {
     modal.classList.remove('hidden');
     modal.style.display = 'flex';
   }
 
-  if (arenaBody && typeof renderPracticeArena === 'function') {
-    renderPracticeArena(arenaBody);
+  if (bodyEl) {
+    if (mode === 'test' && typeof renderTestSetup === 'function') {
+      renderTestSetup(bodyEl);
+    } else if (typeof renderPracticeArena === 'function') {
+      renderPracticeArena(bodyEl);
+    } else {
+      bodyEl.innerHTML = `<p class="text-center text-slate-500 font-bold p-6">Loading workspace...</p>`;
+    }
   }
 };
 
@@ -909,6 +920,7 @@ window.closeTopicWorkspace = function() {
     modal.style.display = 'none';
   }
 };
+
 </script>
 </body>
 </html>
