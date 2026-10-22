@@ -29,10 +29,11 @@ fetch('./data/lessons.json')
 // 1. GEMINI API CALLER
 // ----------------------------------------------------
 async function callGeminiDynamic(promptText, isJson = false) {
-  const models = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash'
+    const models = [
+    'gemini-3.8-flash',
+    'gemini-3.5-flash-lite'
   ];
+  
 
   const apiKey = window.GEMINI_API_KEY || '';
   if (!apiKey) {
