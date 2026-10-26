@@ -15,18 +15,24 @@ let testScore = 0;
 window.aiLessonCache = window.aiLessonCache || {};
 window.aiPracticeCache = window.aiPracticeCache || {};
 
-// ----------------------------------------------------
-// 1. ROBUST GEMINI CALLER (JSON & TEXT)
+
+  // ----------------------------------------------------
+// 1. GEMINI API RUNNER WITH MULTI-MODEL FALLBACK
 // ----------------------------------------------------
 async function fetchGeminiAI(promptText, returnJson = true) {
   const apiKey = window.apiKey || localStorage.getItem('omnimath_gemini_key') || '';
   if (!apiKey) {
-    throw new Error('API key missing. Please paste a valid Gemini key.');
+    throw new Error('API key missing. Please enter your Gemini key.');
   }
 
+  // Multi-tier model candidate array starting from 3.8
   const candidateModels = [
-    'gemini-2.5-flash',
-    'gemini-2.0-flash'
+    'gemini-3.8-flash',
+    'gemini-3.7-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.5-flash',
+    'gemini-3.0-flash',
+    'gemini-2.5-flash'
   ];
 
   let lastError = null;
@@ -52,21 +58,20 @@ async function fetchGeminiAI(promptText, returnJson = true) {
 
       const data = await res.json();
       const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) throw new Error("Empty response from Gemini.");
+      if (!rawText) throw new Error("Empty response from AI engine.");
 
       if (returnJson) {
-        // Clean out accidental markdown formatting if present
         const cleaned = rawText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
         return JSON.parse(cleaned);
       }
       return rawText;
     } catch (err) {
       lastError = err;
-      console.warn(`Model ${model} failed, trying next model:`, err.message);
+      console.warn(`Model ${model} unavailable, trying next...:`, err.message);
     }
   }
 
-  throw lastError || new Error("Failed to reach Gemini AI.");
+  throw lastError || new Error("Failed to connect to Gemini API.");
 }
 
 // ----------------------------------------------------
