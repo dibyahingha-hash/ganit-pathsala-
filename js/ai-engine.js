@@ -23,7 +23,16 @@ async function fetchGeminiFast(promptText, returnJson = true) {
   if (!apiKey) throw new Error('API key missing. Enter your Gemini key.');
 
   // Fastest high-throughput endpoints only (no dead cascading loops)
-  const models = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+    // Multi-tier model candidate array starting from 3.8
+  const candidateModels = [
+    'gemini-3.8-flash',
+    'gemini-3.7-flash',
+    'gemini-3.5-flash-lite',
+    'gemini-3.5-flash',
+    'gemini-3.0-flash',
+    'gemini-2.5-flash'
+  ];
+  
   let lastError = null;
 
   for (const model of models) {
