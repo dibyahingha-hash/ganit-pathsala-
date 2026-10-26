@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="as">
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-<script>eruda.init();</script>
-  
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>গণিত পাঠশালা | Gonit Pathshala</title>
+
+  <!-- Eruda Mobile Console -->
+  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+  <script>eruda.init();</script>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -172,17 +173,15 @@
         </p>
 
         <div class="grid grid-cols-2 gap-3">
-          <button id="chooseLangAsBtn" onclick="selectLang('as')" class="p-4 rounded-2xl border-2 border-amber-400 bg-amber-50 hover:bg-amber-100 font-black text-amber-950 transition transform active:scale-95 flex flex-col items-center gap-1 shadow-sm">
+          <button id="chooseLangAsBtn" class="p-4 rounded-2xl border-2 border-amber-400 bg-amber-50 hover:bg-amber-100 font-black text-amber-950 transition transform active:scale-95 flex flex-col items-center gap-1 shadow-sm">
             <span class="text-2xl">অ</span>
-
             <span class="text-base font-bold">অসমীয়া</span>
           </button>
 
-         <button id="chooseLangEnBtn" onclick="selectLang('en')" class="p-4 rounded-2xl border-2 border-slate-300 bg-slate-50 hover:bg-slate-100 font-black text-slate-800 transition transform active:scale-95 flex flex-col items-center gap-1 shadow-sm">
-    <span class="text-2xl font-bold">En</span>
-    <span class="text-base font-bold">English</span>
-         </button>
-          
+          <button id="chooseLangEnBtn" class="p-4 rounded-2xl border-2 border-slate-300 bg-slate-50 hover:bg-slate-100 font-black text-slate-800 transition transform active:scale-95 flex flex-col items-center gap-1 shadow-sm">
+            <span class="text-2xl font-bold">En</span>
+            <span class="text-base font-bold">English</span>
+          </button>
         </div>
       </div>
 
@@ -196,9 +195,8 @@
           <span>🚀</span> <span id="redirectBtnText">মোক Key পৃষ্ঠালৈ লৈ যাওক</span>
         </button>
         <button id="skipToPasteBtn" type="button" class="mt-3 w-full text-xs text-amber-800 font-bold hover:underline py-2 text-center">
-  মোৰ ওচৰত ইতিমধ্যে Key আছে (I already have a key) &rarr;
+          মোৰ ওচৰত ইতিমধ্যে Key আছে (I already have a key) &rarr;
         </button>
-        
       </div>
 
       <!-- Screen 2B: Returning to Paste Key -->
@@ -303,166 +301,127 @@
 
     const asDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
 
-    
-
-    let currentLang = localStorage.getItem('omnimath_lang') || 'as';
-    let apiKey = localStorage.getItem('omnimath_gemini_key') || '';
+    window.currentLang = localStorage.getItem('omnimath_lang') || 'as';
+    window.apiKey = localStorage.getItem('omnimath_gemini_key') || '';
     let currentClassId = 'class-1';
     let currentHwImageBase64 = null;
     let currentHwType = "hint";
 
     function t(key) {
-      return strings[currentLang][key] || key;
+      const lang = window.currentLang || 'as';
+      return (strings[lang] && strings[lang][key]) || (strings['en'] && strings['en'][key]) || key;
     }
 
-    function toDigits(num) {
-      if (currentLang === 'en') return num.toString();
-      return num.toString().replace(/\d/g, d => asDigits[d]);
-    }
-window.addEventListener('DOMContentLoaded', () => {
-  setupUI();
+    window.toDigits = function(num) {
+      if (window.currentLang === 'en' || num === null || num === undefined) return String(num);
+      return String(num).replace(/\d/g, d => asDigits[d]);
+    };
 
-  const savedLang = localStorage.getItem('omnimath_lang');
-  const savedKey = localStorage.getItem('omnimath_gemini_key');
-  const onboardingPortal = document.getElementById('onboardingPortal');
-  const langScreen = document.getElementById('onboardingStepLang');
+    window.addEventListener('DOMContentLoaded', () => {
+      setupUI();
 
-  // If you already have your key from yesterday, launch straight into the app!
-  if (savedKey && savedKey.length >= 20) {
-    apiKey = savedKey;
-    currentLang = savedLang || 'as';
-    document.documentElement.lang = currentLang;
-    if (typeof applyStaticTranslations === 'function') applyStaticTranslations();
-    if (onboardingPortal) onboardingPortal.classList.add('hidden');
-    bootDashboard();
-    return;
-  }
+      const savedLang = localStorage.getItem('omnimath_lang');
+      const savedKey = localStorage.getItem('omnimath_gemini_key');
+      const onboardingPortal = document.getElementById('onboardingPortal');
 
-  // Only show setup if there is no key saved at all
-  if (onboardingPortal) onboardingPortal.classList.remove('hidden');
-  if (langScreen) langScreen.classList.remove('hidden');
-});
-    
+      if (savedKey && savedKey.length >= 20) {
+        window.apiKey = savedKey;
+        window.currentLang = savedLang || 'as';
+        document.documentElement.lang = window.currentLang;
+        applyStaticTranslations();
+        if (onboardingPortal) {
+          onboardingPortal.classList.add('hidden');
+          onboardingPortal.style.display = 'none';
+        }
+        bootDashboard();
+        return;
+      }
 
+      if (onboardingPortal) {
+        onboardingPortal.classList.remove('hidden');
+        onboardingPortal.style.display = 'flex';
+      }
+    });
 
     function setupUI() {
       // Language Selection in Modal
-      document.getElementById('chooseLangAsBtn').onclick = () => selectLang('as');
-      document.getElementById('chooseLangEnBtn').onclick = () => selectLang('en');
+      const btnAs = document.getElementById('chooseLangAsBtn');
+      const btnEn = document.getElementById('chooseLangEnBtn');
+      if (btnAs) btnAs.onclick = () => selectLang('as');
+      if (btnEn) btnEn.onclick = () => selectLang('en');
 
       // Header Lang Toggle
-      document.getElementById('langToggleBtn').onclick = () => {
-        selectLang(currentLang === 'as' ? 'en' : 'as');
-        bootDashboard();
-      };
+      const langToggle = document.getElementById('langToggleBtn');
+      if (langToggle) {
+        langToggle.onclick = () => {
+          selectLang(window.currentLang === 'as' ? 'en' : 'as');
+          bootDashboard();
+        };
+      }
 
       // Direct Redirect to AI Studio
-      document.getElementById('directRedirectBtn').onclick = () => {
-        sessionStorage.setItem('omnimath_redirected', 'true');
-        window.open(AI_STUDIO_URL, '_blank');
-        showKeyPasteScreen();
-      };
-      document.getElementById('skipToPasteBtn').onclick = () => showKeyPasteScreen();
-      
+      const redirectBtn = document.getElementById('directRedirectBtn');
+      if (redirectBtn) {
+        redirectBtn.onclick = () => {
+          sessionStorage.setItem('omnimath_redirected', 'true');
+          window.open(AI_STUDIO_URL, '_blank');
+          showKeyPasteScreen();
+        };
+      }
 
-      document.getElementById('reopenGoogleBtn').onclick = () => {
-        window.open(AI_STUDIO_URL, '_blank');
-      };
+      const skipBtn = document.getElementById('skipToPasteBtn');
+      if (skipBtn) skipBtn.onclick = () => showKeyPasteScreen();
 
-      document.getElementById('saveAndLaunchBtn').onclick = verifyAndLaunch;
+      const reopenBtn = document.getElementById('reopenGoogleBtn');
+      if (reopenBtn) {
+        reopenBtn.onclick = () => {
+          window.open(AI_STUDIO_URL, '_blank');
+        };
+      }
+
+      const saveBtn = document.getElementById('saveAndLaunchBtn');
+      if (saveBtn) saveBtn.onclick = verifyAndLaunch;
 
       // Detect return from Google tab
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible' && !apiKey) {
+        if (document.visibilityState === 'visible' && !window.apiKey) {
           if (sessionStorage.getItem('omnimath_redirected') === 'true') {
             showKeyPasteScreen();
           }
         }
       });
-                  function renderClassSelector() {
-        const select = document.getElementById('classSelectDropdown');
-        if (!select || !window.MATH_CURRICULUM) return;
-        select.innerHTML = '';
-        window.MATH_CURRICULUM.forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c.id;
-          opt.textContent = c.label[currentLang] || c.label.en;
-          if (c.id === currentClassId) opt.selected = true;
-          select.appendChild(opt);
-        });
-      }
 
-      function renderChapterCards() {
-        const container = document.getElementById('chaptersContainer');
-        if (!container || !window.MATH_CURRICULUM) return;
-        container.innerHTML = '';
-
-        const cls = window.MATH_CURRICULUM.find(c => c.id === currentClassId) || window.MATH_CURRICULUM[0];
-        if (!cls) return;
-
-        const renderTopicList = (topics, streamTitle) => {
-          let html = '';
-          if (streamTitle) {
-            html += `<div class="col-span-full mt-4 mb-2"><h3 class="text-sm font-black text-amber-900 uppercase tracking-wider bg-amber-200/60 px-3 py-1 rounded-lg inline-block">${streamTitle}</h3></div>`;
-          }
-          topics.forEach(t => {
-            const titleStr = t.title[currentLang] || t.title.en;
-            const classTitle = cls.label[currentLang] || cls.label.en;
-            html += `
-              <div class="bg-white rounded-2xl p-5 shadow-sm border border-amber-200 hover:shadow-md transition-shadow flex flex-col justify-between">
-                <div>
-                  <span class="text-[10px] font-black uppercase text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">${classTitle}</span>
-                  <h3 class="font-bold text-slate-800 text-base mt-2">${titleStr}</h3>
-                </div>
-                <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100">
-                                         <button onclick="window.openWorkspaceForTopic('${titleStr.replace(/'/g, "\\'")}', '${classTitle.replace(/'/g, "\\'")}', 'learn', '${t.id}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-1.5 rounded-xl text-xs">Learn</button>
-            <button onclick="window.openWorkspaceForTopic('${titleStr.replace(/'/g, "\\'")}', '${classTitle.replace(/'/g, "\\'")}', 'play', '${t.id}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold py-1.5 rounded-xl text-xs">Play</button>
-            <button onclick="window.openWorkspaceForTopic('${titleStr.replace(/'/g, "\\'")}', '${classTitle.replace(/'/g, "\\'")}', 'test', '${t.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-1.5 rounded-xl text-xs">Test</button>
-          </div>
-        </div>
-                `;
-                
-    
-          });
-          return html;
+      const classDropdown = document.getElementById('classSelectDropdown');
+      if (classDropdown) {
+        classDropdown.onchange = (e) => {
+          currentClassId = e.target.value;
+          renderChapterCards();
         };
-
-        if (cls.topics) {
-          container.innerHTML = renderTopicList(cls.topics, null);
-        } else if (cls.streams) {
-          let fullHtml = '';
-          cls.streams.forEach(s => {
-            fullHtml += renderTopicList(s.topics, s.streamName[currentLang] || s.streamName.en);
-          });
-          container.innerHTML = fullHtml;
-        }
       }
 
-      document.getElementById('classSelectDropdown').onchange = (e) => {
-        currentClassId = e.target.value;
-        renderChapterCards();
-      };
-
-      document.getElementById('conceptSearchInput').oninput = (e) => {
-        if (window.handleUniversalSearchQuery) window.handleUniversalSearchQuery(e.target.value);
-      };
+      const searchInput = document.getElementById('conceptSearchInput');
+      if (searchInput) {
+        searchInput.oninput = handleUniversalSearch;
+      }
 
       renderClassSelector();
       renderChapterCards();
-      
-
-      // Search Handler
-      document.getElementById('conceptSearchInput').oninput = handleUniversalSearch;
 
       // Homework Modal Triggers
-      document.getElementById('openHwBtn').onclick = () => document.getElementById('hwModal').classList.remove('hidden');
-      document.getElementById('closeHwBtn').onclick = () => document.getElementById('hwModal').classList.add('hidden');
-      document.getElementById('closeWsBtn').onclick = () => document.getElementById('workspaceModal').classList.add('hidden');
+      const openHw = document.getElementById('openHwBtn');
+      const closeHw = document.getElementById('closeHwBtn');
+      const closeWs = document.getElementById('closeWsBtn');
+      if (openHw) openHw.onclick = () => document.getElementById('hwModal')?.classList.remove('hidden');
+      if (closeHw) closeHw.onclick = () => document.getElementById('hwModal')?.classList.add('hidden');
+      if (closeWs) closeWs.onclick = () => window.closeTopicWorkspace();
 
       // Homework File Upload
-      document.getElementById('hwCameraInput').onchange = handleHwImage;
-      document.getElementById('hwFileInput').onchange = handleHwImage;
-      document.getElementById('hwRemoveImgBtn').onclick = clearHwImage;
+      const cam = document.getElementById('hwCameraInput');
+      const file = document.getElementById('hwFileInput');
+      const remImg = document.getElementById('hwRemoveImgBtn');
+      if (cam) cam.onchange = handleHwImage;
+      if (file) file.onchange = handleHwImage;
+      if (remImg) remImg.onclick = clearHwImage;
 
       // Homework Help Type Toggles
       document.querySelectorAll('.hw-type-btn').forEach(btn => {
@@ -473,176 +432,227 @@ window.addEventListener('DOMContentLoaded', () => {
         };
       });
 
-      document.getElementById('askHwBtn').onclick = submitHomeworkQuery;
+      const askBtn = document.getElementById('askHwBtn');
+      if (askBtn) askBtn.onclick = submitHomeworkQuery;
     }
 
     function selectLang(lang) {
-      currentLang = lang;
-  localStorage.setItem('omnimath_lang', lang);
-      
-      
-       document.documentElement.lang = lang;
-  if (typeof applyStaticTranslations === 'function') applyStaticTranslations();
+      window.currentLang = lang;
+      localStorage.setItem('omnimath_lang', lang);
+      document.documentElement.lang = lang;
+      applyStaticTranslations();
 
-  const savedKey = localStorage.getItem('omnimath_gemini_key');
-  const onboardingPortal = document.getElementById('onboardingPortal');
-  const langScreen = document.getElementById('onboardingStepLang');
+      const savedKey = localStorage.getItem('omnimath_gemini_key');
+      const onboardingPortal = document.getElementById('onboardingPortal');
+      const langScreen = document.getElementById('onboardingStepLang');
 
-  if (savedKey && savedKey.length >= 20) {
-    apiKey = savedKey;
-    if (onboardingPortal) onboardingPortal.classList.add('hidden');
-    bootDashboard();
-  } else {
-    if (langScreen) langScreen.classList.add('hidden');
-    if (typeof showKeyRedirectScreen === 'function') {
-      showKeyRedirectScreen();
+      if (savedKey && savedKey.length >= 20) {
+        window.apiKey = savedKey;
+        if (onboardingPortal) {
+          onboardingPortal.classList.add('hidden');
+          onboardingPortal.style.display = 'none';
+        }
+        bootDashboard();
+      } else {
+        if (langScreen) langScreen.classList.add('hidden');
+        showKeyRedirectScreen();
+      }
     }
-  }
-}
 
-const setLanguage = selectLang;
-    
     function showKeyRedirectScreen() {
-  const pasteScreen = document.getElementById('onboardingStepKeyPaste');
-  const redirectScreen = document.getElementById('onboardingStepKeyRedirect');
-  if (pasteScreen) pasteScreen.classList.add('hidden');
-  if (redirectScreen) redirectScreen.classList.remove('hidden');
+      const pasteScreen = document.getElementById('onboardingStepKeyPaste');
+      const redirectScreen = document.getElementById('onboardingStepKeyRedirect');
+      if (pasteScreen) pasteScreen.classList.add('hidden');
+      if (redirectScreen) redirectScreen.classList.remove('hidden');
 
-  const title = document.getElementById('portalKeyTitle');
-  const desc = document.getElementById('portalKeyDesc');
-  const btn = document.getElementById('redirectBtnText');
+      const title = document.getElementById('portalKeyTitle');
+      const desc = document.getElementById('portalKeyDesc');
+      const btn = document.getElementById('redirectBtnText');
 
-  if (title) title.innerText = t('portalKeyTitle');
-  if (desc) desc.innerText = t('portalKeyDesc');
-  if (btn) btn.innerText = t('redirectBtnText');
+      if (title) title.innerText = t('portalKeyTitle');
+      if (desc) desc.innerText = t('portalKeyDesc');
+      if (btn) btn.innerText = t('redirectBtnText');
     }
-    
+
     function showKeyPasteScreen() {
-      document.getElementById('onboardingStepKeyRedirect').classList.add('hidden');
-      document.getElementById('onboardingStepKeyPaste').classList.remove('hidden');
+      document.getElementById('onboardingStepKeyRedirect')?.classList.add('hidden');
+      const pasteScreen = document.getElementById('onboardingStepKeyPaste');
+      if (pasteScreen) pasteScreen.classList.remove('hidden');
 
       document.getElementById('portalPasteTitle').innerText = t('portalPasteTitle');
       document.getElementById('portalPasteDesc').innerText = t('portalPasteDesc');
       document.getElementById('launchBtnText').innerText = t('launchBtnText');
       document.getElementById('reopenGoogleBtnText').innerText = t('reopenGoogleBtnText');
 
-      setTimeout(() => document.getElementById('geminiKeyInput').focus(), 250);
+      setTimeout(() => document.getElementById('geminiKeyInput')?.focus(), 250);
     }
-async function verifyAndLaunch() {
-  const input = document.getElementById('geminiKeyInput');
-  const feedback = document.getElementById('portalFeedback');
-  const btn = document.getElementById('saveAndLaunchBtn');
-  const key = input.value.trim();
 
-  feedback.classList.remove('hidden');
+    async function verifyAndLaunch() {
+      const input = document.getElementById('geminiKeyInput');
+      const feedback = document.getElementById('portalFeedback');
+      const btn = document.getElementById('saveAndLaunchBtn');
+      const key = input.value.trim();
 
-  if (!key || key.length < 20) {
-    feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center";
-    feedback.innerText = t('keyInvalid');
-    return;
-  }
+      feedback.classList.remove('hidden');
 
-  feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-amber-100 text-amber-800 text-center";
-  feedback.innerText = t('verifyingKey');
-  btn.disabled = true;
-
-  try {
-    // Pass key as both header and query param for full compatibility with AQ. and AIza keys
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`, {
-      method: 'GET',
-      headers: {
-        'x-goog-api-key': key,
-        'Content-Type': 'application/json'
+      if (!key || key.length < 20) {
+        feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center";
+        feedback.innerText = t('keyInvalid');
+        return;
       }
-    });
-    const data = await res.json();
 
-    if (res.ok) {
-      apiKey = key;
-      localStorage.setItem('omnimath_gemini_key', key);
-      sessionStorage.removeItem('omnimath_redirected');
+      feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-amber-100 text-amber-800 text-center";
+      feedback.innerText = t('verifyingKey');
+      btn.disabled = true;
 
-      feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 text-center";
-      feedback.innerText = t('keyValid');
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(key)}`, {
+          method: 'GET',
+          headers: {
+            'x-goog-api-key': key,
+            'Content-Type': 'application/json'
+          }
+        });
+        const data = await res.json();
 
-      setTimeout(() => {
-        document.getElementById('onboardingPortal').classList.add('hidden');
+        if (res.ok) {
+          window.apiKey = key;
+          localStorage.setItem('omnimath_gemini_key', key);
+          sessionStorage.removeItem('omnimath_redirected');
+
+          feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 text-center";
+          feedback.innerText = t('keyValid');
+
+          setTimeout(() => {
+            const portal = document.getElementById('onboardingPortal');
+            if (portal) {
+              portal.classList.add('hidden');
+              portal.style.display = 'none';
+            }
+            btn.disabled = false;
+            bootDashboard();
+          }, 700);
+        } else {
+          btn.disabled = false;
+          const apiErr = data.error?.message || `Error ${res.status}: ${res.statusText}`;
+          feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center break-words";
+          feedback.innerText = apiErr;
+        }
+      } catch (err) {
         btn.disabled = false;
-        bootDashboard();
-      }, 700);
-    } else {
-      btn.disabled = false;
-      const apiErr = data.error?.message || `Error ${res.status}: ${res.statusText}`;
-      feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center break-words";
-      feedback.innerText = apiErr;
+        feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center break-words";
+        feedback.innerText = err.message || "Network error reaching Google API";
+      }
     }
-  } catch (err) {
-    btn.disabled = false;
-    feedback.className = "mt-3 p-2.5 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 text-center break-words";
-    feedback.innerText = err.message || "Network error reaching Google API";
-  }
-}
-    
-    
 
     function applyStaticTranslations() {
-      document.getElementById('uiBrandTitle').innerText = t('brandTitle');
-      document.getElementById('uiBrandTagline').innerText = t('brandTagline');
-      document.getElementById('currentLangLabel').innerText = currentLang === 'as' ? 'English' : 'অসমীয়া';
-      document.getElementById('conceptSearchInput').placeholder = t('searchPlaceholder');
-      document.getElementById('uiSelectClassLabel').innerText = t('selectClassLabel');
-      document.getElementById('uiHwNavText').innerText = t('hwNavText');
-      document.getElementById('uiHwTitle').innerText = t('hwTitle');
-      document.getElementById('uiCaptureBtnText').innerText = t('captureBtn');
-      document.getElementById('uiUploadBtnText').innerText = t('uploadBtn');
-      document.getElementById('hwTextInput').placeholder = t('hwPlaceholder');
-      document.getElementById('uiHwModeSelectLabel').innerText = t('hwModeLabel');
-      document.getElementById('uiHwOptHint').innerText = t('hwHint');
-      document.getElementById('uiHwOptStep').innerText = t('hwStep');
-      document.getElementById('uiHwOptCheck').innerText = t('hwCheck');
-      document.getElementById('uiAskBtnText').innerText = t('askBtn');
+      const brandTitle = document.getElementById('uiBrandTitle');
+      const brandTag = document.getElementById('uiBrandTagline');
+      const langLbl = document.getElementById('currentLangLabel');
+      const sInput = document.getElementById('conceptSearchInput');
+      const selCls = document.getElementById('uiSelectClassLabel');
+      const hwNav = document.getElementById('uiHwNavText');
+      const hwTitle = document.getElementById('uiHwTitle');
+      const capBtn = document.getElementById('uiCaptureBtnText');
+      const upBtn = document.getElementById('uiUploadBtnText');
+      const hwInput = document.getElementById('hwTextInput');
+      const hwMode = document.getElementById('uiHwModeSelectLabel');
+      const hwHint = document.getElementById('uiHwOptHint');
+      const hwStep = document.getElementById('uiHwOptStep');
+      const hwChk = document.getElementById('uiHwOptCheck');
+      const askBtn = document.getElementById('uiAskBtnText');
+
+      if (brandTitle) brandTitle.innerText = t('brandTitle');
+      if (brandTag) brandTag.innerText = t('brandTagline');
+      if (langLbl) langLbl.innerText = window.currentLang === 'as' ? 'English' : 'অসমীয়া';
+      if (sInput) sInput.placeholder = t('searchPlaceholder');
+      if (selCls) selCls.innerText = t('selectClassLabel');
+      if (hwNav) hwNav.innerText = t('hwNavText');
+      if (hwTitle) hwTitle.innerText = t('hwTitle');
+      if (capBtn) capBtn.innerText = t('captureBtn');
+      if (upBtn) upBtn.innerText = t('uploadBtn');
+      if (hwInput) hwInput.placeholder = t('hwPlaceholder');
+      if (hwMode) hwMode.innerText = t('hwModeLabel');
+      if (hwHint) hwHint.innerText = t('hwHint');
+      if (hwStep) hwStep.innerText = t('hwStep');
+      if (hwChk) hwChk.innerText = t('hwCheck');
+      if (askBtn) askBtn.innerText = t('askBtn');
+    }
+
+    function renderClassSelector() {
+      const select = document.getElementById('classSelectDropdown');
+      if (!select || !window.MATH_CURRICULUM) return;
+      select.innerHTML = '';
+      window.MATH_CURRICULUM.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.label[window.currentLang] || c.label.en;
+        if (c.id === currentClassId) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderChapterCards() {
+      const container = document.getElementById('chaptersContainer');
+      if (!container || !window.MATH_CURRICULUM) return;
+      container.innerHTML = '';
+
+      const cls = window.MATH_CURRICULUM.find(c => c.id === currentClassId) || window.MATH_CURRICULUM[0];
+      if (!cls) return;
+
+      const renderTopicList = (topics, streamTitle) => {
+        let html = '';
+        if (streamTitle) {
+          html += `<div class="col-span-full mt-4 mb-2"><h3 class="text-sm font-black text-amber-900 uppercase tracking-wider bg-amber-200/60 px-3 py-1 rounded-lg inline-block">${streamTitle}</h3></div>`;
+        }
+        topics.forEach(t => {
+          const titleStr = t.title[window.currentLang] || t.title.en;
+          const classTitle = cls.label[window.currentLang] || cls.label.en;
+          html += `
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-amber-200 hover:shadow-md transition-shadow flex flex-col justify-between">
+              <div>
+                <span class="text-[10px] font-black uppercase text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">${classTitle}</span>
+                <h3 class="font-bold text-slate-800 text-base mt-2">${titleStr}</h3>
+              </div>
+              <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100">
+                <button onclick="window.openWorkspaceForTopic('${titleStr.replace(/'/g, "\\\\'")}', '${classTitle.replace(/'/g, "\\\\'")}', 'learn', '${t.id}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-1.5 rounded-xl text-xs">Learn</button>
+                <button onclick="window.openWorkspaceForTopic('${titleStr.replace(/'/g, "\\\\'")}', '${classTitle.replace(/'/g, "\\\\'")}', 'play', '${t.id}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold py-1.5 rounded-xl text-xs">Play</button>
+                <button onclick="window.openWorkspaceForTopic('${titleStr.replace(/'/g, "\\\\'")}', '${classTitle.replace(/'/g, "\\\\'")}', 'test', '${t.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-1.5 rounded-xl text-xs">Test</button>
+              </div>
+            </div>
+          `;
+        });
+        return html;
+      };
+
+      if (cls.topics) {
+        container.innerHTML = renderTopicList(cls.topics, null);
+      } else if (cls.streams) {
+        let fullHtml = '';
+        cls.streams.forEach(s => {
+          fullHtml += renderTopicList(s.topics, s.streamName[window.currentLang] || s.streamName.en);
+        });
+        container.innerHTML = fullHtml;
+      }
     }
 
     function bootDashboard() {
-  const langPortal = document.getElementById('onboardingStepLang');
-  const keyPortal = document.getElementById('onboardingPortal');
+      const keyPortal = document.getElementById('onboardingPortal');
+      if (keyPortal) {
+        keyPortal.classList.add('hidden');
+        keyPortal.style.display = 'none';
+      }
 
-  if (langPortal) langPortal.classList.add('hidden');
-  if (keyPortal) {
-    keyPortal.classList.add('hidden');
-    keyPortal.style.display = 'none';
-  }
-
-  if (typeof applyStaticTranslations === 'function') applyStaticTranslations();
-  
-  // Re-render curriculum cards safely using MATH_CURRICULUM
-  if (typeof setupUI === 'function') {
-    const container = document.getElementById('chaptersContainer');
-    if (container && (!container.children || container.children.length === 0)) {
-      setupUI();
+      applyStaticTranslations();
+      renderClassSelector();
+      renderChapterCards();
     }
-  }
-    }
-    
 
-  const langPortal = document.getElementById('langSelectionPortal') || document.getElementById('onboardingStepLang');
-  const keyPortal = document.getElementById('onboardingPortal');
-  const appContainer = document.getElementById('appContainer') || document.getElementById('mainDashboard');
-
-  if (langPortal) langPortal.classList.add('hidden');
-  if (keyPortal) keyPortal.classList.add('hidden');
-  if (appContainer) appContainer.classList.remove('hidden');
-
-  if (typeof applyStaticTranslations === 'function') applyStaticTranslations();
-  if (typeof populateClassDropdown === 'function') populateClassDropdown();
-  if (typeof renderChapterCards === 'function') renderChapterCards();
-    }
-    
-
-    
     function handleUniversalSearch(e) {
       const query = e.target.value.trim().toLowerCase();
       const dropdown = document.getElementById('searchResultsDropdown');
+
+      if (!dropdown) return;
 
       if (query.length < 2) {
         dropdown.classList.add('hidden');
@@ -650,13 +660,17 @@ async function verifyAndLaunch() {
         return;
       }
 
+      if (!window.MATH_CURRICULUM) return;
+
       const results = [];
-      classesData.forEach(c => {
-        c.chapters.forEach(ch => {
-          const matchAs = ch.title.as.toLowerCase().includes(query) || ch.desc.as.toLowerCase().includes(query);
-          const matchEn = ch.title.en.toLowerCase().includes(query) || ch.desc.en.toLowerCase().includes(query);
-          if (matchAs || matchEn) {
-            results.push({ ...ch, classTitle: c.title[currentLang] });
+      window.MATH_CURRICULUM.forEach(c => {
+        const classTitle = c.label[window.currentLang] || c.label.en;
+        const topicList = c.topics || (c.streams ? c.streams.flatMap(s => s.topics) : []);
+        topicList.forEach(t => {
+          const titleAs = (t.title.as || '').toLowerCase();
+          const titleEn = (t.title.en || '').toLowerCase();
+          if (titleAs.includes(query) || titleEn.includes(query)) {
+            results.push({ ...t, classTitle, titleDisplay: t.title[window.currentLang] || t.title.en });
           }
         });
       });
@@ -665,9 +679,9 @@ async function verifyAndLaunch() {
         dropdown.innerHTML = `<div class="p-4 text-xs text-slate-500 text-center">কোনো ধাৰণা পোৱা নগ'ল / No concept found</div>`;
       } else {
         dropdown.innerHTML = results.map(r => `
-          <div class="search-result-item p-3 border-b border-slate-100 hover:bg-amber-50 cursor-pointer flex justify-between items-center" data-id="${r.id}">
+          <div class="search-result-item p-3 border-b border-slate-100 hover:bg-amber-50 cursor-pointer flex justify-between items-center" data-title="${r.titleDisplay}" data-class="${r.classTitle}" data-id="${r.id}">
             <div>
-              <h5 class="text-sm font-bold text-slate-900">${r.title[currentLang]}</h5>
+              <h5 class="text-sm font-bold text-slate-900">${r.titleDisplay}</h5>
               <span class="text-[10px] text-amber-700 font-semibold uppercase">${r.classTitle}</span>
             </div>
             <span class="text-xs text-amber-700 font-bold">খোলক &rarr;</span>
@@ -677,117 +691,12 @@ async function verifyAndLaunch() {
         dropdown.querySelectorAll('.search-result-item').forEach(item => {
           item.onclick = () => {
             dropdown.classList.add('hidden');
-            launchWorkspace(item.getAttribute('data-id'), 'learn');
+            window.openWorkspaceForTopic(item.getAttribute('data-title'), item.getAttribute('data-class'), 'learn', item.getAttribute('data-id'));
           };
         });
       }
 
       dropdown.classList.remove('hidden');
-    }
-
-    function launchWorkspace(chapterId, mode) {
-      let foundChapter = null;
-      classesData.forEach(c => {
-        const ch = c.chapters.find(x => x.id === chapterId);
-        if (ch) foundChapter = ch;
-      });
-      if (!foundChapter) return;
-
-      const modal = document.getElementById('workspaceModal');
-      const badge = document.getElementById('wsModeBadge');
-      const title = document.getElementById('wsChapterTitle');
-      const body = document.getElementById('wsBody');
-
-      badge.innerText = mode.toUpperCase();
-      title.innerText = foundChapter.title[currentLang];
-      modal.classList.remove('hidden');
-
-      if (mode === 'learn') {
-        body.innerHTML = `
-          <div class="space-y-4">
-            <div class="prose max-w-none text-sm text-slate-700 leading-relaxed">
-              ${foundChapter.learnHtml[currentLang]}
-            </div>
-            <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200">
-              <h5 class="text-xs font-bold text-amber-900 uppercase">${currentLang === 'as' ? 'প্ৰধান সূত্ৰ' : 'Core Identity'}</h5>
-              <div class="text-center text-lg my-2 font-mono">$$${foundChapter.formula}$$</div>
-            </div>
-          </div>
-        `;
-      } else if (mode === 'play') {
-        const target = Math.floor(Math.random() * 8) + 4;
-        let cur = 0;
-        body.innerHTML = `
-          <div class="space-y-4 text-center">
-            <p class="text-sm font-bold text-slate-800">
-              ${currentLang === 'as' ? `তুলাচনীৰ সোঁফালে যোগ কৰি মুঠ মান <b>${toDigits(target)}</b> ৰ সমান কৰক:` : `Add weights to balance the scale to exactly <b>${target}</b>:`}
-            </p>
-            <div class="p-6 bg-amber-50 rounded-2xl border-2 border-amber-300 flex justify-around items-center min-h-[140px]">
-              <div class="bg-amber-600 text-white font-black text-xl p-4 rounded-2xl shadow">🎯 ${toDigits(target)}</div>
-              <div class="text-2xl font-black text-amber-800">=</div>
-              <div id="playCurrentBox" class="bg-white border-2 border-amber-400 text-amber-900 font-black text-xl p-4 rounded-2xl shadow min-w-[70px]">${toDigits(0)}</div>
-            </div>
-            <div id="playFeedback" class="text-xs font-bold h-5 text-amber-700"></div>
-            <div class="flex justify-center gap-3">
-              <button id="addWeight1" class="px-4 py-2 bg-white border-2 border-amber-400 hover:bg-amber-100 text-amber-950 font-bold rounded-xl">+${toDigits(1)}</button>
-              <button id="addWeight2" class="px-4 py-2 bg-white border-2 border-amber-400 hover:bg-amber-100 text-amber-950 font-bold rounded-xl">+${toDigits(2)}</button>
-              <button id="resetPlayWeight" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl">🔄</button>
-            </div>
-          </div>
-        `;
-
-        const box = body.querySelector('#playCurrentBox');
-        const feed = body.querySelector('#playFeedback');
-        body.querySelector('#addWeight1').onclick = () => { cur += 1; checkWeight(); };
-        body.querySelector('#addWeight2').onclick = () => { cur += 2; checkWeight(); };
-        body.querySelector('#resetPlayWeight').onclick = () => { cur = 0; box.innerText = toDigits(0); feed.innerText = ''; };
-
-        function checkWeight() {
-          box.innerText = toDigits(cur);
-          if (cur === target) {
-            feed.className = "text-xs font-bold h-5 text-emerald-700 animate-bounce";
-            feed.innerText = currentLang === 'as' ? "🎉 অসাধাৰণ! সমতা নিশ্চিত হ’ল!" : "🎉 Splendid! Equilibrium achieved!";
-          } else if (cur > target) {
-            feed.className = "text-xs font-bold h-5 text-rose-700";
-            feed.innerText = currentLang === 'as' ? "অলপ বেছি হ’ল! পুনৰ চেষ্টা কৰক।" : "A bit over! Reset and try again.";
-          }
-        }
-      } else if (mode === 'test') {
-        const a = Math.floor(Math.random() * 6) + 2;
-        const b = Math.floor(Math.random() * 5) + 3;
-        const ans = a + b;
-        body.innerHTML = `
-          <div class="space-y-4">
-            <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200">
-              <h4 class="text-lg font-black text-slate-900">${currentLang === 'as' ? 'সমীকৰণটো সমাধান কৰক:' : 'Solve the given equation:'}</h4>
-              <div class="text-center text-xl font-bold my-3 font-mono">${toDigits(a)} + ${toDigits(b)} = ?</div>
-            </div>
-            <div class="flex gap-2">
-              <input type="number" id="testAnsInput" placeholder="?" class="flex-1 p-3 border-2 border-slate-300 rounded-xl text-center text-lg font-bold" />
-              <button id="testSubmitBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-6 py-3 rounded-xl">${currentLang === 'as' ? 'উত্তৰ চাওক' : 'Check'}</button>
-            </div>
-            <div id="testRescueBox" class="hidden p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl text-xs space-y-2">
-              <h5 class="font-black text-amber-950 flex items-center gap-1.5 text-sm"><span>💡</span> <span>${t('rescueTitle')}</span></h5>
-              <p class="text-amber-900">${t('tryAgainGuidance')}</p>
-              <p class="font-mono bg-white p-2 rounded-lg border border-amber-200">${toDigits(a)} + ${toDigits(b)} = ${toDigits(a)} + (${toDigits(1)} + ${toDigits(b - 1)})</p>
-            </div>
-          </div>
-        `;
-
-        body.querySelector('#testSubmitBtn').onclick = () => {
-          const val = parseInt(body.querySelector('#testAnsInput').value.trim(), 10);
-          const r = body.querySelector('#testRescueBox');
-          r.classList.remove('hidden');
-          if (val === ans) {
-            r.className = "p-4 bg-emerald-50 border-2 border-emerald-300 rounded-2xl text-xs text-emerald-900 font-bold";
-            r.innerHTML = `<span>🌟 ${currentLang === 'as' ? 'শুদ্ধ সমাধান! আপুনি ধাৰণাটো আয়ত্ত কৰিলে।' : 'Correct! Concept fully mastered.'}</span>`;
-          }
-        };
-      }
-
-      if (window.renderMathInElement) {
-        renderMathInElement(body, { delimiters: [{ left: '$$', right: '$$', display: true }] });
-      }
     }
 
     function handleHwImage(e) {
@@ -797,29 +706,33 @@ async function verifyAndLaunch() {
       reader.onload = (event) => {
         currentHwImageBase64 = event.target.result.split(',')[1];
         document.getElementById('hwImagePreview').src = event.target.result;
-        document.getElementById('hwImagePreviewContainer').classList.remove('hidden');
+        document.getElementById('hwImagePreviewContainer')?.classList.remove('hidden');
       };
       reader.readAsDataURL(file);
     }
 
     function clearHwImage() {
       currentHwImageBase64 = null;
-      document.getElementById('hwImagePreviewContainer').classList.add('hidden');
-      document.getElementById('hwCameraInput').value = '';
-      document.getElementById('hwFileInput').value = '';
+      document.getElementById('hwImagePreviewContainer')?.classList.add('hidden');
+      const cam = document.getElementById('hwCameraInput');
+      const file = document.getElementById('hwFileInput');
+      if (cam) cam.value = '';
+      if (file) file.value = '';
     }
 
-      async function submitHomeworkQuery() {
-      const text = document.getElementById('hwTextInput').value.trim();
+    async function submitHomeworkQuery() {
+      const text = document.getElementById('hwTextInput')?.value.trim();
       const output = document.getElementById('hwOutput');
       const btn = document.getElementById('askHwBtn');
 
       if (!text && !currentHwImageBase64) return;
-      output.classList.remove('hidden');
-      output.innerHTML = `<span class="animate-pulse font-bold text-amber-800">⚡ ${t('analyzingHw')}</span>`;
-      btn.disabled = true;
+      if (output) {
+        output.classList.remove('hidden');
+        output.innerHTML = `<span class="animate-pulse font-bold text-amber-800">⚡ ${t('analyzingHw')}</span>`;
+      }
+      if (btn) btn.disabled = true;
 
-      const langRule = currentLang === 'as'
+      const langRule = window.currentLang === 'as'
         ? "Respond purely and strictly in Assamese. Use formal terminology (যেনে: অৱকলন, সমীকৰণ, ভগ্নাংশ). Do not include English words unless formulas."
         : "Respond purely and strictly in English with professional mathematical clarity. Do not mix any other language.";
 
@@ -836,9 +749,6 @@ async function verifyAndLaunch() {
       }
 
       const candidateModels = [
-        'gemini-3.8-flash',
-        'gemini-3.7-flash',
-        'gemini-3.5-flash-lite',
         'gemini-2.5-flash',
         'gemini-2.0-flash'
       ];
@@ -847,11 +757,9 @@ async function verifyAndLaunch() {
 
       for (const model of candidateModels) {
         try {
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${window.apiKey}`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ parts: contentsParts }] })
           });
 
@@ -868,75 +776,78 @@ async function verifyAndLaunch() {
         }
       }
 
-      if (candidateText) {
-        output.innerHTML = candidateText.replace(/\n/g, '<br/>');
-        if (window.renderMathInElement) {
-          renderMathInElement(output, { 
-            delimiters: [
-              { left: '$$', right: '$$', display: true }, 
-              { left: '$', right: '$', display: false }
-            ] 
-          });
+      if (output) {
+        if (candidateText) {
+          output.innerHTML = candidateText.replace(/\\n/g, '<br/>');
+          if (window.renderMathInElement) {
+            renderMathInElement(output, { 
+              delimiters: [
+                { left: '$$', right: '$$', display: true }, 
+                { left: '$', right: '$', display: false }
+              ] 
+            });
+          }
+        } else {
+          output.innerHTML = `<span class="text-rose-700 font-bold">${window.currentLang === 'as' ? 'সংযোগত সমস্যা হ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।' : 'Connection error. Please try again.'}</span>`;
         }
-      } else {
-        output.innerHTML = `<span class="text-rose-700 font-bold">${currentLang === 'as' ? 'সংযোগত সমস্যা হ’ল। অনুগ্ৰহ কৰি পুনৰ চেষ্টা কৰক।' : 'Connection error. Please try again.'}</span>`;
       }
 
-    btn.disabled = false;
-  }
-</script>
-
-<!-- EXTERNAL SCRIPTS -->
-<script src="js/curriculum.js"></script>
-<script src="js/ai-engine.js?v=20"></script>
-
-<!-- MODAL CONTROLLER -->
-<script>
-window.openWorkspaceForTopic = function(title, standard, mode) {
-  window.activeTopicContext = { title: title || '', standard: standard || '' };
-  
-  if (typeof practiceStreak !== 'undefined') practiceStreak = 0;
-  if (typeof testQuestions !== 'undefined') testQuestions = [];
-  if (typeof currentTestIndex !== 'undefined') currentTestIndex = 0;
-  if (typeof testScore !== 'undefined') testScore = 0;
-
-  const modal = document.getElementById('workspaceModal');
-  const titleEl = document.getElementById('wsChapterTitle');
-  const badgeEl = document.getElementById('wsModeBadge');
-  const bodyEl = document.getElementById('wsBody');
-  const closeBtn = document.getElementById('closeWsBtn');
-
-  if (titleEl) titleEl.innerText = title || 'Mathematics';
-  if (badgeEl) badgeEl.innerText = standard || 'Class 1';
-
-  if (closeBtn) {
-    closeBtn.onclick = window.closeTopicWorkspace;
-  }
-
-  if (modal) {
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
-  }
-
-  if (bodyEl) {
-    if (mode === 'test' && typeof renderTestSetup === 'function') {
-      renderTestSetup(bodyEl);
-    } else if (typeof renderPracticeArena === 'function') {
-      renderPracticeArena(bodyEl);
-    } else {
-      bodyEl.innerHTML = `<p class="text-center text-slate-500 font-bold p-6">Loading workspace...</p>`;
+      if (btn) btn.disabled = false;
     }
-  }
-};
+  </script>
 
-window.closeTopicWorkspace = function() {
-  const modal = document.getElementById('workspaceModal');
-  if (modal) {
-    modal.classList.add('hidden');
-    modal.style.display = 'none';
-  }
-};
+  <!-- EXTERNAL SCRIPTS -->
+  <script src="js/curriculum.js"></script>
+  <script src="js/ai-engine.js?v=25"></script>
 
-</script>
+  <!-- MODAL CONTROLLER -->
+  <script>
+    window.openWorkspaceForTopic = function(title, standard, mode, topicId) {
+      window.activeTopicContext = { title: title || '', standard: standard || '', topicId: topicId || '' };
+      
+      if (typeof practiceStreak !== 'undefined') practiceStreak = 0;
+      if (typeof testQuestions !== 'undefined') testQuestions = [];
+      if (typeof currentTestIndex !== 'undefined') currentTestIndex = 0;
+      if (typeof testScore !== 'undefined') testScore = 0;
+
+      const modal = document.getElementById('workspaceModal');
+      const titleEl = document.getElementById('wsChapterTitle');
+      const badgeEl = document.getElementById('wsModeBadge');
+      const bodyEl = document.getElementById('wsBody');
+      const closeBtn = document.getElementById('closeWsBtn');
+
+      if (titleEl) titleEl.innerText = title || 'Mathematics';
+      if (badgeEl) badgeEl.innerText = (mode || 'PRACTICE').toUpperCase();
+
+      if (closeBtn) {
+        closeBtn.onclick = window.closeTopicWorkspace;
+      }
+
+      if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+      }
+
+      if (bodyEl) {
+        if (mode === 'test' && typeof renderTestSetup === 'function') {
+          renderTestSetup(bodyEl);
+        } else if (mode === 'learn' && typeof renderLearnMode === 'function') {
+          renderLearnMode(bodyEl);
+        } else if (typeof renderPracticeArena === 'function') {
+          renderPracticeArena(bodyEl);
+        } else {
+          bodyEl.innerHTML = `<p class="text-center text-slate-500 font-bold p-6">Loading workspace...</p>`;
+        }
+      }
+    };
+
+    window.closeTopicWorkspace = function() {
+      const modal = document.getElementById('workspaceModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+      }
+    };
+  </script>
 </body>
 </html>
