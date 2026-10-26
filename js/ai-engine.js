@@ -16,6 +16,73 @@ let testScore = 0;
 // 1. TOPIC REGISTRY (Structured Pedagogy)
 // ----------------------------------------------------
 window.TopicRegistry = {
+    // CLASS 1: COUNTING & NUMBER SENSE (1-9)
+  'counting_number_sense': {
+    title: { en: 'Counting & Number Sense (1-9)', as: 'গণনা আৰু সংখ্যাবোধ (১-৯)' },
+    standards: ['class 1'],
+    lesson: {
+      concept: {
+        en: 'Counting means matching each item with a number name in order: 1, 2, 3, 4, 5, 6, 7, 8, 9.',
+        as: 'গণনা কৰা মানে প্ৰতিটো বস্তুক এটা এটাকৈ ক্ৰমত সংখ্যাৰ সৈতে মিলোৱা: ১, ২, ৩, ৪, ৫, ৬, ৭, ৮, ৯।'
+      },
+      visual: (count = 5) => `
+        <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-center">
+          <div class="text-xs font-bold text-amber-900 mb-2">Count the apples / আপেলবোৰ গণনা কৰক:</div>
+          <div class="flex flex-wrap justify-center gap-2 text-2xl">
+            ${Array.from({ length: count }).map((_, i) => `<span class="inline-block p-1 bg-white border border-amber-300 rounded-xl shadow-xs">🍎</span>`).join('')}
+          </div>
+          <div class="mt-2 text-sm font-black text-amber-950">${window.currentLang === 'as' ? `মুঠ আপেল = ${window.toDigits(count)} টা` : `Total Apples = ${count}`}</div>
+        </div>
+      `,
+      example: {
+        question: { 
+          en: 'Count the stars: ⭐ ⭐ ⭐ ⭐', 
+          as: 'তৰাবোৰ গণনা কৰক: ⭐ ⭐ ⭐ ⭐' 
+        },
+        steps: {
+          en: [
+            'Point to the first star: 1',
+            'Point to the second star: 2',
+            'Point to the third star: 3',
+            'Point to the last star: 4'
+          ],
+          as: [
+            'প্ৰথম তৰাটোলৈ আঙুলিয়াওক: ১',
+            'দ্বিতীয় তৰাটোলৈ আঙুলিয়াওক: ২',
+            'তৃতীয় তৰাটোলৈ আঙুলিয়াওক: ৩',
+            'শেষৰ তৰাটোলৈ আঙুলিয়াওক: ৪'
+          ]
+        },
+        answer: '4'
+      }
+    },
+    generate: function() {
+      const count = Math.floor(Math.random() * 7) + 2; // 2 to 8
+      const isAs = window.currentLang === 'as';
+
+      return {
+        questionText: isAs 
+          ? `তলত কেইটা আঙুৰ আছে গণনা কৰক:` 
+          : `Count how many grapes are shown below:`,
+        visualHtml: `
+          <div class="flex flex-wrap justify-center gap-2 p-3 bg-emerald-50 rounded-2xl border border-emerald-200">
+            ${Array.from({ length: count }).map(() => `<span class="text-2xl">🍇</span>`).join('')}
+          </div>
+        `,
+        correctAnswer: `${count}`,
+        options: window.shuffleArray([
+          `${count}`,
+          `${Math.min(9, count + 1)}`,
+          `${Math.max(1, count - 1)}`,
+          `${count === 4 ? 6 : Math.max(1, count + 2)}`
+        ]),
+        hint: isAs 
+          ? `প্ৰতিটো আঙুৰত এটা এটাকৈ আঙুলি থৈ গণনা কৰক।` 
+          : `Tap and count each grape one by one.`
+      };
+    }
+  },
+  
   // CLASS 1 - 2: PLACE VALUE
   'place_value_tens_ones': {
     title: { en: 'Place Value: Tens and Ones', as: 'স্থানীয় মান: দহক আৰু একক' },
@@ -209,6 +276,8 @@ window.TopicRegistry = {
 // ----------------------------------------------------
 function findRegisteredTopic(title, standard) {
   const t = (title || '').toLowerCase();
+    if (t.includes('count') || t.includes('number sense') || t.includes('গণনা')) return window.TopicRegistry['counting_number_sense'];
+  
   
   if (t.includes('place value') || t.includes('tens') || t.includes('স্থানীয় মান')) return window.TopicRegistry['place_value_tens_ones'];
   if (t.includes('borrow') || t.includes('subtraction') || t.includes('বিয়োগ')) return window.TopicRegistry['subtraction_borrowing'];
