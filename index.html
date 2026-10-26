@@ -604,10 +604,26 @@ async function verifyAndLaunch() {
     }
 
     function bootDashboard() {
-  if (typeof classesData === 'undefined' || !Array.isArray(classesData) || classesData.length === 0) {
-    console.error("classesData is missing or not loaded!");
-    return;
+  const langPortal = document.getElementById('onboardingStepLang');
+  const keyPortal = document.getElementById('onboardingPortal');
+
+  if (langPortal) langPortal.classList.add('hidden');
+  if (keyPortal) {
+    keyPortal.classList.add('hidden');
+    keyPortal.style.display = 'none';
   }
+
+  if (typeof applyStaticTranslations === 'function') applyStaticTranslations();
+  
+  // Re-render curriculum cards safely using MATH_CURRICULUM
+  if (typeof setupUI === 'function') {
+    const container = document.getElementById('chaptersContainer');
+    if (container && (!container.children || container.children.length === 0)) {
+      setupUI();
+    }
+  }
+    }
+    
 
   const langPortal = document.getElementById('langSelectionPortal') || document.getElementById('onboardingStepLang');
   const keyPortal = document.getElementById('onboardingPortal');
