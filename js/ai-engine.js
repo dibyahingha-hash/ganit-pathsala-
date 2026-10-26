@@ -22,8 +22,15 @@ async function fetchGeminiFast(promptText, returnJson = true) {
   const apiKey = window.apiKey || localStorage.getItem('omnimath_gemini_key') || '';
   if (!apiKey) throw new Error('API key missing. Enter your Gemini key.');
 
-      // Single active model endpoint requested directly by the API
-  const models = ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.5-flash'];
+        // Active models verified directly from your AI Studio account
+  const models = [
+    'gemini-flash-latest',
+    'gemini-3.5-flash-lite',
+    'gemini-3.5-flash',
+    'gemini-3.7-flash',
+    'gemini-2.5-flash'
+  ];
+  
   
   
   let lastError = null;
