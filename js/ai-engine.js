@@ -1,6 +1,5 @@
-
 // ============================================================================
-// GANIT PATHSHALA - PEDAGOGICAL CORE & TOPIC REGISTRY ENGINE
+// GANIT PATHSHALA - 100% AI-POWERED PEDAGOGY ENGINE (GEMINI-DRIVEN)
 // ============================================================================
 
 window.activeTopicContext = { title: '', standard: '', mode: 'learn', topicId: '' };
@@ -12,294 +11,68 @@ let testQuestions = [];
 let currentTestIndex = 0;
 let testScore = 0;
 
+// Dynamic Session Cache (Prevents redundant API calls)
+window.aiLessonCache = window.aiLessonCache || {};
+window.aiPracticeCache = window.aiPracticeCache || {};
+
 // ----------------------------------------------------
-// 1. TOPIC REGISTRY (Structured Pedagogy)
+// 1. ROBUST GEMINI CALLER (JSON & TEXT)
 // ----------------------------------------------------
-window.TopicRegistry = {
-    // CLASS 1: COUNTING & NUMBER SENSE (1-9)
-  'counting_number_sense': {
-    title: { en: 'Counting & Number Sense (1-9)', as: 'গণনা আৰু সংখ্যাবোধ (১-৯)' },
-    standards: ['class 1'],
-    lesson: {
-      concept: {
-        en: 'Counting means matching each item with a number name in order: 1, 2, 3, 4, 5, 6, 7, 8, 9.',
-        as: 'গণনা কৰা মানে প্ৰতিটো বস্তুক এটা এটাকৈ ক্ৰমত সংখ্যাৰ সৈতে মিলোৱা: ১, ২, ৩, ৪, ৫, ৬, ৭, ৮, ৯।'
-      },
-      visual: (count = 5) => `
-        <div class="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-center">
-          <div class="text-xs font-bold text-amber-900 mb-2">Count the apples / আপেলবোৰ গণনা কৰক:</div>
-          <div class="flex flex-wrap justify-center gap-2 text-2xl">
-            ${Array.from({ length: count }).map((_, i) => `<span class="inline-block p-1 bg-white border border-amber-300 rounded-xl shadow-xs">🍎</span>`).join('')}
-          </div>
-          <div class="mt-2 text-sm font-black text-amber-950">${window.currentLang === 'as' ? `মুঠ আপেল = ${window.toDigits(count)} টা` : `Total Apples = ${count}`}</div>
-        </div>
-      `,
-      example: {
-        question: { 
-          en: 'Count the stars: ⭐ ⭐ ⭐ ⭐', 
-          as: 'তৰাবোৰ গণনা কৰক: ⭐ ⭐ ⭐ ⭐' 
-        },
-        steps: {
-          en: [
-            'Point to the first star: 1',
-            'Point to the second star: 2',
-            'Point to the third star: 3',
-            'Point to the last star: 4'
-          ],
-          as: [
-            'প্ৰথম তৰাটোলৈ আঙুলিয়াওক: ১',
-            'দ্বিতীয় তৰাটোলৈ আঙুলিয়াওক: ২',
-            'তৃতীয় তৰাটোলৈ আঙুলিয়াওক: ৩',
-            'শেষৰ তৰাটোলৈ আঙুলিয়াওক: ৪'
-          ]
-        },
-        answer: '4'
-      }
-    },
-    generate: function() {
-      const count = Math.floor(Math.random() * 7) + 2; // 2 to 8
-      const isAs = window.currentLang === 'as';
+async function fetchGeminiAI(promptText, returnJson = true) {
+  const apiKey = window.apiKey || localStorage.getItem('omnimath_gemini_key') || '';
+  if (!apiKey) {
+    throw new Error('API key missing. Please paste a valid Gemini key.');
+  }
 
-      return {
-        questionText: isAs 
-          ? `তলত কেইটা আঙুৰ আছে গণনা কৰক:` 
-          : `Count how many grapes are shown below:`,
-        visualHtml: `
-          <div class="flex flex-wrap justify-center gap-2 p-3 bg-emerald-50 rounded-2xl border border-emerald-200">
-            ${Array.from({ length: count }).map(() => `<span class="text-2xl">🍇</span>`).join('')}
-          </div>
-        `,
-        correctAnswer: `${count}`,
-        options: window.shuffleArray([
-          `${count}`,
-          `${Math.min(9, count + 1)}`,
-          `${Math.max(1, count - 1)}`,
-          `${count === 4 ? 6 : Math.max(1, count + 2)}`
-        ]),
-        hint: isAs 
-          ? `প্ৰতিটো আঙুৰত এটা এটাকৈ আঙুলি থৈ গণনা কৰক।` 
-          : `Tap and count each grape one by one.`
+  const candidateModels = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash'
+  ];
+
+  let lastError = null;
+
+  for (const model of candidateModels) {
+    try {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const payload = {
+        contents: [{ parts: [{ text: promptText }] }],
+        generationConfig: returnJson ? { responseMimeType: "application/json" } : {}
       };
-    }
-  },
-  
-  // CLASS 1 - 2: PLACE VALUE
-  'place_value_tens_ones': {
-    title: { en: 'Place Value: Tens and Ones', as: 'স্থানীয় মান: দহক আৰু একক' },
-    standards: ['class 1', 'class 2'],
-    lesson: {
-      concept: {
-        en: 'A 2-digit number is made of **Tens** (bundles of 10) and **Ones** (single units). For example, 24 is 2 Tens and 4 Ones.',
-        as: 'দুটীয়া সংখ্যাবোৰ **দহক** (১০ টাৰ থুপ) আৰু **একক** (এটা এটাকৈ) ৰে গঠিত। যেনে: ২৪ মানে ২ টা দহক আৰু ৪ টা একক।'
-      },
-      visual: (tens = 2, ones = 4) => `
-        <div class="flex flex-col items-center gap-2 p-3 bg-amber-50 rounded-2xl border border-amber-200">
-          <div class="flex gap-4 items-end">
-            <div class="text-center">
-              <div class="flex gap-1">${'<div class="w-4 h-16 bg-amber-500 rounded-sm border border-amber-700" title="10-Rod"></div>'.repeat(tens)}</div>
-              <span class="text-xs font-bold text-amber-900 mt-1 block">${tens} Tens (${tens * 10})</span>
-            </div>
-            <div class="text-center">
-              <div class="flex gap-1 flex-wrap max-w-[80px]">${'<div class="w-4 h-4 bg-emerald-500 rounded-sm border border-emerald-700" title="1-Unit"></div>'.repeat(ones)}</div>
-              <span class="text-xs font-bold text-emerald-900 mt-1 block">${ones} Ones (${ones})</span>
-            </div>
-          </div>
-          <div class="text-sm font-black text-slate-800">${tens * 10} + ${ones} = ${tens * 10 + ones}</div>
-        </div>
-      `,
-      example: {
-        question: { en: 'How many tens and ones are in 35?', as: '৩৫ সংখ্যাটোত কেইটা দহক আৰু কেইটা একক আছে?' },
-        steps: {
-          en: ['The first digit 3 is in the Tens place = 3 Tens (30).', 'The second digit 5 is in the Ones place = 5 Ones (5).'],
-          as: ['প্ৰথম অংক ৩ হ’ল দহকৰ ঘৰত = ৩ টা দহক (৩০)।', 'দ্বিতীয় অংক ৫ হ’ল এককৰ ঘৰত = ৫ টা একক (৫)।']
-        },
-        answer: '3 Tens + 5 Ones'
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error?.message || `HTTP ${res.status}`);
       }
-    },
-    generate: function() {
-      const tens = Math.floor(Math.random() * 8) + 1; // 1 to 8
-      const ones = Math.floor(Math.random() * 9) + 1; // 1 to 9
-      const num = tens * 10 + ones;
-      const isAs = window.currentLang === 'as';
 
-      return {
-        questionText: isAs 
-          ? `${window.toDigits(num)} সংখ্যাটোত কিমানটা দহক আৰু একক আছে?`
-          : `In the number ${num}, what is the place value?`,
-        visualHtml: this.lesson.visual(tens, ones),
-        correctAnswer: isAs ? `${window.toDigits(tens)} দহক + ${window.toDigits(ones)} একক` : `${tens} Tens + ${ones} Ones`,
-        options: window.shuffleArray([
-          isAs ? `${window.toDigits(tens)} দহক + ${window.toDigits(ones)} একক` : `${tens} Tens + ${ones} Ones`,
-          isAs ? `${window.toDigits(ones)} দহক + ${window.toDigits(tens)} একক` : `${ones} Tens + ${tens} Ones`,
-          isAs ? `${window.toDigits(tens + 1)} দহক + ${window.toDigits(ones)} একক` : `${tens + 1} Tens + ${ones} Ones`,
-          isAs ? `${window.toDigits(tens)} দহক + ${window.toDigits(Math.max(0, ones - 1))} একক` : `${tens} Tens + ${Math.max(0, ones - 1)} Ones`
-        ]),
-        hint: isAs ? `প্ৰথম অংকটো দহক (${tens}) আৰু দ্বিতীয় অংকটো একক (${ones})।` : `First digit is Tens (${tens}), second digit is Ones (${ones}).`
-      };
-    }
-  },
+      const data = await res.json();
+      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawText) throw new Error("Empty response from Gemini.");
 
-  // CLASS 2: 2-DIGIT SUBTRACTION WITH BORROWING
-  'subtraction_borrowing': {
-    title: { en: '2-Digit Subtraction with Borrowing', as: 'ধাৰ কৰা দুটকীয়া বিয়োগ' },
-    standards: ['class 2', 'class 3'],
-    lesson: {
-      concept: {
-        en: 'When the top ones digit is smaller than the bottom ones digit, **borrow 1 Ten (10 ones)** from the tens column!',
-        as: 'যেতিয়া ওপৰৰ এককৰ সংখ্যাটো তলৰ সংখ্যাটোতকৈ সৰু হয়, তেতিয়া দহকৰ ঘৰৰ পৰা **১ টা দহক (১০ টা একক) ধাৰ কৰি** লওক!'
-      },
-      example: {
-        question: { en: 'Solve: 52 - 17 = ?', as: 'সমাধান কৰক: ৫২ - ১৭ = ?' },
-        steps: {
-          en: [
-            'In Ones place: 2 is smaller than 7. Borrow 1 Ten from 5. Tens becomes 4, and Ones becomes 12 (10 + 2).',
-            'Subtract Ones: 12 - 7 = 5.',
-            'Subtract Tens: 4 - 1 = 3.',
-            'Combine: 35.'
-          ],
-          as: [
-            'এককৰ ঘৰত: ২ সংখ্যাটো ৭ তকৈ সৰু। গতিকে ৫ ৰ পৰা ১ দহক ধাৰ কৰক। দহক হ’ল ৪, আৰু একক হ’ল ১২ (১০ + ২)।',
-            'একক বিয়োগ কৰক: ১২ - ৭ = ৫।',
-            'দহক বিয়োগ কৰক: ৪ - ১ = ৩।',
-            'মুঠ ফলাফল: ৩৫।'
-          ]
-        },
-        answer: '35'
+      if (returnJson) {
+        // Clean out accidental markdown formatting if present
+        const cleaned = rawText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+        return JSON.parse(cleaned);
       }
-    },
-    generate: function() {
-      const tensA = Math.floor(Math.random() * 5) + 3; // 3 to 7
-      const onesA = Math.floor(Math.random() * 5) + 1; // 1 to 5
-      const numA = tensA * 10 + onesA;
-
-      const tensB = Math.floor(Math.random() * (tensA - 1)) + 1;
-      const onesB = Math.floor(Math.random() * 4) + (onesA + 1); // strictly bigger to force borrow
-      const numB = tensB * 10 + onesB;
-
-      const correct = numA - numB;
-      const distractorNoBorrow = (tensA - tensB) * 10 + (onesB - onesA); // common mistake: subtracting smaller from larger
-
-      return {
-        questionText: `${window.toDigits ? window.toDigits(numA) : numA} - ${window.toDigits ? window.toDigits(numB) : numB} = ?`,
-        correctAnswer: `${correct}`,
-        options: window.shuffleArray([
-          `${correct}`,
-          `${distractorNoBorrow}`,
-          `${correct + 10}`,
-          `${Math.max(1, correct - 2)}`
-        ]),
-        hint: window.currentLang === 'as'
-          ? `এককৰ পৰা বিয়োগ কৰিবলৈ দহকৰ পৰা ১ ধাৰ লওক (${onesA + 10} - ${onesB} = ${onesA + 10 - onesB})।`
-          : `Borrow 1 ten into ones column: (${onesA + 10} - ${onesB} = ${onesA + 10 - onesB}).`
-      };
-    }
-  },
-
-  // CLASS 3: READING CLOCK & TIME
-  'reading_clock': {
-    title: { en: 'Reading Clock & Time', as: 'ঘড়ী আৰু সময় নিৰ্ণয়' },
-    standards: ['class 3', 'class 4'],
-    lesson: {
-      concept: {
-        en: 'The **short hand** shows the **Hour**. The **long hand** shows the **Minutes** (multiply the number by 5).',
-        as: '**চুটি কাঁটাডালে** **ঘণ্টা** আৰু **দীঘল কাঁটাডালে** **মিনিট** দেখুৱায় (সংখ্যাটোক ৫ ৰে পূৰণ কৰক)।'
-      },
-      example: {
-        question: { en: 'Short hand is at 4, long hand is at 6. What time is it?', as: 'চুটি কাঁটাডাল ৪ ত আৰু দীঘল কাঁটাডাল ৬ ত আছে। এতিয়া সময় কিমান?' },
-        steps: {
-          en: ['Hour hand at 4 = 4 o\'clock.', 'Minute hand at 6 = 6 × 5 = 30 minutes.', 'Time = 4:30.'],
-          as: ['ঘণ্টাৰ কাঁটা ৪ ত = ৪ বাজিছে।', 'মিনিটৰ কাঁটা ৬ ত = ৬ × ৫ = ৩০ মিনিট।', 'সময় = ৪:৩০।']
-        },
-        answer: '4:30'
-      }
-    },
-    generate: function() {
-      const hour = Math.floor(Math.random() * 12) + 1;
-      const minIndex = Math.floor(Math.random() * 4) * 3; // 0, 15, 30, 45
-      const minStr = minIndex === 0 ? '00' : `${minIndex}`;
-      const isAs = window.currentLang === 'as';
-
-      return {
-        questionText: isAs
-          ? `ঘড়ীৰ চুটি কাঁটাডাল ${window.toDigits(hour)} ত আৰু দীঘল কাঁটাডাল ${window.toDigits(minIndex / 5 || 12)} ত থাকিলে সময় কিমান হ’ব?`
-          : `If the short hand is on ${hour} and the long hand is on ${minIndex / 5 || 12}, what is the time?`,
-        correctAnswer: `${hour}:${minStr}`,
-        options: window.shuffleArray([
-          `${hour}:${minStr}`,
-          `${hour === 12 ? 1 : hour + 1}:${minStr}`,
-          `${hour}:${minIndex === 30 ? '15' : '30'}`,
-          `${minIndex / 5 || 12}:${hour < 10 ? '0' + hour : hour}`
-        ]),
-        hint: isAs ? `দীঘল কাঁটাডালৰ সংখ্যাটোক ৫ ৰে পূৰণ কৰি মিনিট উলিয়াওক।` : `Multiply the minute hand position by 5 to find minutes.`
-      };
-    }
-  },
-
-  // CLASS 9 - 10: REAL NUMBER SYSTEM
-  'real_numbers': {
-    title: { en: 'Real Number System', as: 'বাস্তৱ সংখ্যা প্ৰণালী' },
-    standards: ['class 9', 'class 10'],
-    lesson: {
-      concept: {
-        en: 'Real numbers include both **Rational numbers** (fractions $p/q$) and **Irrational numbers** (non-repeating decimals like $\\sqrt{2}, \\pi$).',
-        as: 'বাস্তৱ সংখ্যাৰ ভিতৰত **পৰিমেয় সংখ্যা** ($p/q$ আকাৰৰ) আৰু **অপৰিমেয় সংখ্যা** (অসীম পৌনঃপুনিক নোহোৱা যেনে: $\\sqrt{2}, \\pi$) দুয়োটাই অন্তৰ্ভুক্ত।'
-      },
-      example: {
-        question: { en: 'Which of the following is an irrational number?', as: 'তলৰ কোনটো এটা অপৰিমেয় সংখ্যা?' },
-        steps: {
-          en: ['$\\sqrt{4} = 2$ (rational)', '$3/5$ is a ratio of integers (rational)', '$\\sqrt{5}$ cannot be written as $p/q$ (irrational).'],
-          as: ['$\\sqrt{4} = ২$ (পৰিমেয়)', '$৩/৫$ হ’ল দুটা অখণ্ড সংখ্যাৰ অনুপাত (পৰিমেয়)', '$\\sqrt{৫}$ ক $p/q$ ৰূপত লিখিব নোৱাৰি (অপৰিমেয়)।']
-        },
-        answer: '√5'
-      }
-    },
-    generate: function() {
-      const isAs = window.currentLang === 'as';
-      const irrationals = ['√2', '√3', '√5', '√7', 'π'];
-      const rationals = ['3/4', '0.25', '√9', '√16', '7/2', '5'];
-      
-      const pickIrr = irrationals[Math.floor(Math.random() * irrationals.length)];
-      const pickRats = window.shuffleArray(rationals).slice(0, 3);
-
-      return {
-        questionText: isAs ? 'তলৰ কোনটো এটা অপৰিমেয় সংখ্যা?' : 'Which of the following is an IRRATIONAL number?',
-        correctAnswer: pickIrr,
-        options: window.shuffleArray([pickIrr, ...pickRats]),
-        hint: isAs ? 'যিবোৰ সংখ্যাৰ বৰ্গমূল সম্পূৰ্ণ নহয়, সেইবোৰ অপৰিমেয়।' : 'Numbers that cannot be expressed as a perfect fraction or square are irrational.'
-      };
+      return rawText;
+    } catch (err) {
+      lastError = err;
+      console.warn(`Model ${model} failed, trying next model:`, err.message);
     }
   }
-};
 
-// ----------------------------------------------------
-// 2. HELPER: TOPIC MATCHER
-// ----------------------------------------------------
-function findRegisteredTopic(title, standard) {
-  const t = (title || '').toLowerCase();
-    if (t.includes('count') || t.includes('number sense') || t.includes('গণনা')) return window.TopicRegistry['counting_number_sense'];
-  
-  
-  if (t.includes('place value') || t.includes('tens') || t.includes('স্থানীয় মান')) return window.TopicRegistry['place_value_tens_ones'];
-  if (t.includes('borrow') || t.includes('subtraction') || t.includes('বিয়োগ')) return window.TopicRegistry['subtraction_borrowing'];
-  if (t.includes('clock') || t.includes('calendar') || t.includes('time') || t.includes('ঘড়ী')) return window.TopicRegistry['reading_clock'];
-  if (t.includes('real number') || t.includes('বাস্তৱ সংখ্যা')) return window.TopicRegistry['real_numbers'];
-
-  return null;
+  throw lastError || new Error("Failed to reach Gemini AI.");
 }
 
-window.shuffleArray = function(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-};
-
 // ----------------------------------------------------
-// 3. WORKSPACE CONTROLLER (Learn / Practice / Test)
+// 2. WORKSPACE MODAL CONTROLLER
 // ----------------------------------------------------
-window.openWorkspaceForTopic = function(title, standard, mode, topicId) {
+window.openWorkspaceForTopic = function(title, standard, mode = 'learn', topicId = '') {
   window.activeTopicContext = {
     title: title || 'Mathematics',
     standard: standard || 'Class 1',
@@ -347,63 +120,120 @@ window.closeTopicWorkspace = function() {
 };
 
 // ----------------------------------------------------
-// 4. LEARN MODE SCREEN (The Pedagogical Core)
+// 3. LEARN MODE (100% AI PEDAGOGICAL GENERATION)
 // ----------------------------------------------------
-window.renderLearnMode = function(container) {
+window.renderLearnMode = async function(container) {
   const isAs = window.currentLang === 'as';
-  const topic = findRegisteredTopic(activeTopicContext.title, activeTopicContext.standard);
+  const title = window.activeTopicContext.title;
+  const standard = window.activeTopicContext.standard;
+  const cacheKey = `learn_${title}_${standard}_${window.currentLang}`;
 
-  if (!topic || !topic.lesson) {
-    container.innerHTML = `
-      <div class="p-6 text-center space-y-4">
-        <p class="text-sm font-bold text-slate-600">
-          ${isAs ? 'এই পাঠটোৰ বাবে বিস্তৃত ধাৰণা প্ৰস্তুত কৰা হৈ আছে।' : 'Lesson notes for this specific chapter are being prepared.'}
-        </p>
-        <button onclick="window.renderPracticeArena(document.getElementById('wsBody'))" class="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition">
-          ${isAs ? 'অনুশীলন আৰম্ভ কৰক' : 'Jump to Practice'}
-        </button>
-      </div>
-    `;
+  // Use cached response if already fetched
+  if (window.aiLessonCache[cacheKey]) {
+    displayRenderedLesson(container, window.aiLessonCache[cacheKey], isAs);
     return;
   }
 
-  const lesson = topic.lesson;
-  const conceptText = lesson.concept[isAs ? 'as' : 'en'] || lesson.concept.en;
-  const ex = lesson.example;
+  // Loading View
+  container.innerHTML = `
+    <div class="py-12 px-4 text-center space-y-4">
+      <div class="text-4xl animate-bounce">🧠</div>
+      <h4 class="text-base font-black text-amber-950">
+        ${isAs ? 'AI গুৰুৱে পাঠটো প্ৰস্তুত কৰি আছে...' : 'AI Guru is preparing your interactive lesson...'}
+      </h4>
+      <p class="text-xs text-slate-500 font-bold max-w-xs mx-auto">
+        ${title} • ${standard}
+      </p>
+      <div class="w-32 h-1.5 bg-amber-200 rounded-full mx-auto overflow-hidden">
+        <div class="w-full h-full bg-amber-600 animate-pulse"></div>
+      </div>
+    </div>
+  `;
 
+  const prompt = `You are an award-winning mathematics teacher creating a pedagogy-first interactive lesson card for students in "${standard}".
+Topic: "${title}".
+Target Language: Strictly ${isAs ? 'Assamese (অসমীয়া ভাষাত আৰু লিপি ব্যৱহাৰ কৰক)' : 'English'}.
+
+Respond ONLY with a valid JSON object matching this schema without any markdown code fences:
+{
+  "conceptHeadline": "Short catchy rule or intuitive headline",
+  "conceptExplanation": "A 2-3 sentence intuitive explanation using an age-appropriate real-world analogy.",
+  "coreFormula": "Key mathematical formula in LaTeX ($...$) or memory rule",
+  "visualIllustrationHtml": "A clean HTML representation (e.g. styled flexboxes with emojis, fraction bars, blocks, or number lines using Tailwind CSS classes like 'flex gap-2 justify-center p-3 bg-amber-100 rounded-xl')",
+  "sampleProblem": "A clean illustrative practice problem",
+  "stepByStepSolution": [
+    "Step 1: First explain what is observed or given",
+    "Step 2: Show the mathematical conversion",
+    "Step 3: State the final conclusion"
+  ],
+  "finalAnswer": "Final answer value"
+}`;
+
+  try {
+    const lessonData = await fetchGeminiAI(prompt, true);
+    window.aiLessonCache[cacheKey] = lessonData;
+    displayRenderedLesson(container, lessonData, isAs);
+  } catch (err) {
+    container.innerHTML = `
+      <div class="p-6 text-center space-y-4">
+        <div class="text-3xl text-rose-500">⚠️</div>
+        <p class="text-sm font-bold text-rose-800">
+          ${isAs ? 'পাঠটো সংগ্ৰহ কৰাত সমস্যা হ’ল।' : 'Failed to generate lesson from AI.'}
+        </p>
+        <p class="text-xs text-slate-500">${err.message}</p>
+        <div class="flex gap-2 justify-center">
+          <button onclick="window.renderLearnMode(document.getElementById('wsBody'))" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs">
+            ${isAs ? 'পুনৰ চেষ্টা কৰক' : 'Try Again'}
+          </button>
+          <button onclick="window.renderPracticeArena(document.getElementById('wsBody'))" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs">
+            ${isAs ? 'অনুশীলনলৈ যাওক' : 'Skip to Practice'}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+};
+
+function displayRenderedLesson(container, lesson, isAs) {
   container.innerHTML = `
     <div class="space-y-4 text-slate-800">
       
       <!-- 1. The Concept Card -->
-      <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-2xl">
+      <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-2xl shadow-xs">
         <h4 class="text-xs uppercase tracking-wider font-black text-amber-800 mb-1">
-          💡 ${isAs ? 'ধাৰণা / বুজি লওঁ আহক' : 'Concept Explanation'}
+          💡 ${lesson.conceptHeadline || (isAs ? 'ধাৰণা / বুজি লওঁ আহক' : 'Concept Explanation')}
         </h4>
-        <p class="text-sm font-bold text-slate-800 leading-relaxed">${conceptText}</p>
+        <p class="text-sm font-semibold text-slate-800 leading-relaxed">${lesson.conceptExplanation}</p>
+        ${lesson.coreFormula ? `<div class="mt-2.5 text-xs font-black text-amber-950 font-mono bg-white p-2.5 rounded-xl border border-amber-200 inline-block">${lesson.coreFormula}</div>` : ''}
       </div>
 
-      <!-- 2. Visual Demonstration (if present) -->
-      ${lesson.visual ? `<div class="my-2">${lesson.visual()}</div>` : ''}
+      <!-- 2. Visual Representation / Manipulative -->
+      ${lesson.visualIllustrationHtml ? `
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl shadow-xs">
+          <div class="text-[10px] font-black uppercase text-slate-400 mb-2">${isAs ? 'দৃশ্যমান আৰ্হি' : 'Visual Model'}</div>
+          ${lesson.visualIllustrationHtml}
+        </div>
+      ` : ''}
 
       <!-- 3. Worked Step-by-Step Example -->
-      ${ex ? `
-        <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl">
+      ${lesson.sampleProblem ? `
+        <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl shadow-xs">
           <div class="text-xs font-black text-indigo-900 uppercase mb-1">
             📝 ${isAs ? 'সমাধান কৰা উদাহৰণ' : 'Step-by-Step Example'}
           </div>
-          <div class="text-sm font-bold text-slate-900 mb-2">${ex.question[isAs ? 'as' : 'en']}</div>
+          <div class="text-sm font-bold text-slate-900 mb-2.5">${lesson.sampleProblem}</div>
           <div class="text-xs space-y-1.5 text-slate-700">
-            ${(ex.steps[isAs ? 'as' : 'en'] || ex.steps.en).map(s => `<div>• ${s}</div>`).join('')}
+            ${(lesson.stepByStepSolution || []).map(s => `<div class="flex items-start gap-1.5"><span>•</span><span>${s}</span></div>`).join('')}
           </div>
-          <div class="mt-3 text-xs font-black text-emerald-700 bg-emerald-100/60 inline-block px-3 py-1 rounded-lg">
-            ${isAs ? 'শুদ্ধ উত্তৰ' : 'Answer'}: ${ex.answer}
+          <div class="mt-3 text-xs font-black text-emerald-800 bg-emerald-100 px-3 py-1.5 rounded-xl inline-block">
+            ${isAs ? 'শুদ্ধ উত্তৰ' : 'Answer'}: ${lesson.finalAnswer}
           </div>
         </div>
       ` : ''}
 
-      <!-- 4. Next: Practice Button -->
+      <!-- 4. Action Button: Move to Practice -->
       <button onclick="window.renderPracticeArena(document.getElementById('wsBody'))" 
-              class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-2xl shadow-md transition active:scale-95 text-sm flex items-center justify-center gap-2">
+              class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl shadow-md transition active:scale-95 text-sm flex items-center justify-center gap-2">
         <span>${isAs ? 'এতিয়া নিজে অনুশীলন কৰক' : 'Ready to Practice!'}</span>
         <span>➔</span>
       </button>
@@ -412,39 +242,83 @@ window.renderLearnMode = function(container) {
   `;
 
   if (window.renderMathInElement) {
-    window.renderMathInElement(container, { delimiters: [{ left: '$', right: '$', display: false }] });
+    window.renderMathInElement(container, { 
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false }
+      ] 
+    });
+  }
+}
+
+// ----------------------------------------------------
+// 4. PRACTICE ARENA (100% AI DYNAMIC QUESTION GEN)
+// ----------------------------------------------------
+window.renderPracticeArena = async function(container) {
+  const isAs = window.currentLang === 'as';
+  const title = window.activeTopicContext.title;
+  const standard = window.activeTopicContext.standard;
+
+  container.innerHTML = `
+    <div class="py-12 px-4 text-center space-y-4">
+      <div class="text-4xl animate-spin">⚡</div>
+      <h4 class="text-base font-black text-amber-950">
+        ${isAs ? 'AI য়ে প্ৰশ্ন সাজি আছে...' : 'AI Guru is generating a real-time question...'}
+      </h4>
+      <p class="text-xs text-slate-500 font-bold max-w-xs mx-auto">
+        ${title} • ${standard}
+      </p>
+    </div>
+  `;
+
+  const prompt = `You are a mathematics question generator for "${standard}".
+Topic: "${title}".
+Language: Strictly ${isAs ? 'Assamese (অসমীয়া)' : 'English'}.
+
+Generate 1 high-quality question strictly relevant to this chapter. Provide 4 distinct answer choices, identifying the correct choice and providing common misconceptions for the wrong choices. Do NOT provide negative numbers for early grades.
+
+Respond ONLY with a valid JSON object matching this schema:
+{
+  "questionText": "The question string with LaTeX ($...$) if needed",
+  "visualHtml": "Optional HTML visual string (or empty string)",
+  "correctAnswer": "Exact string of the correct answer",
+  "distractors": ["Wrong 1", "Wrong 2", "Wrong 3"],
+  "hint": "A guiding conceptual hint without giving away the final answer immediately"
+}`;
+
+  try {
+    const qData = await fetchGeminiAI(prompt, true);
+    
+    // Combine correct answer and distractors into randomized options
+    const allOptions = window.shuffleArray([qData.correctAnswer, ...qData.distractors]);
+
+    currentPracticeProblem = {
+      questionText: qData.questionText,
+      visualHtml: qData.visualHtml || '',
+      correctAnswer: qData.correctAnswer,
+      options: allOptions,
+      hint: qData.hint
+    };
+
+    displayRenderedPractice(container, isAs);
+  } catch (err) {
+    container.innerHTML = `
+      <div class="p-6 text-center space-y-4">
+        <p class="text-sm font-bold text-rose-700">${isAs ? 'প্ৰশ্ন প্ৰস্তুত কৰাত সমস্যা হ’ল।' : 'Failed to generate question.'}</p>
+        <button onclick="window.renderPracticeArena(document.getElementById('wsBody'))" class="px-5 py-2.5 bg-amber-600 text-white font-bold rounded-xl text-xs">
+          ${isAs ? 'পুনৰ চেষ্টা কৰক' : 'Retry'}
+        </button>
+      </div>
+    `;
   }
 };
 
-// ----------------------------------------------------
-// 5. PRACTICE ARENA
-// ----------------------------------------------------
-window.renderPracticeArena = function(container) {
-  const isAs = window.currentLang === 'as';
-  const topic = findRegisteredTopic(activeTopicContext.title, activeTopicContext.standard);
-
-  let problem = null;
-  if (topic && typeof topic.generate === 'function') {
-    problem = topic.generate();
-  } else {
-    // Arithmetic Fallback with meaningful positive distractors
-    const a = Math.floor(Math.random() * 8) + 2;
-    const b = Math.floor(Math.random() * 8) + 2;
-    problem = {
-      questionText: `Solve: ${a} × ${b} = ?`,
-      correctAnswer: `${a * b}`,
-      options: window.shuffleArray([`${a * b}`, `${a * b + 2}`, `${Math.max(1, a * b - 3)}`, `${a * b + 4}`]),
-      hint: `Multiply ${a} by ${b}.`
-    };
-  }
-
-  currentPracticeProblem = problem;
-
+function displayRenderedPractice(container, isAs) {
   let optionsHtml = '<div class="grid grid-cols-2 gap-3 max-w-xs mx-auto my-4">';
-  problem.options.forEach(opt => {
+  currentPracticeProblem.options.forEach(opt => {
     const optArg = typeof opt === 'string' ? `'${opt.replace(/'/g, "\\'")}'` : opt;
     optionsHtml += `
-      <button onclick="window.handleOptionSelect(${optArg}, this)" class="option-btn py-4 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-base sm:text-lg font-black text-slate-800 shadow-sm active:scale-95 transition">
+      <button onclick="window.handleOptionSelect(${optArg}, this)" class="option-btn py-4 px-2 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-base sm:text-lg font-black text-slate-800 shadow-sm active:scale-95 transition">
         ${opt}
       </button>
     `;
@@ -460,10 +334,10 @@ window.renderPracticeArena = function(container) {
 
       <div class="p-5 bg-white border-2 border-amber-300 rounded-3xl shadow-sm text-center">
         <div class="text-lg sm:text-xl font-black text-slate-800 tracking-wider mb-2">
-          ${problem.questionText}
+          ${currentPracticeProblem.questionText}
         </div>
 
-        ${problem.visualHtml ? `<div class="my-2">${problem.visualHtml}</div>` : ''}
+        ${currentPracticeProblem.visualHtml ? `<div class="my-2">${currentPracticeProblem.visualHtml}</div>` : ''}
 
         <p class="text-xs text-slate-400 font-bold mb-2">${isAs ? 'শুদ্ধ উত্তৰ বাছক:' : 'Tap the correct answer:'}</p>
         ${optionsHtml}
@@ -482,9 +356,14 @@ window.renderPracticeArena = function(container) {
   `;
 
   if (window.renderMathInElement) {
-    window.renderMathInElement(container, { delimiters: [{ left: '$', right: '$', display: false }] });
+    window.renderMathInElement(container, { 
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false }
+      ] 
+    });
   }
-};
+}
 
 window.handleOptionSelect = function(selectedVal, btnElement) {
   const fb = document.getElementById('practiceFeedback');
@@ -494,8 +373,8 @@ window.handleOptionSelect = function(selectedVal, btnElement) {
 
   if (String(selectedVal) === String(currentPracticeProblem.correctAnswer)) {
     practiceStreak++;
-    btnElement.className = 'option-btn py-4 bg-emerald-500 border-2 border-emerald-600 rounded-2xl text-base sm:text-lg font-black text-white shadow-md scale-105 transition';
-    if (fb) fb.innerHTML = `<span class="text-emerald-600 text-base animate-bounce">🎉 ${isAs ? 'শুদ্ধ হৈছে! বহুত ভাল!' : 'Correct! Awesome job!'}</span>`;
+    btnElement.className = 'option-btn py-4 px-2 bg-emerald-500 border-2 border-emerald-600 rounded-2xl text-base sm:text-lg font-black text-white shadow-md scale-105 transition';
+    if (fb) fb.innerHTML = `<span class="text-emerald-600 text-base animate-bounce">🎉 ${isAs ? 'শুদ্ধ হৈছে! বহুত ভাল!' : 'Correct! Outstanding!'}</span>`;
 
     const streakEl = document.getElementById('streakCount');
     if (streakEl) streakEl.innerText = practiceStreak;
@@ -503,11 +382,11 @@ window.handleOptionSelect = function(selectedVal, btnElement) {
     setTimeout(() => {
       const arena = document.getElementById('wsBody');
       if (arena) window.renderPracticeArena(arena);
-    }, 1000);
+    }, 1200);
   } else {
     practiceStreak = 0;
-    btnElement.className = 'option-btn py-4 bg-rose-500 border-2 border-rose-600 rounded-2xl text-base sm:text-lg font-black text-white shadow-sm transition';
-    if (fb) fb.innerHTML = `<span class="text-rose-600">${isAs ? 'ভুল হৈছে, পুনৰ চেষ্টা কৰক!' : 'Oops! Try again!'}</span>`;
+    btnElement.className = 'option-btn py-4 px-2 bg-rose-500 border-2 border-rose-600 rounded-2xl text-base sm:text-lg font-black text-white shadow-sm transition';
+    if (fb) fb.innerHTML = `<span class="text-rose-600">${isAs ? 'ভুল হৈছে, পুনৰ চেষ্টা কৰক!' : 'Incorrect! Give it another try!'}</span>`;
 
     const streakEl = document.getElementById('streakCount');
     if (streakEl) streakEl.innerText = practiceStreak;
@@ -515,9 +394,9 @@ window.handleOptionSelect = function(selectedVal, btnElement) {
     setTimeout(() => {
       document.querySelectorAll('.option-btn').forEach(b => {
         b.disabled = false;
-        b.className = 'option-btn py-4 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-base sm:text-lg font-black text-slate-800 shadow-sm active:scale-95 transition';
+        b.className = 'option-btn py-4 px-2 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-base sm:text-lg font-black text-slate-800 shadow-sm active:scale-95 transition';
       });
-    }, 700);
+    }, 800);
   }
 };
 
@@ -529,46 +408,82 @@ window.askPracticeHint = function() {
 };
 
 // ----------------------------------------------------
-// 6. TEST MODE ENGINE
+// 5. TEST MODE (AI-GENERATED QUESTION SET)
 // ----------------------------------------------------
 window.renderTestSetup = function(container) {
   const isAs = window.currentLang === 'as';
   container.innerHTML = `
     <div class="p-5 text-center space-y-4">
       <h3 class="text-base font-bold text-slate-800">${isAs ? 'পৰীক্ষাৰ প্ৰশ্ন সংখ্যা বাছক:' : 'Select Question Count'}</h3>
-      <p class="text-xs text-slate-500">${isAs ? 'কোনো ইংগিত পোৱা নাযাব। সময় নিৰ্ধাৰিত পৰীক্ষা।' : 'Strict timed test. No hints allowed.'}</p>
+      <p class="text-xs text-slate-500">${isAs ? 'AI দ্বাৰা তৈয়াৰী পৰীক্ষা। সময় নিৰ্ধাৰিত।' : 'AI-generated test for this topic. No hints.'}</p>
       
       <div class="grid grid-cols-3 gap-3 max-w-xs mx-auto pt-2">
+        <button onclick="window.startTestMode(5)" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">
+          5 Qs
+        </button>
         <button onclick="window.startTestMode(10)" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">
           10 Qs
         </button>
         <button onclick="window.startTestMode(15)" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">
           15 Qs
         </button>
-        <button onclick="window.startTestMode(20)" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">
-          20 Qs
-        </button>
       </div>
     </div>
   `;
 };
 
-window.startTestMode = function(count) {
-  testQuestions = [];
-  currentTestIndex = 0;
-  testScore = 0;
-
-  const topic = findRegisteredTopic(activeTopicContext.title, activeTopicContext.standard);
-  for (let i = 0; i < count; i++) {
-    testQuestions.push(topic && typeof topic.generate === 'function' ? topic.generate() : {
-      questionText: `Solve: ${Math.floor(Math.random()*8)+2} × ${Math.floor(Math.random()*8)+2} = ?`,
-      correctAnswer: '12',
-      options: ['12', '14', '10', '16']
-    });
-  }
-
+window.startTestMode = async function(count) {
   const container = document.getElementById('wsBody');
-  if (container) renderTestQuestion(container);
+  const isAs = window.currentLang === 'as';
+  const title = window.activeTopicContext.title;
+  const standard = window.activeTopicContext.standard;
+
+  container.innerHTML = `
+    <div class="py-12 px-4 text-center space-y-4">
+      <div class="text-4xl animate-spin">⏱️</div>
+      <h4 class="text-base font-black text-amber-950">
+        ${isAs ? 'AI গুৰুৱে পৰীক্ষাৰ প্ৰশ্নকাকত তৈয়াৰ কৰি আছে...' : 'AI Guru is generating your customized test paper...'}
+      </h4>
+      <p class="text-xs text-slate-500 font-bold max-w-xs mx-auto">
+        ${count} Questions • ${title}
+      </p>
+    </div>
+  `;
+
+  const prompt = `You are an examination board generator for "${standard}".
+Topic: "${title}".
+Language: Strictly ${isAs ? 'Assamese' : 'English'}.
+
+Create exactly ${count} distinct multiple-choice questions for this chapter.
+Respond ONLY with a JSON array of objects matching this schema:
+[
+  {
+    "questionText": "Question 1 string",
+    "correctAnswer": "Answer value",
+    "distractors": ["Wrong 1", "Wrong 2", "Wrong 3"]
+  }
+]`;
+
+  try {
+    const questionsArray = await fetchGeminiAI(prompt, true);
+    testQuestions = questionsArray.map(q => ({
+      questionText: q.questionText,
+      correctAnswer: q.correctAnswer,
+      options: window.shuffleArray([q.correctAnswer, ...q.distractors])
+    }));
+    currentTestIndex = 0;
+    testScore = 0;
+    renderTestQuestion(container);
+  } catch (err) {
+    container.innerHTML = `
+      <div class="p-6 text-center space-y-4">
+        <p class="text-sm font-bold text-rose-700">${isAs ? 'পৰীক্ষা প্ৰস্তুত কৰাত সমস্যা হ’ল।' : 'Failed to generate test questions.'}</p>
+        <button onclick="window.renderTestSetup(document.getElementById('wsBody'))" class="px-5 py-2.5 bg-amber-600 text-white font-bold rounded-xl text-xs">
+          ${isAs ? 'পুনৰ চেষ্টা কৰক' : 'Retry'}
+        </button>
+      </div>
+    `;
+  }
 };
 
 function renderTestQuestion(container) {
@@ -580,7 +495,7 @@ function renderTestQuestion(container) {
   q.options.forEach(opt => {
     const optArg = typeof opt === 'string' ? `'${opt.replace(/'/g, "\\'")}'` : opt;
     optionsHtml += `
-      <button onclick="window.handleTestSelect(${optArg})" class="option-btn py-4 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-lg font-black text-slate-800 shadow-sm active:scale-95 transition">
+      <button onclick="window.handleTestSelect(${optArg})" class="option-btn py-4 px-2 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-base font-black text-slate-800 shadow-sm active:scale-95 transition">
         ${opt}
       </button>
     `;
@@ -595,13 +510,22 @@ function renderTestQuestion(container) {
       </div>
 
       <div class="p-6 bg-white border-2 border-amber-300 rounded-3xl text-center shadow-sm">
-        <div class="text-xl font-black text-slate-800 tracking-wider mb-4">
+        <div class="text-lg font-black text-slate-800 tracking-wider mb-4">
           ${q.questionText}
         </div>
         ${optionsHtml}
       </div>
     </div>
   `;
+
+  if (window.renderMathInElement) {
+    window.renderMathInElement(container, { 
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false }
+      ] 
+    });
+  }
 }
 
 window.handleTestSelect = function(val) {
@@ -633,4 +557,16 @@ window.handleTestSelect = function(val) {
       `;
     }
   }
+};
+
+// ----------------------------------------------------
+// 6. UTILITY HELPERS
+// ----------------------------------------------------
+window.shuffleArray = function(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
 };
