@@ -22,7 +22,6 @@ async function fetchGeminiFast(promptText, returnJson = true) {
   const apiKey = window.apiKey || localStorage.getItem('omnimath_gemini_key') || '';
   if (!apiKey) throw new Error('API key missing. Enter your Gemini key.');
 
-  // Fastest high-throughput endpoints only (no dead cascading loops)
     // Multi-tier model candidate array starting from 3.8
   const candidateModels = [
     'gemini-3.8-flash',
