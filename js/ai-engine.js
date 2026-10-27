@@ -170,16 +170,17 @@ Topic: "${title}".
 Target Language: Strictly ${isAs ? 'Assamese' : 'English'}.
 ${isAs ? ASSAMESE_GUARDRAIL : ''}
 
-Respond ONLY with a JSON object:
+Respond ONLY with a valid JSON object matching this schema:
 {
   "conceptHeadline": "Short intuitive headline",
-  "conceptExplanation": "Clear, warm 2-3 sentence intuitive explanation.",
+  "conceptExplanation": "Clear, warm 2-3 sentence intuitive explanation using an age-appropriate analogy.",
   "coreFormula": "Key identity in LaTeX ($...$) or short memory rule",
-  "visualIllustrationHtml": "Compact visual HTML manipulative using Tailwind CSS",
+  "visualIllustrationHtml": "MANDATORY: High-quality, responsive inline <svg viewBox='0 0 300 160' class='w-full max-w-xs mx-auto'>. RULES: 1. NEVER make flat boxes with text labels. 2. For 3D shapes, draw true isometric 3D perspective with 3 shaded faces (light top, medium front, darker side), or spheres/cylinders with gradient shading. 3. For 2D shapes, draw clear outlines with labeled sides, vertices, or angle arcs. 4. For fractions/numbers, draw segmented visual bars or number lines with jump arrows. 5. Use rich, friendly colors.",
   "sampleProblem": "Illustrative example problem",
   "stepByStepSolution": ["Step 1", "Step 2", "Step 3"],
   "finalAnswer": "Answer string"
 }`;
+  
 
   try {
     const lessonData = await fetchGeminiFast(prompt, true);
