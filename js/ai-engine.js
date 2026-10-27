@@ -307,117 +307,60 @@ window.requestMoreExample = async function() {
 
   exampleCounter++;
   const prompt = `Math educator for "${standard}". Topic: "${title}".
-Create a DIFFERENT worked example for this chapter.
+Create a DIFFERENT, clear worked example for this topic.
 Target Language: Strictly ${isAs ? 'Assamese' : 'English'}.
 ${isAs ? ASSAMESE_GUARDRAIL : ''}
 
 Respond ONLY with a JSON object:
 {
-  "problem": "Problem statement with LaTeX",
+  "problem": "Problem statement with LaTeX ($...$)",
   "steps": ["Step 1 explanation", "Step 2 equation", "Step 3 conclusion"],
   "answer": "Final clean answer"
 }`;
 
   try {
     const data = await fetchGeminiFast(prompt, true);
+    
+    // Fallback safe access in case Gemini uses alternate property keys
+    const problemText = data.problem || data.sampleProblem || data.questionText || '';
+    const stepsList = Array.isArray(data.steps) ? data.steps : (Array.isArray(data.stepByStepSolution) ? data.stepByStepSolution : []);
+    const answerText = data.answer || data.finalAnswer || data.correctAnswer || '';
+
     const card = document.createElement('div');
     card.className = "bg-indigo-50 border border-indigo-200 p-4 rounded-2xl shadow-xs space-y-1.5 mt-2";
     card.innerHTML = `
       <div class="text-xs font-black text-indigo-900 uppercase">
         📝 ${isAs ? `উদাহৰণ ${window.toDigits ? window.toDigits(exampleCounter) : exampleCounter}` : `Example ${exampleCounter}`}
       </div>
-      <div class="text-sm font-bold text-slate-900 mb-1.5">${data.problem}</div>
+      <div class="text-sm font-bold text-slate-900 mb-1.5">${problemText}</div>
       <div class="text-xs space-y-1 text-slate-700">
-        ${(data.steps || []).map(s => `<div>• ${s}</div>`).join('')}
+        ${stepsList.map(s => `<div>• ${s}</div>`).join('')}
       </div>
       <div class="mt-2 text-xs font-black text-emerald-800 bg-emerald-100 px-3 py-1 rounded-lg inline-block">
-        ${isAs ? 'শুদ্ধ উত্তৰ' : 'Answer'}: ${data.answer}
+        ${isAs ? 'শুদ্ধ উত্তৰ' : 'Answer'}: ${answerText}
       </div>
     `;
     container.appendChild(card);
 
     if (window.renderMathInElement) {
       window.renderMathInElement(card, { 
-        delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }] 
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false }
+        ] 
       });
     }
   } catch (err) {
-    alert(isAs ? "আন এটা উদাহৰণ প্ৰস্তুত কৰাত সমস্যা হ’ল।" : "Failed to load extra example.");
-  }
-
-  btn.disabled = false;
-  btn.innerHTML = `<span>➕</span> <span>${isAs ? 'আৰু এটা উদাহৰণ' : 'Another Example'}</span>`;
-};
-
-window.requestDeepDive = async function() {
-  const btn = document.getElementById('deepDiveBtn');
-  const container = document.getElementById('deepDiveContainer');
-  if (!btn || !container) return;
-
-  const isAs = window.currentLang === 'as';
-  const title = window.activeTopicContext.title;
-  const standard = window.activeTopicContext.standard;
-
-  btn.disabled = true;
-  btn.innerHTML = `<span class="animate-spin">⏳</span> <span>${isAs ? 'বিশ্লেষণ...' : 'Analyzing...'}</span>`;
-
-  const prompt = `Math educator for "${standard}". Topic: "${title}".
-Target Language: Strictly ${isAs ? 'Assamese' : 'English'}.
-${isAs ? ASSAMESE_GUARDRAIL : ''}
-
-Explain intuitive proof, common student pitfalls, and real-life usage.
-Respond in clean HTML paragraphs using <b>bolding</b> and LaTeX ($...$). Do NOT return JSON or code fences.`;
-
-  try {
-    const rawHtml = await fetchGeminiFast(prompt, false);
-    container.classList.remove('hidden');
-    container.className = "p-4 bg-teal-50 border border-teal-300 rounded-2xl shadow-xs text-xs text-slate-800 space-y-2 mt-2";
-    container.innerHTML = `
-      <div class="text-xs font-black uppercase text-teal-900 flex items-center gap-1.5">
-        <span>🔍</span>
-        <span>${isAs ? 'গভীৰ অন্তৰ্দৃষ্টি আৰু প্ৰয়োগ' : 'Deep Insight & Real-World Application'}</span>
-      </div>
-      <div class="leading-relaxed space-y-2">${rawHtml.replace(/```html/gi, '').replace(/```/g, '')}</div>
-    `;
-
-    if (window.renderMathInElement) {
-      window.renderMathInElement(container, { 
-        delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }] 
-      });
-    }
-  } catch (err) {
-    alert(isAs ? "বিশ্লেষণ সংগ্ৰহ কৰাত সমস্যা হ’ল।" : "Failed to fetch deep insight.");
-  }
-
-  btn.disabled = false;
-  btn.innerHTML = `<span>🔍</span> <span>${isAs ? 'গভীৰ অন্তৰ্দৃষ্টি' : 'Deep Insight'}</span>`;
-};
-
-window.askStudentDoubt = async function() {
-  const input = document.getElementById('studentDoubtInput');
-  const box = document.getElementById('doubtResponseBox');
-  if (!input || !box || !input.value.trim()) return;
-
-  const query = input.value.trim();
-  const isAs = window.currentLang === 'as';
-  const title = window.activeTopicContext.title;
-
-  box.classList.remove('hidden');
-  box.innerHTML = `<span class="animate-pulse font-bold text-amber-800">🤔 ${isAs ? 'গুৰুৱে চিন্তা কৰি আছে...' : 'AI Guru is thinking...'}</span>`;
-
-  const prompt = `Student learning "${title}".
-Doubt: "${query}".
-Target Language: Strictly ${isAs ? 'Assamese' : 'English'}.
-${isAs ? ASSAMESE_GUARDRAIL : ''}
-Answer directly and encouragingly in maximum 2-3 sentences.`;
-
-  try {
-    const reply = await fetchGeminiFast(prompt, false);
-    box.innerHTML = `<strong>${isAs ? 'গুৰুৰ উত্তৰ' : 'Response'}:</strong> ${reply}`;
-  } catch (err) {
-    box.innerHTML = isAs ? 'উত্তৰ পোৱা নগ’ল।' : 'Could not resolve doubt.';
+    console.error("requestMoreExample error:", err);
+    alert((isAs ? "উদাহৰণ প্ৰস্তুত কৰাত সমস্যা হ’ল: " : "Error generating example: ") + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>➕</span> <span>${isAs ? 'আৰু এটা উদাহৰণ' : 'Another Example'}</span>`;
   }
 };
+
+
+  
 
 // ----------------------------------------------------
 // 4. PRACTICE ARENA (BATCH BUFFERING & SPEED)
