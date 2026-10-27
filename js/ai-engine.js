@@ -1,5 +1,5 @@
 // ============================================================================
-// GANIT PATHSHALA - RESILIENT PEDAGOGY ENGINE
+// GANIT PATHSHALA - RESILIENT ENGINE (SAFE STRINGS & HIGH QUOTA)
 // ============================================================================
 
 window.activeTopicContext = { title: '', standard: '', mode: 'learn', topicId: '' };
@@ -12,7 +12,6 @@ let isFetchingQueue = false;
 let testQuestions = [];
 let currentTestIndex = 0;
 let testScore = 0;
-
 let exampleCounter = 1;
 
 const ASSAMESE_GUARDRAIL = `
@@ -20,23 +19,23 @@ CRITICAL LINGUISTIC INSTRUCTION:
 - You must write in 100% PURE ASSAMESE (অসমীয়া).
 - Strictly use the Assamese letter 'ৰ' (U+09F0), NEVER use the Bengali 'র' (U+09B0).
 - Strictly use the Assamese letter 'ৱ' (U+09F1), NEVER replace it with 'ব'.
-- DO NOT mix Bengali grammar or vocabulary (e.g., use 'কৰক/কৰে', never 'করুন/করে'; use 'হ’ব', never 'হবে'; use 'এটা', never 'একটি'; use 'আছেনে', never 'আছে কি').
+- DO NOT mix Bengali grammar or vocabulary (use 'কৰক/কৰে', never 'করুন/করে'; use 'হ’ব', never 'হবে'; use 'এটা', never 'একটি').
 - Use authentic Assamese mathematical terms (যেনে: কালি/ক্ষেত্ৰফল, অনুপাত, সদৃশ ত্ৰিভুজ, দহক, একক, ভগ্নাংশ, সমীকৰণ).
 `;
 
 // ----------------------------------------------------
-// 1. ROBUST MULTI-TIER CALLER (HIGH-QUOTA FREE TIER)
+// 1. SAFE GEMINI API CALLER (WITH MULTI-TIER QUOTA)
 // ----------------------------------------------------
 async function fetchGeminiFast(promptText, returnJson = true) {
   const apiKey = window.apiKey || localStorage.getItem('omnimath_gemini_key') || '';
   if (!apiKey) throw new Error('API key missing. Enter your Gemini key.');
 
-  // High-quota models prioritized over the 20 RPD preview models
+  // High-quota active models prioritized
   const models = [
-    'gemini-2.5-flash',
-    'gemini-1.5-flash',
-    'gemini-2.5-flash-lite',
     'gemini-flash-latest',
+    'gemini-3.5-flash-lite',
+    'gemini-3.5-flash',
+    'gemini-2.5-flash',
     'gemini-3.8-flash'
   ];
 
@@ -174,9 +173,9 @@ ${isAs ? ASSAMESE_GUARDRAIL : ''}
 Respond ONLY with a JSON object:
 {
   "conceptHeadline": "Short intuitive headline",
-  "conceptExplanation": "Clear, warm 2-3 sentence intuitive explanation using an age-appropriate analogy.",
+  "conceptExplanation": "Clear, warm 2-3 sentence intuitive explanation.",
   "coreFormula": "Key identity in LaTeX ($...$) or short memory rule",
-  "visualIllustrationHtml": "Compact HTML manipulative using Tailwind CSS",
+  "visualIllustrationHtml": "Compact visual HTML manipulative using Tailwind CSS",
   "sampleProblem": "Illustrative example problem",
   "stepByStepSolution": ["Step 1", "Step 2", "Step 3"],
   "finalAnswer": "Answer string"
@@ -190,6 +189,7 @@ Respond ONLY with a JSON object:
     container.innerHTML = `
       <div class="p-6 text-center space-y-3">
         <p class="text-xs font-bold text-rose-700">${isAs ? 'পাঠটো ল’ড কৰাত সমস্যা হ’ল।' : 'Failed to load lesson.'}</p>
+        <p class="text-[11px] text-slate-500">${err.message}</p>
         <button onclick="window.renderLearnMode(document.getElementById('wsBody'))" class="px-5 py-2 bg-amber-600 text-white font-bold rounded-xl text-xs">
           ${isAs ? 'পুনৰ চেষ্টা কৰক' : 'Retry'}
         </button>
@@ -203,17 +203,14 @@ function displayRenderedLesson(container, lesson, isAs) {
 
   container.innerHTML = `
     <div class="space-y-4 text-slate-800">
-      
-      <!-- 1. The Core Concept Card -->
       <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-2xl shadow-xs">
         <h4 class="text-xs uppercase tracking-wider font-black text-amber-800 mb-1">
-          💡 ${lesson.conceptHeadline || (isAs ? 'ধাৰণা / বুজি লওঁ আহক' : 'Concept Explanation')}
+          💡 ${lesson.conceptHeadline || (isAs ? 'ধাৰণা' : 'Concept Explanation')}
         </h4>
         <p class="text-sm font-semibold text-slate-800 leading-relaxed">${lesson.conceptExplanation}</p>
         ${lesson.coreFormula ? `<div class="mt-2.5 text-xs font-black text-amber-950 font-mono bg-white p-2 rounded-xl border border-amber-200 inline-block">${lesson.coreFormula}</div>` : ''}
       </div>
 
-      <!-- 2. Visual Model -->
       ${lesson.visualIllustrationHtml ? `
         <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl">
           <div class="text-[10px] font-black uppercase text-slate-400 mb-1.5">${isAs ? 'দৃশ্যমান আৰ্হি' : 'Visual Model'}</div>
@@ -221,7 +218,6 @@ function displayRenderedLesson(container, lesson, isAs) {
         </div>
       ` : ''}
 
-      <!-- 3. Worked Examples List -->
       <div id="workedExamplesList" class="space-y-3">
         ${lesson.sampleProblem ? `
           <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl">
@@ -239,22 +235,20 @@ function displayRenderedLesson(container, lesson, isAs) {
         ` : ''}
       </div>
 
-      <!-- Deep Dive Container -->
       <div id="deepDiveContainer" class="hidden"></div>
 
-      <!-- Controls -->
       <div class="pt-2 border-t border-slate-200 space-y-2">
         <div class="text-[11px] font-black uppercase text-slate-500 tracking-wider">
           ${isAs ? 'আৰু অধিক জানিব বিচাৰে নেকি?' : 'Want to explore deeper?'}
         </div>
         
         <div class="grid grid-cols-2 gap-2">
-          <button id="moreExampleBtn" onclick="window.requestMoreExample()" class="py-2.5 px-3 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-xl text-xs font-bold text-amber-950 flex items-center justify-center gap-1.5 transition active:scale-95">
+          <button id="moreExampleBtn" class="py-2.5 px-3 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-xl text-xs font-bold text-amber-950 flex items-center justify-center gap-1.5 transition active:scale-95">
             <span>➕</span>
             <span>${isAs ? 'আন এটা উদাহৰণ' : 'Another Example'}</span>
           </button>
 
-          <button id="deepDiveBtn" onclick="window.requestDeepDive()" class="py-2.5 px-3 bg-indigo-100 hover:bg-indigo-200 border border-indigo-300 rounded-xl text-xs font-bold text-indigo-950 flex items-center justify-center gap-1.5 transition active:scale-95">
+          <button id="deepDiveBtn" class="py-2.5 px-3 bg-indigo-100 hover:bg-indigo-200 border border-indigo-300 rounded-xl text-xs font-bold text-indigo-950 flex items-center justify-center gap-1.5 transition active:scale-95">
             <span>🔍</span>
             <span>${isAs ? 'গভীৰ অন্তৰ্দৃষ্টি' : 'Deep Insight'}</span>
           </button>
@@ -264,21 +258,25 @@ function displayRenderedLesson(container, lesson, isAs) {
           <input type="text" id="studentDoubtInput" 
                  placeholder="${isAs ? 'এই পাঠটোৰ বিষয়ে কিবা সন্দেহ আছে নেকি?...' : 'Any doubt about this concept?...'}" 
                  class="flex-1 bg-transparent text-xs px-2 py-1.5 focus:outline-none text-slate-800" />
-          <button onclick="window.askStudentDoubt()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs transition">
+          <button id="askDoubtBtn" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs transition">
             ${isAs ? 'সুধক' : 'Ask'}
           </button>
         </div>
         <div id="doubtResponseBox" class="hidden text-xs p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-950 leading-relaxed"></div>
       </div>
 
-      <button onclick="window.renderPracticeArena(document.getElementById('wsBody'))" 
-              class="w-full mt-4 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl shadow-md transition active:scale-95 text-sm flex items-center justify-center gap-2">
+      <button id="readyPracticeBtn" class="w-full mt-4 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl shadow-md transition active:scale-95 text-sm flex items-center justify-center gap-2">
         <span>${isAs ? 'এতিয়া নিজে অনুশীলন কৰক' : 'Ready to Practice!'}</span>
         <span>➔</span>
       </button>
-
     </div>
   `;
+
+  // Attach event listeners safely without inline onclick quotes
+  document.getElementById('moreExampleBtn').onclick = window.requestMoreExample;
+  document.getElementById('deepDiveBtn').onclick = window.requestDeepDive;
+  document.getElementById('askDoubtBtn').onclick = window.askStudentDoubt;
+  document.getElementById('readyPracticeBtn').onclick = () => window.renderPracticeArena(document.getElementById('wsBody'));
 
   if (window.renderMathInElement) {
     window.renderMathInElement(container, { 
@@ -289,7 +287,6 @@ function displayRenderedLesson(container, lesson, isAs) {
     });
   }
 }
-
 // ----------------------------------------------------
 // 3C. ON-DEMAND EXPANSION HANDLERS
 // ----------------------------------------------------
@@ -307,63 +304,124 @@ window.requestMoreExample = async function() {
 
   exampleCounter++;
   const prompt = `Math educator for "${standard}". Topic: "${title}".
-Create a DIFFERENT, clear worked example for this topic.
+Create a DIFFERENT worked example for this chapter.
 Target Language: Strictly ${isAs ? 'Assamese' : 'English'}.
 ${isAs ? ASSAMESE_GUARDRAIL : ''}
 
 Respond ONLY with a JSON object:
 {
   "problem": "Problem statement with LaTeX ($...$)",
-  "steps": ["Step 1 explanation", "Step 2 equation", "Step 3 conclusion"],
-  "answer": "Final clean answer"
+  "steps": ["Step 1", "Step 2", "Step 3"],
+  "answer": "Clean answer"
 }`;
 
   try {
     const data = await fetchGeminiFast(prompt, true);
-    
-    // Fallback safe access in case Gemini uses alternate property keys
-    const problemText = data.problem || data.sampleProblem || data.questionText || '';
-    const stepsList = Array.isArray(data.steps) ? data.steps : (Array.isArray(data.stepByStepSolution) ? data.stepByStepSolution : []);
-    const answerText = data.answer || data.finalAnswer || data.correctAnswer || '';
+    const pText = data.problem || data.sampleProblem || data.questionText || '';
+    const sList = Array.isArray(data.steps) ? data.steps : (Array.isArray(data.stepByStepSolution) ? data.stepByStepSolution : []);
+    const aText = data.answer || data.finalAnswer || '';
 
     const card = document.createElement('div');
     card.className = "bg-indigo-50 border border-indigo-200 p-4 rounded-2xl shadow-xs space-y-1.5 mt-2";
     card.innerHTML = `
       <div class="text-xs font-black text-indigo-900 uppercase">
-        📝 ${isAs ? `উদাহৰণ ${window.toDigits ? window.toDigits(exampleCounter) : exampleCounter}` : `Example ${exampleCounter}`}
+        📝 ${isAs ? `উদাহৰণ ${exampleCounter}` : `Example ${exampleCounter}`}
       </div>
-      <div class="text-sm font-bold text-slate-900 mb-1.5">${problemText}</div>
+      <div class="text-sm font-bold text-slate-900 mb-1.5">${pText}</div>
       <div class="text-xs space-y-1 text-slate-700">
-        ${stepsList.map(s => `<div>• ${s}</div>`).join('')}
+        ${sList.map(s => `<div>• ${s}</div>`).join('')}
       </div>
       <div class="mt-2 text-xs font-black text-emerald-800 bg-emerald-100 px-3 py-1 rounded-lg inline-block">
-        ${isAs ? 'শুদ্ধ উত্তৰ' : 'Answer'}: ${answerText}
+        ${isAs ? 'শুদ্ধ উত্তৰ' : 'Answer'}: ${aText}
       </div>
     `;
     container.appendChild(card);
 
     if (window.renderMathInElement) {
       window.renderMathInElement(card, { 
-        delimiters: [
-          { left: '$$', right: '$$', display: true },
-          { left: '$', right: '$', display: false }
-        ] 
+        delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }] 
       });
     }
   } catch (err) {
-    console.error("requestMoreExample error:", err);
-    alert((isAs ? "উদাহৰণ প্ৰস্তুত কৰাত সমস্যা হ’ল: " : "Error generating example: ") + err.message);
+    alert((isAs ? "উদাহৰণ প্ৰস্তুত কৰাত সমস্যা হ’ল: " : "Error: ") + err.message);
   } finally {
     btn.disabled = false;
     btn.innerHTML = `<span>➕</span> <span>${isAs ? 'আৰু এটা উদাহৰণ' : 'Another Example'}</span>`;
   }
 };
 
+window.requestDeepDive = async function() {
+  const btn = document.getElementById('deepDiveBtn');
+  const container = document.getElementById('deepDiveContainer');
+  if (!btn || !container) return;
 
-  
+  const isAs = window.currentLang === 'as';
+  const title = window.activeTopicContext.title;
+  const standard = window.activeTopicContext.standard;
+
+  btn.disabled = true;
+  btn.innerHTML = `<span class="animate-spin">⏳</span> <span>${isAs ? 'বিশ্লেষণ...' : 'Analyzing...'}</span>`;
+
+  const prompt = `Math educator for "${standard}". Topic: "${title}".
+Target Language: Strictly ${isAs ? 'Assamese' : 'English'}.
+${isAs ? ASSAMESE_GUARDRAIL : ''}
+
+Explain intuitive proof, common student pitfalls, and real-life usage.
+Respond in clean HTML paragraphs using <b>bolding</b> and LaTeX ($...$). Do NOT return JSON or code fences.`;
+
+  try {
+    const rawHtml = await fetchGeminiFast(prompt, false);
+    container.classList.remove('hidden');
+    container.className = "p-4 bg-teal-50 border border-teal-300 rounded-2xl shadow-xs text-xs text-slate-800 space-y-2 mt-2";
+    container.innerHTML = `
+      <div class="text-xs font-black uppercase text-teal-900 flex items-center gap-1.5">
+        <span>🔍</span>
+        <span>${isAs ? 'গভীৰ অন্তৰ্দৃষ্টি আৰু প্ৰয়োগ' : 'Deep Insight & Real-World Application'}</span>
+      </div>
+      <div class="leading-relaxed space-y-2">${rawHtml.replace(/```html/gi, '').replace(/```/g, '')}</div>
+    `;
+
+    if (window.renderMathInElement) {
+      window.renderMathInElement(container, { 
+        delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }] 
+      });
+    }
+  } catch (err) {
+    alert(isAs ? "বিশ্লেষণ সংগ্ৰহ কৰাত সমস্যা হ’ল।" : "Failed to fetch deep insight.");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<span>🔍</span> <span>${isAs ? 'গভীৰ অন্তৰ্দৃষ্টি' : 'Deep Insight'}</span>`;
+  }
+};
+
+window.askStudentDoubt = async function() {
+  const input = document.getElementById('studentDoubtInput');
+  const box = document.getElementById('doubtResponseBox');
+  if (!input || !box || !input.value.trim()) return;
+
+  const query = input.value.trim();
+  const isAs = window.currentLang === 'as';
+  const title = window.activeTopicContext.title;
+
+  box.classList.remove('hidden');
+  box.innerHTML = `<span class="animate-pulse font-bold text-amber-800">🤔 ${isAs ? 'গুৰুৱে চিন্তা কৰি আছে...' : 'AI Guru is thinking...'}</span>`;
+
+  const prompt = `Student learning "${title}".
+Doubt: "${query}".
+Target Language: Strictly ${isAs ? 'Assamese' : 'English'}.
+${isAs ? ASSAMESE_GUARDRAIL : ''}
+Answer directly in maximum 2-3 sentences.`;
+
+  try {
+    const reply = await fetchGeminiFast(prompt, false);
+    box.innerHTML = `<strong>${isAs ? 'গুৰুৰ উত্তৰ' : 'Response'}:</strong> ${reply}`;
+  } catch (err) {
+    box.innerHTML = isAs ? 'উত্তৰ পোৱা নগ’ল।' : 'Could not resolve doubt.';
+  }
+};
 
 // ----------------------------------------------------
-// 4. PRACTICE ARENA (BATCH BUFFERING & SPEED)
+// 4. PRACTICE ARENA (BATCH QUEUE)
 // ----------------------------------------------------
 window.renderPracticeArena = async function(container) {
   const isAs = window.currentLang === 'as';
@@ -418,11 +476,11 @@ Create exactly ${count} distinct practice questions.
 Respond ONLY with a JSON array:
 [
   {
-    "questionText": "Question string with LaTeX ($...$) if needed",
+    "questionText": "Question string with LaTeX ($...$)",
     "visualHtml": "Optional short visual HTML or empty string",
     "correctAnswer": "Answer string",
     "distractors": ["Wrong 1", "Wrong 2", "Wrong 3"],
-    "hint": "Short guiding clue"
+    "hint": "Short clue"
   }
 ]`;
 
@@ -472,7 +530,7 @@ function displayRenderedPractice(container, isAs) {
       <div id="practiceFeedback" class="text-center font-bold text-sm min-h-[28px]"></div>
 
       <div class="flex gap-2">
-        <button onclick="window.askPracticeHint()" class="flex-1 py-2.5 bg-amber-100 text-amber-900 hover:bg-amber-200 font-bold rounded-xl text-xs transition">
+        <button id="practiceHintBtn" class="flex-1 py-2.5 bg-amber-100 text-amber-900 hover:bg-amber-200 font-bold rounded-xl text-xs transition">
           💡 ${isAs ? 'ইংগিত দিয়ক' : 'Need a Hint?'}
         </button>
       </div>
@@ -480,6 +538,8 @@ function displayRenderedPractice(container, isAs) {
       <div id="practiceHintBox" class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-950 hidden leading-relaxed"></div>
     </div>
   `;
+
+  document.getElementById('practiceHintBtn').onclick = window.askPracticeHint;
 
   const optContainer = document.getElementById('practiceOptionsContainer');
   currentPracticeProblem.options.forEach(opt => {
@@ -553,18 +613,16 @@ window.renderTestSetup = function(container) {
       <p class="text-xs text-slate-500">${isAs ? 'AI দ্বাৰা তৈয়াৰী পৰীক্ষা। সময় নিৰ্ধাৰিত।' : 'AI-generated test. No hints.'}</p>
       
       <div class="grid grid-cols-3 gap-3 max-w-xs mx-auto pt-2">
-        <button onclick="window.startTestMode(5)" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">
-          5 Qs
-        </button>
-        <button onclick="window.startTestMode(10)" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">
-          10 Qs
-        </button>
-        <button onclick="window.startTestMode(15)" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">
-          15 Qs
-        </button>
+        <button id="tBtn5" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">5 Qs</button>
+        <button id="tBtn10" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">10 Qs</button>
+        <button id="tBtn15" class="p-3 border-2 border-amber-500 hover:bg-amber-500 hover:text-white rounded-2xl font-black text-amber-900 text-sm transition active:scale-95 shadow-sm">15 Qs</button>
       </div>
     </div>
   `;
+
+  document.getElementById('tBtn5').onclick = () => window.startTestMode(5);
+  document.getElementById('tBtn10').onclick = () => window.startTestMode(10);
+  document.getElementById('tBtn15').onclick = () => window.startTestMode(15);
 };
 
 window.startTestMode = async function(count) {
@@ -682,11 +740,12 @@ window.handleTestSelect = function(val) {
           <p class="text-lg font-bold text-amber-900">
             ${isAs ? 'আপোনাৰ নম্বৰ' : 'Your Score'}: <span class="text-2xl font-black text-emerald-600">${testScore}</span> / ${total}
           </p>
-          <button onclick="window.renderTestSetup(document.getElementById('wsBody'))" class="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition">
+          <button id="reTestBtn" class="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition">
             ${isAs ? 'পুনৰ পৰীক্ষা দিয়ক' : 'Take Another Test'}
           </button>
         </div>
       `;
+      document.getElementById('reTestBtn').onclick = () => window.renderTestSetup(document.getElementById('wsBody'));
     }
   }
 };
@@ -699,3 +758,4 @@ window.shuffleArray = function(arr) {
   }
   return a;
 };
+        
