@@ -599,7 +599,13 @@
         select.appendChild(opt);
       });
     }
-
+function handleCardClick(btn, mode) {
+  const title = decodeURIComponent(btn.getAttribute('data-title'));
+  const standard = decodeURIComponent(btn.getAttribute('data-class'));
+  const topicId = btn.getAttribute('data-id') || '';
+  window.openWorkspaceForTopic(title, standard, mode, topicId);
+}
+    
     function renderChapterCards() {
       const container = document.getElementById('chaptersContainer');
       if (!container || !window.MATH_CURRICULUM) return;
@@ -623,15 +629,17 @@
                 <h3 class="font-bold text-slate-800 text-base mt-2">${titleStr}</h3>
               </div>
               <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100">
-                <button onclick="window.openWorkspaceForTopic('${titleStr.replace(/'/g, "\\\\'")}', '${classTitle.replace(/'/g, "\\\\'")}', 'learn', '${t.id}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-1.5 rounded-xl text-xs">Learn</button>
-                <button onclick="window.openWorkspaceForTopic('${titleStr.replace(/'/g, "\\\\'")}', '${classTitle.replace(/'/g, "\\\\'")}', 'play', '${t.id}')" class="bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold py-1.5 rounded-xl text-xs">Play</button>
-                <button onclick="window.openWorkspaceForTopic('${titleStr.replace(/'/g, "\\\\'")}', '${classTitle.replace(/'/g, "\\\\'")}', 'test', '${t.id}')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-1.5 rounded-xl text-xs">Test</button>
+                              <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100">
+                <button onclick="handleCardClick(this, 'learn')" data-title="${encodeURIComponent(titleStr)}" data-class="${encodeURIComponent(classTitle)}" data-id="${t.id}" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-1.5 rounded-xl text-xs">Learn</button>
+                <button onclick="handleCardClick(this, 'play')" data-title="${encodeURIComponent(titleStr)}" data-class="${encodeURIComponent(classTitle)}" data-id="${t.id}" class="bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold py-1.5 rounded-xl text-xs">Play</button>
+                <button onclick="handleCardClick(this, 'test')" data-title="${encodeURIComponent(titleStr)}" data-class="${encodeURIComponent(classTitle)}" data-id="${t.id}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-1.5 rounded-xl text-xs">Test</button>
               </div>
             </div>
           `;
         });
         return html;
       };
+      
 
       if (cls.topics) {
         container.innerHTML = renderTopicList(cls.topics, null);
