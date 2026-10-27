@@ -614,7 +614,7 @@ function handleCardClick(btn, mode) {
       const cls = window.MATH_CURRICULUM.find(c => c.id === currentClassId) || window.MATH_CURRICULUM[0];
       if (!cls) return;
 
-      const renderTopicList = (topics, streamTitle) => {
+            const renderTopicList = (topics, streamTitle) => {
         let html = '';
         if (streamTitle) {
           html += `<div class="col-span-full mt-4 mb-2"><h3 class="text-sm font-black text-amber-900 uppercase tracking-wider bg-amber-200/60 px-3 py-1 rounded-lg inline-block">${streamTitle}</h3></div>`;
@@ -629,7 +629,6 @@ function handleCardClick(btn, mode) {
                 <h3 class="font-bold text-slate-800 text-base mt-2">${titleStr}</h3>
               </div>
               <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100">
-                              <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-slate-100">
                 <button onclick="handleCardClick(this, 'learn')" data-title="${encodeURIComponent(titleStr)}" data-class="${encodeURIComponent(classTitle)}" data-id="${t.id}" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-1.5 rounded-xl text-xs">Learn</button>
                 <button onclick="handleCardClick(this, 'play')" data-title="${encodeURIComponent(titleStr)}" data-class="${encodeURIComponent(classTitle)}" data-id="${t.id}" class="bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold py-1.5 rounded-xl text-xs">Play</button>
                 <button onclick="handleCardClick(this, 'test')" data-title="${encodeURIComponent(titleStr)}" data-class="${encodeURIComponent(classTitle)}" data-id="${t.id}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-1.5 rounded-xl text-xs">Test</button>
