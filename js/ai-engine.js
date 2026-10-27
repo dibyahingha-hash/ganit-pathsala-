@@ -24,19 +24,19 @@ CRITICAL LINGUISTIC INSTRUCTION:
 `;
 
 // ----------------------------------------------------
-// 1. SAFE GEMINI API CALLER (WITH MULTI-TIER QUOTA)
+// 1. SAFE GEMINI API CALLER (WITH EXTENDED TIMEOUT & PROVEN MODELS)
 // ----------------------------------------------------
 async function fetchGeminiFast(promptText, returnJson = true) {
   const apiKey = window.apiKey || localStorage.getItem('omnimath_gemini_key') || '';
   if (!apiKey) throw new Error('API key missing. Enter your Gemini key.');
 
-  // High-quota active models prioritized
+  // Stable, widely available model chain
   const models = [
-    'gemini-flash-latest',
-    'gemini-3.5-flash-lite',
-    'gemini-3.5-flash',
-    'gemini-2.5-flash',
-    'gemini-3.8-flash'
+    'gemini-2.0-flash',
+    'gemini-2.5-flash-preview',
+    'gemini-3.8-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-flash-latest'
   ];
 
   let lastError = null;
@@ -44,7 +44,8 @@ async function fetchGeminiFast(promptText, returnJson = true) {
   for (const model of models) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 9000);
+      // Increased from 9s to 25s so mobile requests don't abort prematurely
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
 
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
       const res = await fetch(endpoint, {
