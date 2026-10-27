@@ -278,6 +278,14 @@ function displayRenderedLesson(container, lesson, isAs) {
   document.getElementById('deepDiveBtn').onclick = window.requestDeepDive;
   document.getElementById('askDoubtBtn').onclick = window.askStudentDoubt;
   document.getElementById('readyPracticeBtn').onclick = () => window.renderPracticeArena(document.getElementById('wsBody'));
+  // Execute interactive 3D script mount if present
+  const scripts = container.querySelectorAll('script');
+  scripts.forEach(s => {
+    const freshScript = document.createElement('script');
+    freshScript.text = s.text;
+    document.body.appendChild(freshScript);
+    document.body.removeChild(freshScript);
+  });
 
   if (window.renderMathInElement) {
     window.renderMathInElement(container, { 
@@ -760,3 +768,100 @@ window.shuffleArray = function(arr) {
   return a;
 };
         
+// ----------------------------------------------------
+// INTERACTIVE 3D SHAPE VIEWER (ROTATABLE ON TOUCH)
+// ----------------------------------------------------
+window.mountInteractive3D = function(containerId, shapeType = 'cube') {
+  const host = document.getElementById(containerId);
+  if (!host) return;
+
+  let rx = -20;
+  let ry = 35;
+  let isDragging = false;
+  let startX = 0, startY = 0;
+
+  let shapeMarkup = '';
+
+  if (shapeType === 'cube') {
+    shapeMarkup = `
+      <div id="shape3d" class="relative w-28 h-28 mx-auto" style="transform-style: preserve-3d; transform: rotateX(${rx}deg) rotateY(${ry}deg); transition: transform 0.05s ease-out;">
+        <!-- Front -->
+        <div class="absolute inset-0 bg-blue-500/80 border-2 border-white flex items-center justify-center text-white font-black text-xs shadow-inner" style="transform: translateZ(56px);">Front</div>
+        <!-- Back -->
+        <div class="absolute inset-0 bg-blue-700/80 border-2 border-white flex items-center justify-center text-white font-black text-xs" style="transform: rotateY(180deg) translateZ(56px);">Back</div>
+        <!-- Right -->
+        <div class="absolute inset-0 bg-indigo-600/80 border-2 border-white flex items-center justify-center text-white font-black text-xs" style="transform: rotateY(90deg) translateZ(56px);">Side</div>
+        <!-- Left -->
+        <div class="absolute inset-0 bg-indigo-500/80 border-2 border-white flex items-center justify-center text-white font-black text-xs" style="transform: rotateY(-90deg) translateZ(56px);">Side</div>
+        <!-- Top -->
+        <div class="absolute inset-0 bg-sky-400/85 border-2 border-white flex items-center justify-center text-slate-900 font-black text-xs" style="transform: rotateX(90deg) translateZ(56px);">Top</div>
+        <!-- Bottom -->
+        <div class="absolute inset-0 bg-blue-900/90 border-2 border-white flex items-center justify-center text-white font-black text-xs" style="transform: rotateX(-90deg) translateZ(56px);">Bottom</div>
+      </div>
+    `;
+  } else if (shapeType === 'cylinder') {
+    shapeMarkup = `
+      <div id="shape3d" class="relative w-28 h-36 mx-auto" style="transform-style: preserve-3d; transform: rotateX(${rx}deg) rotateY(${ry}deg);">
+        <div class="absolute w-28 h-28 rounded-full bg-emerald-400 border-2 border-white" style="transform: rotateX(90deg) translateZ(50px);"></div>
+        <div class="absolute w-28 h-28 rounded-full bg-emerald-700 border-2 border-white" style="transform: rotateX(90deg) translateZ(-50px);"></div>
+        <div class="absolute w-28 h-32 bg-gradient-to-r from-emerald-600 via-emerald-400 to-emerald-700 border-x-2 border-white rounded-lg opacity-90" style="transform: translateZ(0px);"></div>
+      </div>
+    `;
+  } else {
+    // Default Sphere with realistic light spot
+    shapeMarkup = `
+      <div class="w-28 h-28 mx-auto rounded-full shadow-2xl animate-pulse" 
+           style="background: radial-gradient(circle at 35% 35%, #93c5fd, #2563eb 50%, #1e3a8a 100%); box-shadow: 0 20px 25px -5px rgba(30, 58, 138, 0.4);">
+      </div>
+    `;
+  }
+
+  host.innerHTML = `
+    <div class="relative py-6 bg-gradient-to-b from-slate-900 to-slate-950 rounded-2xl overflow-hidden select-none touch-none border border-slate-800 shadow-xl" style="perspective: 800px;">
+      <div class="absolute top-2 left-3 text-[10px] uppercase font-bold text-amber-400 flex items-center gap-1">
+        <span>👆</span> <span>Touch & drag to rotate in 3D</span>
+      </div>
+      <div class="py-4">
+        ${shapeMarkup}
+      </div>
+      <div class="text-center text-[10px] text-slate-400 font-medium">Real 3D Solid (${shapeType.toUpperCase()}) with depth & faces</div>
+    </div>
+  `;
+
+  const target = host.querySelector('#shape3d');
+  if (!target) return;
+
+  function onPointerDown(e) {
+    isDragging = true;
+    startX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+  }
+
+  function onPointerMove(e) {
+    if (!isDragging) return;
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX) || 0;
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
+
+    const dx = clientX - startX;
+    const dy = clientY - startY;
+
+    ry += dx * 0.8;
+    rx -= dy * 0.8;
+
+    target.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg)`;
+    startX = clientX;
+    startY = clientY;
+  }
+
+  function onPointerUp() {
+    isDragging = false;
+  }
+
+  host.addEventListener('mousedown', onPointerDown);
+  window.addEventListener('mousemove', onPointerMove);
+  window.addEventListener('mouseup', onPointerUp);
+
+  host.addEventListener('touchstart', onPointerDown, { passive: true });
+  window.addEventListener('touchmove', onPointerMove, { passive: true });
+  window.addEventListener('touchend', onPointerUp);
+};
