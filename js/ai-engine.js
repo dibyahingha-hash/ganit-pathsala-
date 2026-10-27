@@ -540,6 +540,13 @@ function refillPracticeQueueBackground() {
     fetchPracticeBatch(5);
   }
 }
+function sanitizeMathString(text) {
+  if (!text) return '';
+  return text
+    .replace(/\?[\u0980-\u09FF\u0900-\u097F]+/g, '?')
+    .replace(/=\s*\?\s*\$/g, '=$ ?')
+    .trim();
+}
 
 function displayRenderedPractice(container, isAs) {
   container.innerHTML = `
@@ -551,7 +558,8 @@ function displayRenderedPractice(container, isAs) {
 
       <div class="p-5 bg-white border-2 border-amber-300 rounded-3xl shadow-sm text-center">
         <div class="text-lg sm:text-xl font-black text-slate-800 tracking-wider mb-2">
-          ${currentPracticeProblem.questionText}
+                  ${sanitizeMathString(currentPracticeProblem.questionText)}
+                  
         </div>
 
         ${currentPracticeProblem.visualHtml ? `<div class="my-2">${currentPracticeProblem.visualHtml}</div>` : ''}
