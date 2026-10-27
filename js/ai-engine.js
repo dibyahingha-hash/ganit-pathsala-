@@ -31,13 +31,22 @@ async function fetchGeminiFast(promptText, returnJson = true) {
   if (!apiKey) throw new Error('API key missing. Enter your Gemini key.');
 
   // Stable, widely available model chain
-  const models = [
-    'gemini-2.0-flash',
-    'gemini-2.5-flash-preview',
+    const models = [
+    // 1. Cutting-Edge Flash Tier (Starts here as requested)
     'gemini-3.8-flash',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
+
+    // 2. High-Volume Workhorse Tier (1,500 requests/day, lowest latency)
+    'gemini-2.0-flash',
     'gemini-2.0-flash-lite',
-    'gemini-flash-latest'
+
+    // 3. Ultra-Resilient Production Fallback Tier
+    'gemini-flash-latest',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-8b'
   ];
+  
 
   let lastError = null;
 
