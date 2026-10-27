@@ -1,23 +1,20 @@
 // ============================================================================
-// GANIT PATHSHALA - ULTRA-FAST PEDAGOGY ENGINE (GEMINI-3.8-FLASH & PURE ASSAMESE)
+// GANIT PATHSHALA - RESILIENT PEDAGOGY ENGINE
 // ============================================================================
 
 window.activeTopicContext = { title: '', standard: '', mode: 'learn', topicId: '' };
 let currentPracticeProblem = null;
 let practiceStreak = 0;
 
-// Practice Queue for Instant Transitions
 let practiceQuestionQueue = [];
 let isFetchingQueue = false;
 
-// Test Engine State
 let testQuestions = [];
 let currentTestIndex = 0;
 let testScore = 0;
 
 let exampleCounter = 1;
 
-// Linguistic Guardrail to prevent Bengali mixing
 const ASSAMESE_GUARDRAIL = `
 CRITICAL LINGUISTIC INSTRUCTION:
 - You must write in 100% PURE ASSAMESE (অসমীয়া).
@@ -28,19 +25,19 @@ CRITICAL LINGUISTIC INSTRUCTION:
 `;
 
 // ----------------------------------------------------
-// 1. FAST SINGLE-HOP GEMINI CALLER WITH 3.8-FLASH PRIORITY
+// 1. ROBUST MULTI-TIER CALLER (HIGH-QUOTA FREE TIER)
 // ----------------------------------------------------
 async function fetchGeminiFast(promptText, returnJson = true) {
   const apiKey = window.apiKey || localStorage.getItem('omnimath_gemini_key') || '';
   if (!apiKey) throw new Error('API key missing. Enter your Gemini key.');
 
+  // High-quota models prioritized over the 20 RPD preview models
   const models = [
-    'gemini-3.8-flash',
+    'gemini-2.5-flash',
+    'gemini-1.5-flash',
+    'gemini-2.5-flash-lite',
     'gemini-flash-latest',
-    'gemini-3.5-flash-lite',
-    'gemini-3.5-flash',
-    'gemini-3.7-flash',
-    'gemini-2.5-flash'
+    'gemini-3.8-flash'
   ];
 
   let lastError = null;
@@ -179,7 +176,7 @@ Respond ONLY with a JSON object:
   "conceptHeadline": "Short intuitive headline",
   "conceptExplanation": "Clear, warm 2-3 sentence intuitive explanation using an age-appropriate analogy.",
   "coreFormula": "Key identity in LaTeX ($...$) or short memory rule",
-  "visualIllustrationHtml": "Compact HTML manipulative using Tailwind CSS (flexbox, emojis/colored blocks/number lines)",
+  "visualIllustrationHtml": "Compact HTML manipulative using Tailwind CSS",
   "sampleProblem": "Illustrative example problem",
   "stepByStepSolution": ["Step 1", "Step 2", "Step 3"],
   "finalAnswer": "Answer string"
@@ -201,9 +198,6 @@ Respond ONLY with a JSON object:
   }
 };
 
-// ----------------------------------------------------
-// 3B. LEARN MODE DISPLAY & ON-DEMAND EXTENSIONS
-// ----------------------------------------------------
 function displayRenderedLesson(container, lesson, isAs) {
   exampleCounter = 1;
 
@@ -227,7 +221,7 @@ function displayRenderedLesson(container, lesson, isAs) {
         </div>
       ` : ''}
 
-      <!-- 3. Worked Examples List (Dynamically Expands) -->
+      <!-- 3. Worked Examples List -->
       <div id="workedExamplesList" class="space-y-3">
         ${lesson.sampleProblem ? `
           <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-2xl">
@@ -245,10 +239,10 @@ function displayRenderedLesson(container, lesson, isAs) {
         ` : ''}
       </div>
 
-      <!-- Dynamic Deep Dive Container -->
+      <!-- Deep Dive Container -->
       <div id="deepDiveContainer" class="hidden"></div>
 
-      <!-- ON-DEMAND EXPANSIONS (More Examples, Deep Insight, Doubts) -->
+      <!-- Controls -->
       <div class="pt-2 border-t border-slate-200 space-y-2">
         <div class="text-[11px] font-black uppercase text-slate-500 tracking-wider">
           ${isAs ? 'আৰু অধিক জানিব বিচাৰে নেকি?' : 'Want to explore deeper?'}
@@ -266,7 +260,6 @@ function displayRenderedLesson(container, lesson, isAs) {
           </button>
         </div>
 
-        <!-- Student Doubt Resolution -->
         <div class="flex items-center gap-2 mt-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
           <input type="text" id="studentDoubtInput" 
                  placeholder="${isAs ? 'এই পাঠটোৰ বিষয়ে কিবা সন্দেহ আছে নেকি?...' : 'Any doubt about this concept?...'}" 
@@ -278,7 +271,6 @@ function displayRenderedLesson(container, lesson, isAs) {
         <div id="doubtResponseBox" class="hidden text-xs p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-950 leading-relaxed"></div>
       </div>
 
-      <!-- Action Button: Practice Arena -->
       <button onclick="window.renderPracticeArena(document.getElementById('wsBody'))" 
               class="w-full mt-4 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl shadow-md transition active:scale-95 text-sm flex items-center justify-center gap-2">
         <span>${isAs ? 'এতিয়া নিজে অনুশীলন কৰক' : 'Ready to Practice!'}</span>
@@ -299,7 +291,7 @@ function displayRenderedLesson(container, lesson, isAs) {
 }
 
 // ----------------------------------------------------
-// 3C. ON-DEMAND ACTION HANDLERS
+// 3C. ON-DEMAND EXPANSION HANDLERS
 // ----------------------------------------------------
 window.requestMoreExample = async function() {
   const btn = document.getElementById('moreExampleBtn');
@@ -315,7 +307,7 @@ window.requestMoreExample = async function() {
 
   exampleCounter++;
   const prompt = `Math educator for "${standard}". Topic: "${title}".
-Create a DIFFERENT, creative, and challenging worked example for this chapter.
+Create a DIFFERENT worked example for this chapter.
 Target Language: Strictly ${isAs ? 'Assamese' : 'English'}.
 ${isAs ? ASSAMESE_GUARDRAIL : ''}
 
@@ -369,15 +361,11 @@ window.requestDeepDive = async function() {
   btn.disabled = true;
   btn.innerHTML = `<span class="animate-spin">⏳</span> <span>${isAs ? 'বিশ্লেষণ...' : 'Analyzing...'}</span>`;
 
-  const prompt = `Math educator for "${standard}".
-Topic: "${title}".
+  const prompt = `Math educator for "${standard}". Topic: "${title}".
 Target Language: Strictly ${isAs ? 'Assamese' : 'English'}.
 ${isAs ? ASSAMESE_GUARDRAIL : ''}
 
-Explain:
-1. The deep intuitive proof or concept background.
-2. Common misconceptions or pitfalls students face.
-3. Where this theorem/formula is applied in real life.
+Explain intuitive proof, common student pitfalls, and real-life usage.
 Respond in clean HTML paragraphs using <b>bolding</b> and LaTeX ($...$). Do NOT return JSON or code fences.`;
 
   try {
@@ -425,7 +413,7 @@ Answer directly and encouragingly in maximum 2-3 sentences.`;
 
   try {
     const reply = await fetchGeminiFast(prompt, false);
-    box.innerHTML = `<strong>${isAs ? 'গুৰুৰ উত্তৰ' : 'Guru\'s Response'}:</strong> ${reply}`;
+    box.innerHTML = `<strong>${isAs ? 'গুৰুৰ উত্তৰ' : 'Response'}:</strong> ${reply}`;
   } catch (err) {
     box.innerHTML = isAs ? 'উত্তৰ পোৱা নগ’ল।' : 'Could not resolve doubt.';
   }
@@ -483,7 +471,7 @@ Topic: "${title}".
 Target Language: Strictly ${isAs ? 'Assamese' : 'English'}.
 ${isAs ? ASSAMESE_GUARDRAIL : ''}
 
-Create exactly ${count} distinct practice questions. Do NOT provide negative numbers for early grades.
+Create exactly ${count} distinct practice questions.
 Respond ONLY with a JSON array:
 [
   {
@@ -495,7 +483,7 @@ Respond ONLY with a JSON array:
   }
 ]`;
 
-    try {
+  try {
     const list = await fetchGeminiFast(prompt, true);
     list.forEach(q => {
       practiceQuestionQueue.push({
@@ -520,17 +508,6 @@ function refillPracticeQueueBackground() {
 }
 
 function displayRenderedPractice(container, isAs) {
-  let optionsHtml = '<div class="grid grid-cols-2 gap-3 max-w-xs mx-auto my-4">';
-  currentPracticeProblem.options.forEach(opt => {
-    const optArg = typeof opt === 'string' ? `'${opt.replace(/'/g, "\\'")}'` : opt;
-    optionsHtml += `
-      <button onclick="window.handleOptionSelect(${optArg}, this)" class="option-btn py-4 px-2 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-base sm:text-lg font-black text-slate-800 shadow-sm active:scale-95 transition">
-        ${opt}
-      </button>
-    `;
-  });
-  optionsHtml += '</div>';
-
   container.innerHTML = `
     <div class="space-y-4">
       <div class="flex justify-between items-center bg-amber-50 px-4 py-2 rounded-xl border border-amber-200">
@@ -546,7 +523,7 @@ function displayRenderedPractice(container, isAs) {
         ${currentPracticeProblem.visualHtml ? `<div class="my-2">${currentPracticeProblem.visualHtml}</div>` : ''}
 
         <p class="text-xs text-slate-400 font-bold mb-2">${isAs ? 'শুদ্ধ উত্তৰ বাছক:' : 'Tap the correct answer:'}</p>
-        ${optionsHtml}
+        <div id="practiceOptionsContainer" class="grid grid-cols-2 gap-3 max-w-xs mx-auto my-4"></div>
       </div>
 
       <div id="practiceFeedback" class="text-center font-bold text-sm min-h-[28px]"></div>
@@ -560,6 +537,15 @@ function displayRenderedPractice(container, isAs) {
       <div id="practiceHintBox" class="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-xs text-indigo-950 hidden leading-relaxed"></div>
     </div>
   `;
+
+  const optContainer = document.getElementById('practiceOptionsContainer');
+  currentPracticeProblem.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn py-4 px-2 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-base sm:text-lg font-black text-slate-800 shadow-sm active:scale-95 transition';
+    btn.innerText = opt;
+    btn.onclick = () => window.handleOptionSelect(opt, btn);
+    optContainer.appendChild(btn);
+  });
 
   if (window.renderMathInElement) {
     window.renderMathInElement(container, { 
@@ -696,17 +682,6 @@ function renderTestQuestion(container) {
   const isAs = window.currentLang === 'as';
   const total = testQuestions.length;
 
-  let optionsHtml = '<div class="grid grid-cols-2 gap-3 max-w-xs mx-auto my-4">';
-  q.options.forEach(opt => {
-    const optArg = typeof opt === 'string' ? `'${opt.replace(/'/g, "\\'")}'` : opt;
-    optionsHtml += `
-      <button onclick="window.handleTestSelect(${optArg})" class="option-btn py-4 px-2 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-base font-black text-slate-800 shadow-sm active:scale-95 transition">
-        ${opt}
-      </button>
-    `;
-  });
-  optionsHtml += '</div>';
-
   container.innerHTML = `
     <div class="space-y-4">
       <div class="flex justify-between items-center bg-amber-50 px-4 py-2 rounded-xl border border-amber-200 text-xs font-bold text-amber-900">
@@ -718,10 +693,19 @@ function renderTestQuestion(container) {
         <div class="text-lg font-black text-slate-800 tracking-wider mb-4">
           ${q.questionText}
         </div>
-        ${optionsHtml}
+        <div id="testOptionsContainer" class="grid grid-cols-2 gap-3 max-w-xs mx-auto my-4"></div>
       </div>
     </div>
   `;
+
+  const optContainer = document.getElementById('testOptionsContainer');
+  q.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn py-4 px-2 bg-amber-50 hover:bg-amber-100 border-2 border-amber-300 rounded-2xl text-base font-black text-slate-800 shadow-sm active:scale-95 transition';
+    btn.innerText = opt;
+    btn.onclick = () => window.handleTestSelect(opt);
+    optContainer.appendChild(btn);
+  });
 
   if (window.renderMathInElement) {
     window.renderMathInElement(container, { 
@@ -764,9 +748,6 @@ window.handleTestSelect = function(val) {
   }
 };
 
-// ----------------------------------------------------
-// 6. UTILITY HELPERS
-// ----------------------------------------------------
 window.shuffleArray = function(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -775,4 +756,3 @@ window.shuffleArray = function(arr) {
   }
   return a;
 };
-
