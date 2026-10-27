@@ -655,30 +655,44 @@ Topic: "${title}".
 Target Language: Strictly ${isAs ? 'Assamese' : 'English'}.
 ${isAs ? ASSAMESE_GUARDRAIL : ''}
 
-Create exactly ${count} distinct multiple-choice questions.
+Create exactly ${count} distinct multiple-choice questions suitable for ${standard}.
 Respond ONLY with a JSON array:
 [
   {
-    "questionText": "Question string",
+    "questionText": "Question string with LaTeX ($...$) if needed",
     "correctAnswer": "Answer string",
     "distractors": ["Wrong 1", "Wrong 2", "Wrong 3"]
   }
 ]`;
 
   try {
-    const list = await fetchGeminiFast(prompt, true);
-    testQuestions = list.map(q => ({
-      questionText: q.questionText,
-      correctAnswer: q.correctAnswer,
-      options: window.shuffleArray([q.correctAnswer, ...q.distractors])
-    }));
+    const res = await fetchGeminiFast(prompt, true);
+    
+    // Safely extract array even if model wraps inside an object
+    const rawList = Array.isArray(res) ? res : (res.questions || res.testQuestions || res.items || Object.values(res)[0]);
+    if (!Array.isArray(rawList) || rawList.length === 0) {
+      throw new Error("Invalid question format received from AI.");
+    }
+
+    testQuestions = rawList.map(q => {
+      const distractors = Array.isArray(q.distractors) ? q.distractors : ['A', 'B', 'C'];
+      const correct = String(q.correctAnswer || '');
+      return {
+        questionText: q.questionText || q.question || '',
+        correctAnswer: correct,
+        options: window.shuffleArray([correct, ...distractors])
+      };
+    });
+
     currentTestIndex = 0;
     testScore = 0;
     renderTestQuestion(container);
   } catch (err) {
+    console.error("Test generation error:", err);
     container.innerHTML = `
       <div class="p-6 text-center space-y-3">
         <p class="text-xs font-bold text-rose-700">${isAs ? 'পৰীক্ষা প্ৰস্তুত কৰাত সমস্যা হ’ল।' : 'Failed to generate test.'}</p>
+        <p class="text-[11px] text-slate-400 font-mono">${err.message || ''}</p>
         <button onclick="window.renderTestSetup(document.getElementById('wsBody'))" class="px-5 py-2 bg-amber-600 text-white font-bold rounded-xl text-xs">
           ${isAs ? 'পুনৰ চেষ্টা কৰক' : 'Retry'}
         </button>
@@ -686,6 +700,7 @@ Respond ONLY with a JSON array:
     `;
   }
 };
+
 
 function renderTestQuestion(container) {
   const q = testQuestions[currentTestIndex];
