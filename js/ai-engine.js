@@ -22,33 +22,54 @@ CRITICAL LINGUISTIC INSTRUCTION:
 - DO NOT mix Bengali grammar or vocabulary (use 'কৰক/কৰে', never 'করুন/করে'; use 'হ’ব', never 'হবে'; use 'এটা', never 'একটি').
 - Use authentic Assamese mathematical terms (যেনে: কালি/ক্ষেত্ৰফল, অনুপাত, সদৃশ ত্ৰিভুজ, দহক, একক, ভগ্নাংশ, সমীকৰণ).
 `;
-// ----------------------------------------------------
-// 1. BULLETPROOF MULTI-TIER GEMINI ENGINE
-// ----------------------------------------------------
+
+  // Auto-discovers whatever active models Google currently supports for your API key
+window.getDynamicModelList = async function(apiKey) {
+  const cached = sessionStorage.getItem('omnimath_active_models');
+  if (cached) {
+    try { return JSON.parse(cached); } catch (_) {}
+  }
+
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`);
+    if (!res.ok) throw new Error('Failed to fetch models');
+    const data = await res.json();
+
+    const validModels = (data.models || [])
+      .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+      .map(m => m.name.replace(/^models\//, ''))
+      .filter(name => name.includes('gemini') && !name.includes('embedding') && !name.includes('aqa') && !name.includes('vision'))
+      .sort((a, b) => {
+        // Prioritize flash models first for speed & high quota
+        const aFlash = a.includes('flash') ? 1 : 0;
+        const bFlash = b.includes('flash') ? 1 : 0;
+        return bFlash - aFlash;
+      });
+
+    if (validModels.length > 0) {
+      sessionStorage.setItem('omnimath_active_models', JSON.stringify(validModels));
+      return validModels;
+    }
+  } catch (e) {
+    console.warn('[AutoDiscovery] Fallback list used:', e.message);
+  }
+
+  return ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash-lite'];
+};
+
 async function fetchGeminiFast(promptText, returnJson = true) {
   const apiKey = window.apiKey || localStorage.getItem('omnimath_gemini_key') || '';
   if (!apiKey) throw new Error('API key missing. Enter your Gemini key.');
 
-  // Complete chain: 3.8 first (works when quota resets), followed by all fallbacks
-  const candidateModels = [
-    'gemini-3.8-flash',
-    'gemini-3.5-flash-lite',
-    'gemini-3.5-flash',
-    'gemini-2.5-flash',
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-lite'
-  ];
-
+  const candidateModels = await window.getDynamicModelList(apiKey);
   let lastErrorMessage = '';
 
   for (const model of candidateModels) {
     try {
       const controller = new AbortController();
-      // Generous 20s timeout per attempt
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
+      const timeoutId = setTimeout(() => controller.abort(), 22000);
 
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
-      
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,50 +79,32 @@ async function fetchGeminiFast(promptText, returnJson = true) {
           generationConfig: returnJson ? { responseMimeType: "application/json" } : {}
         })
       });
-      
       clearTimeout(timeoutId);
 
-      // If quota exceeded (429) or not found (404) or busy (503), log and TRY NEXT MODEL IMMEDIATELY
       if (!res.ok) {
-        let errDetails = '';
-        try {
-          const errJson = await res.json();
-          errDetails = errJson.error?.message || `HTTP ${res.status}`;
-        } catch (_) {
-          errDetails = `HTTP ${res.status}`;
-        }
-        console.warn(`[FastEngine] Model ${model} failed (${res.status}): ${errDetails}. Trying next...`);
-        lastErrorMessage = `${model}: ${errDetails}`;
-        continue; // <<-- FORCES loop to try next model
+        const errJson = await res.json().catch(() => ({}));
+        lastErrorMessage = `${model}: ${errJson.error?.message || 'HTTP ' + res.status}`;
+        console.warn(`[FastEngine] ${lastErrorMessage}. Trying next...`);
+        continue;
       }
 
       const data = await res.json();
       const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      
-      if (!rawText) {
-        console.warn(`[FastEngine] Model ${model} returned empty content. Trying next...`);
-        continue;
-      }
+      if (!rawText) continue;
 
-      // If we made it here, this model succeeded!
-      console.log(`[FastEngine] Successfully generated with: ${model}`);
-
+      console.log(`[FastEngine] Success with: ${model}`);
       if (returnJson) {
         const cleaned = rawText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
         return JSON.parse(cleaned);
       }
       return rawText;
-
     } catch (err) {
-      console.warn(`[FastEngine] Network/Timeout error on ${model}:`, err.message);
       lastErrorMessage = `${model}: ${err.message}`;
-      // Continue to next model on timeout or abort
       continue;
     }
   }
 
-  // Only reaches here if EVERY single model in candidateModels failed
-  throw new Error(`All AI model tiers exhausted. Last error: ${lastErrorMessage}`);
+  throw new Error(`All active models failed. ${lastErrorMessage}`);
 }
 
 
