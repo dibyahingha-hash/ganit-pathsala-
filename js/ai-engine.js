@@ -547,16 +547,16 @@ function refillPracticeQueueBackground() {
 function sanitizeMathString(text, isAs = false) {
   if (!text) return '';
   let clean = text
-    // 1. Pull question marks OUTSIDE of KaTeX $...$ math delimiters
-    .replace(/=\s*\?\s*\$/g, '=$ ?')
-    .replace(/\?\$/g, '$ ?');
+    .split('=?$').join('=$ ?')
+    .split('= ?$').join('=$ ?')
+    .split('?$').join('$ ?');
 
-  // 2. If in English mode, strip ALL stray Assamese/Bengali/Hindi characters completely
   if (!isAs) {
-    clean = clean.replace(/[\u0900-\u09FF]+/g, '');
+    clean = clean.replace(/[\u0900-\u09FF]/g, '');
   }
   return clean.trim();
 }
+
 
 function displayRenderedPractice(container, isAs) {
   container.innerHTML = `
