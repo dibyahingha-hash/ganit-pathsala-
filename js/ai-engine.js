@@ -543,12 +543,19 @@ function refillPracticeQueueBackground() {
     fetchPracticeBatch(5);
   }
 }
-function sanitizeMathString(text) {
+
+function sanitizeMathString(text, isAs = false) {
   if (!text) return '';
-  return text
-    .replace(/\?[\u0980-\u09FF\u0900-\u097F]+/g, '?')
+  let clean = text
+    // 1. Pull question marks OUTSIDE of KaTeX $...$ math delimiters
     .replace(/=\s*\?\s*\$/g, '=$ ?')
-    .trim();
+    .replace(/\?\$/g, '$ ?');
+
+  // 2. If in English mode, strip ALL stray Assamese/Bengali/Hindi characters completely
+  if (!isAs) {
+    clean = clean.replace(/[\u0900-\u09FF]+/g, '');
+  }
+  return clean.trim();
 }
 
 function displayRenderedPractice(container, isAs) {
@@ -561,7 +568,8 @@ function displayRenderedPractice(container, isAs) {
 
       <div class="p-5 bg-white border-2 border-amber-300 rounded-3xl shadow-sm text-center">
         <div class="text-lg sm:text-xl font-black text-slate-800 tracking-wider mb-2">
-                  ${sanitizeMathString(currentPracticeProblem.questionText)}
+                  ${sanitizeMathString(currentPracticeProblem.questionText, isAs)}
+                  
                   
         </div>
 
